@@ -36,7 +36,8 @@ export const useStore = create((set, get) => ({
       ...c,
       capitalInvertido: c.capital_invertido,
       precioPromedio: c.precio_promedio,
-      precioActual: c.precio_actual
+      precioActual: c.precio_actual,
+      tae: c.tae || 0
     }))
 
     const transaccionesMapeadas = (resTransacciones.data || []).map(t => ({
@@ -83,16 +84,22 @@ export const useStore = create((set, get) => ({
       user_id: user.id,
       nombre: nuevaCuenta.nombre,
       tipo: nuevaCuenta.tipo,
-      saldo: nuevaCuenta.saldo,
+      saldo: Number(nuevaCuenta.saldo),
       icono: nuevaCuenta.icono,
       ticker: nuevaCuenta.ticker,
+      tae: Number(nuevaCuenta.tae || 0),
       capital_invertido: nuevaCuenta.capitalInvertido || 0,
       precio_promedio: nuevaCuenta.precioPromedio || 1
     }
 
     const { data, error } = await supabase.from('cuentas').insert([cuentaInsert]).select()
     if (!error && data) {
-      const cuentaFormateada = { ...data[0], capitalInvertido: data[0].capital_invertido, precioPromedio: data[0].precio_promedio }
+      const cuentaFormateada = { 
+        ...data[0], 
+        capitalInvertido: data[0].capital_invertido, 
+        precioPromedio: data[0].precio_promedio,
+        tae: data[0].tae
+      }
       set((state) => ({ cuentas: [...state.cuentas, cuentaFormateada] }))
     }
   },
@@ -100,12 +107,13 @@ export const useStore = create((set, get) => ({
   editarCuenta: async (id, datos) => {
     const { error } = await supabase.from('cuentas').update({
       nombre: datos.nombre,
-      saldo: Number(datos.saldo)
+      saldo: Number(datos.saldo),
+      tae: Number(datos.tae || 0)
     }).eq('id', id)
 
     if (!error) {
       set((state) => ({
-        cuentas: state.cuentas.map(c => c.id === id ? { ...c, ...datos, saldo: Number(datos.saldo ?? c.saldo) } : c)
+        cuentas: state.cuentas.map(c => c.id === id ? { ...c, ...datos, saldo: Number(datos.saldo ?? c.saldo), tae: Number(datos.tae ?? c.tae) } : c)
       }))
     }
   },
