@@ -145,38 +145,36 @@ export default function Dashboard() {
   const catDetalle = categorias.find(c => c.nombre === catSeleccionada)
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20 md:pb-12 px-1 md:px-0">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24 md:pb-12 w-full">
       
-      {/* Header optimizado: texto más pequeño en móvil para evitar saltos de línea feos */}
-      <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pt-2">
-        <div className="w-full md:w-auto text-center md:text-left">
+      <header className="mb-8 flex flex-col md:flex-row justify-between items-center md:items-end gap-6 pt-2">
+        <div className="w-full text-center md:text-left">
           <p className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center justify-center md:justify-start gap-2">
             <Activity size={14} className="text-brand-500" />
             Patrimonio Neto
           </p>
-          <h1 className="text-4xl md:text-6xl font-black tracking-tighter text-gradient leading-none">
+          <h1 className="text-5xl md:text-6xl font-black tracking-tighter text-gradient leading-none">
             {formatoEuros(patrimonioActual)}
           </h1>
         </div>
         
-        {/* Botones: Grid de 2 columnas en móvil para que sean fáciles de pulsar */}
-        <div className="grid grid-cols-2 md:flex md:flex-row gap-2 w-full md:w-auto">
+        <div className="grid grid-cols-2 md:flex md:flex-row gap-2 w-full">
           <button 
             onClick={() => abrirModal('ingreso')}
-            className="flex items-center justify-center gap-2 px-3 py-3 md:py-2 rounded-xl font-bold bg-brand-500/10 text-brand-400 border border-brand-500/20 active:scale-95 transition-all text-sm"
+            className="flex items-center justify-center gap-2 px-3 py-3.5 md:py-2 rounded-xl font-bold bg-brand-500/10 text-brand-400 border border-brand-500/20 active:scale-95 transition-all text-sm"
           >
             <Plus size={18} /> Ingreso
           </button>
           <button 
             onClick={() => abrirModal('gasto')}
-            className="flex items-center justify-center gap-2 px-3 py-3 md:py-2 rounded-xl font-bold bg-danger/10 text-danger border border-danger/20 active:scale-95 transition-all text-sm"
+            className="flex items-center justify-center gap-2 px-3 py-3.5 md:py-2 rounded-xl font-bold bg-danger/10 text-danger border border-danger/20 active:scale-95 transition-all text-sm"
           >
             <Plus size={18} /> Gasto
           </button>
           <button 
             onClick={handleSync}
             disabled={cargando}
-            className="col-span-2 md:col-span-1 flex items-center justify-center gap-2 px-4 py-3 md:py-2 rounded-xl font-bold bg-surface-solid border border-border-subtle text-text-main active:scale-95 transition-all disabled:opacity-50 text-sm"
+            className="col-span-2 md:col-span-1 flex items-center justify-center gap-2 px-4 py-3.5 md:py-2 rounded-xl font-bold bg-surface-solid border border-border-subtle text-text-main active:scale-95 transition-all disabled:opacity-50 text-sm"
           >
             <RefreshCw size={18} className={cargando ? 'animate-spin' : ''} />
             {cargando ? 'Sincronizando...' : 'Sincronizar'}
@@ -184,10 +182,9 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* Cuentas: Carousel horizontal intacto, pero con padding lateral para que no toque el borde */}
-      <div className="flex gap-3 overflow-x-auto pb-6 no-scrollbar -mx-4 px-4 mb-6">
+      <div className="flex gap-3 overflow-x-auto pb-6 no-scrollbar -mx-4 px-4 mb-4">
         {cuentas.map(cuenta => (
-          <div key={cuenta.id} className="min-w-[160px] md:min-w-[180px] card p-4 flex flex-col gap-2">
+          <div key={cuenta.id} className="min-w-[150px] md:min-w-[180px] card p-4 flex flex-col gap-2">
             <div className="flex items-center gap-2 text-text-muted">
               <div className="p-1.5 bg-white/5 rounded-md text-brand-400">{getIcon(cuenta.icono)}</div>
               <span className="text-[10px] font-bold uppercase tracking-wider truncate">{cuenta.nombre}</span>
@@ -197,7 +194,6 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Gráfico: Un poco más bajo en móvil para ganar espacio vertical */}
       <div className="card p-0 mb-6 overflow-hidden">
         <div className="p-4 md:p-6 border-b border-border-subtle flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -228,10 +224,9 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-        {/* Análisis Mensual */}
-        <div className="card">
-          <div className="flex items-center justify-between mb-6 md:mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="card p-5">
+          <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <Wallet className="text-blue-500" size={18} />
               <h2 className="text-[10px] md:text-sm font-bold text-text-main uppercase tracking-widest">Análisis</h2>
@@ -248,30 +243,29 @@ export default function Dashboard() {
           </div>
           <div className="mb-6">
             <p className="text-[10px] font-semibold text-text-muted uppercase tracking-widest mb-1">Balance del mes</p>
-            <p className={`text-3xl md:text-4xl font-black tracking-tight ${ingresos - gastos >= 0 ? 'text-text-main' : 'text-danger'}`}>
+            <p className={`text-4xl font-black tracking-tight ${ingresos - gastos >= 0 ? 'text-text-main' : 'text-danger'}`}>
               {ingresos - gastos >= 0 ? '+' : ''}{formatoEuros(ingresos - gastos)}
             </p>
           </div>
           <div className="grid grid-cols-1 gap-3">
-            <div className="flex items-center gap-3 p-3 bg-surface-solid border border-border-subtle rounded-xl">
-              <ArrowUpRight className="text-brand-400" size={20} />
+            <div className="flex items-center gap-3 p-4 bg-surface-solid border border-border-subtle rounded-xl">
+              <ArrowUpRight className="text-brand-400" size={24} />
               <div>
                 <p className="text-[10px] text-text-muted uppercase font-bold">Ingresos</p>
-                <p className="font-bold text-text-main text-base">{formatoEuros(ingresos)}</p>
+                <p className="font-bold text-text-main text-lg">{formatoEuros(ingresos)}</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 p-3 bg-surface-solid border border-border-subtle rounded-xl">
-              <ArrowDownRight className="text-danger" size={20} />
+            <div className="flex items-center gap-3 p-4 bg-surface-solid border border-border-subtle rounded-xl">
+              <ArrowDownRight className="text-danger" size={24} />
               <div>
                 <p className="text-[10px] text-text-muted uppercase font-bold">Gastos</p>
-                <p className="font-bold text-text-main text-base">{formatoEuros(gastos)}</p>
+                <p className="font-bold text-text-main text-lg">{formatoEuros(gastos)}</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Categorías */}
-        <div className="card flex flex-col min-h-[350px]">
+        <div className="card flex flex-col p-5 min-h-[350px]">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               {catSeleccionada ? (
@@ -293,24 +287,24 @@ export default function Dashboard() {
               <p className="text-[10px] uppercase font-bold tracking-widest">Sin movimientos</p>
             </div>
           ) : (
-            <div className="flex flex-col gap-4 flex-1">
+            <div className="flex flex-col gap-5 flex-1">
               {!catSeleccionada ? (
                 <>
-                  {(mostrarTodasCats ? categorias : categorias.slice(0, 4)).map((cat, idx) => (
+                  {(mostrarTodasCats ? categorias : categorias.slice(0, 5)).map((cat, idx) => (
                     <button key={cat.nombre} onClick={() => setCatSeleccionada(cat.nombre)} className="group w-full text-left active:opacity-70 transition-all">
-                      <div className="flex justify-between items-end mb-1">
+                      <div className="flex justify-between items-end mb-1.5">
                         <span className="text-[10px] font-bold text-text-muted group-hover:text-text-main uppercase">
                           {cat.nombre}
                         </span>
                         <span className="text-xs font-black text-text-main">{formatoEuros(cat.valor)}</span>
                       </div>
-                      <div className="w-full bg-surface-solid rounded-full h-1 border border-border-subtle overflow-hidden">
-                        <div className="bg-danger h-full" style={{ width: `${(cat.valor / (categorias[0]?.valor || 1)) * 100}%`, opacity: 1 - (idx * 0.15) }} />
+                      <div className="w-full bg-surface-solid rounded-full h-1.5 border border-border-subtle overflow-hidden">
+                        <div className="bg-danger h-full" style={{ width: `${(cat.valor / (categorias[0]?.valor || 1)) * 100}%`, opacity: 1 - (idx * 0.12) }} />
                       </div>
                     </button>
                   ))}
-                  {categorias.length > 4 && (
-                    <button onClick={() => setMostrarTodasCats(!mostrarTodasCats)} className="text-[10px] font-bold text-brand-400 uppercase mt-4 tracking-widest text-center">
+                  {categorias.length > 5 && (
+                    <button onClick={() => setMostrarTodasCats(!mostrarTodasCats)} className="text-[10px] font-bold text-brand-400 uppercase mt-2 tracking-widest text-center">
                       {mostrarTodasCats ? 'Ver menos' : `Ver todas (${categorias.length})`}
                     </button>
                   )}
@@ -318,7 +312,7 @@ export default function Dashboard() {
               ) : (
                 <div className="flex flex-col gap-2 overflow-y-auto max-h-[250px] pr-1">
                   {catDetalle?.transacciones.map(t => (
-                    <div key={t.id} className="flex justify-between items-center p-3 bg-surface-solid rounded-xl border border-border-subtle">
+                    <div key={t.id} className="flex justify-between items-center p-3.5 bg-surface-solid rounded-xl border border-border-subtle">
                       <div className="overflow-hidden">
                         <p className="text-xs font-bold text-text-main truncate">{t.desc || t.categoria}</p>
                         <p className="text-[9px] text-text-muted uppercase font-bold">{t.fecha}</p>
