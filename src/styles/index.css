@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+:root {
+  --bg-app: #000000;
+  --bg-gradient: radial-gradient(circle at 50% 0%, #18181b 0%, #000000 70%);
+  --text-main: #e2e8f0;
+  --text-muted: #94a3b8;
+  --surface: rgba(24, 24, 27, 0.6);
+  --surface-hover: rgba(39, 39, 42, 0.8);
+  --surface-solid: #18181b;
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-focus: rgba(255, 255, 255, 0.1);
+  --gradient-from: #ffffff;
+  --gradient-to: #64748b;
+}
+
+.light-mode {
+  --bg-app: #f1f5f9;
+  --bg-gradient: radial-gradient(circle at 50% 0%, #ffffff 0%, #f1f5f9 70%);
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --surface: rgba(255, 255, 255, 0.7);
+  --surface-hover: rgba(255, 255, 255, 0.9);
+  --surface-solid: #ffffff;
+  --border-subtle: rgba(15, 23, 42, 0.08);
+  --border-focus: rgba(15, 23, 42, 0.15);
+  --gradient-from: #0f172a;
+  --gradient-to: #475569;
+}
+
+@theme {
+  --color-brand-400: #34d399;
+  --color-brand-500: #10b981;
+  --color-brand-600: #059669;
+  
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-solid: var(--surface-solid);
+  
+  --color-border-subtle: var(--border-subtle);
+  --color-border-focus: var(--border-focus);
+  
+  --color-danger: #ef4444;
+  --color-warning: #f59e0b;
+  --color-info: #3b82f6;
+
+  --font-sans: "Inter", system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply antialiased selection:bg-brand-500 selection:text-white transition-colors duration-300;
+    background-color: var(--bg-app);
+    color: var(--text-main);
+    background-image: var(--bg-gradient);
+    background-attachment: fixed;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-surface backdrop-blur-md border border-border-subtle rounded-2xl p-6 transition-all duration-300 hover:border-border-focus hover:bg-surface-hover shadow-2xl;
+  }
+  
+  .btn-primary {
+    @apply bg-brand-600 text-white px-4 py-2 rounded-lg font-medium transition-transform active:scale-95 hover:bg-brand-500;
+  }
+  
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(to right, var(--gradient-from), var(--gradient-to));
+  }
+}
