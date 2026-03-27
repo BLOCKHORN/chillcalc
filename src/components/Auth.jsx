@@ -41,7 +41,8 @@ export default function Auth() {
             Accede a tu terminal de gestión de capital
           </p>
         </div>
-        
+
+
         {/* Formulario */}
         <form onSubmit={handleAuth} className="space-y-4">
           <div>
