@@ -16,6 +16,7 @@ export default function Sidebar() {
 
   const cerrarSesion = async () => {
     await supabase.auth.signOut()
+    window.location.reload()
   }
 
   const navItems = [

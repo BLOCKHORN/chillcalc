@@ -7,6 +7,7 @@ import Dashboard from './components/Dashboard'
 import Cuentas from './components/Cuentas'
 import Transacciones from './components/Transacciones'
 import Objetivos from './components/Objetivos'
+import BottomNav from './components/BottomNav'
 
 function App() {
   const [session, setSession] = useState(null)
@@ -55,9 +56,12 @@ function App() {
   }
 
   return (
-    <MainLayout>
-      {renderVista()}
-    </MainLayout>
+    <>
+      <MainLayout>
+        {renderVista()}
+      </MainLayout>
+      <BottomNav />
+    </>
   )
 }
 

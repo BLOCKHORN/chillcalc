@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useStore } from '../store/useStore'
-import { Target, CalendarClock, TrendingUp, Wallet, AlertCircle, Edit2, Trash2 } from 'lucide-react'
+import { Target, CalendarClock, TrendingUp, Wallet, AlertCircle, Edit2, Trash2, Plus } from 'lucide-react'
 import ModalObjetivo from './ModalObjetivo'
 
 const formatoEuros = (num) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(num || 0)
@@ -64,16 +64,25 @@ export default function Objetivos() {
   }
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <header className="mb-8 flex justify-between items-end">
-        <div>
-          <h2 className="text-2xl font-bold text-text-main mb-1">Objetivos Financieros</h2>
-          <p className="text-sm text-text-muted">Proyección y metas de capital</p>
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24 md:pb-8 px-1 md:px-0">
+      <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pt-2">
+        <div className="w-full text-center md:text-left">
+          <h2 className="text-3xl md:text-2xl font-black md:font-bold text-text-main mb-1 tracking-tighter md:tracking-normal">
+            Tus Metas
+          </h2>
+          <p className="text-[10px] md:text-sm text-text-muted uppercase font-bold tracking-widest">
+            Proyección y objetivos de capital
+          </p>
         </div>
-        <button onClick={handleNuevo} className="btn-primary text-white">Nuevo Objetivo</button>
+        <button 
+          onClick={handleNuevo} 
+          className="w-full md:w-auto flex items-center justify-center gap-2 bg-brand-500 hover:bg-brand-600 text-white py-3 md:py-2 px-6 rounded-xl active:scale-95 transition-all text-sm font-bold shadow-lg shadow-brand-500/20"
+        >
+          <Plus size={18} /> Nuevo Objetivo
+        </button>
       </header>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
         {objetivos.map(obj => {
           const proyeccion = calcularProyeccion(patrimonio, obj.meta, obj.aportacionExtra, obj.tasa)
           
@@ -85,36 +94,37 @@ export default function Objetivos() {
           }
 
           return (
-            <div key={obj.id} className={`card flex flex-col ${proyeccion.alcanzado ? 'border-brand-500/50' : ''}`}>
+            <div key={obj.id} className={`card flex flex-col p-4 md:p-6 ${proyeccion.alcanzado ? 'border-brand-500/50' : ''}`}>
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg ${proyeccion.alcanzado ? 'bg-brand-500/20 text-brand-400' : 'bg-surface-solid text-text-muted'}`}>
-                    <Target size={24} />
+                  <div className={`p-2.5 rounded-xl border ${proyeccion.alcanzado ? 'bg-brand-500/20 text-brand-400 border-brand-500/30' : 'bg-surface-solid text-text-muted border-border-subtle'}`}>
+                    <Target size={22} />
                   </div>
-                  <div>
-                    <h3 className="font-bold text-text-main text-lg">{obj.nombre}</h3>
+                  <div className="overflow-hidden">
+                    <h3 className="font-bold text-text-main text-base md:text-lg truncate">{obj.nombre}</h3>
                     <div className="flex items-center gap-2">
-                      <p className="text-xs text-text-muted">Meta: {formatoEuros(obj.meta)}</p>
-                      {proyeccion.alcanzado && <span className="text-xs font-bold text-brand-400">¡Alcanzado!</span>}
+                      <p className="text-[10px] uppercase font-bold text-text-muted">Meta: {formatoEuros(obj.meta)}</p>
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => handleEditar(obj.id)} className="p-2 text-text-muted hover:text-text-main hover:bg-surface-solid rounded-lg transition-colors">
+                <div className="flex items-center gap-1.5">
+                  <button onClick={() => handleEditar(obj.id)} className="p-2.5 text-text-muted hover:text-text-main bg-surface-solid rounded-lg border border-border-subtle transition-colors">
                     <Edit2 size={16} />
                   </button>
-                  <button onClick={() => eliminarObjetivo(obj.id)} className="p-2 text-text-muted hover:text-danger hover:bg-danger/10 rounded-lg transition-colors">
+                  <button onClick={() => eliminarObjetivo(obj.id)} className="p-2.5 text-text-muted hover:text-danger bg-surface-solid rounded-lg border border-border-subtle transition-colors">
                     <Trash2 size={16} />
                   </button>
                 </div>
               </div>
 
-              <div className="mb-2 flex justify-between text-xs font-semibold">
-                <span className="text-text-muted">Progreso actual</span>
-                <span className="text-text-main">{proyeccion.progreso.toFixed(1)}%</span>
+              <div className="mb-2 flex justify-between text-[10px] font-black uppercase tracking-widest">
+                <span className="text-text-muted">Progreso</span>
+                <span className={proyeccion.alcanzado ? 'text-brand-400' : 'text-text-main'}>
+                  {proyeccion.progreso.toFixed(1)}%
+                </span>
               </div>
               
-              <div className="w-full bg-surface-solid rounded-full h-3 overflow-hidden border border-border-subtle mb-6">
+              <div className="w-full bg-surface-solid rounded-full h-2.5 overflow-hidden border border-border-subtle mb-6">
                 <div 
                   className={`${proyeccion.alcanzado ? 'bg-brand-500' : 'bg-linear-to-r from-brand-600 to-brand-400'} h-full transition-all duration-1000 ease-out`} 
                   style={{ width: `${proyeccion.progreso}%` }}
@@ -123,50 +133,50 @@ export default function Objetivos() {
 
               {proyeccion.imposible ? (
                 <div className="flex-1 flex flex-col items-center justify-center p-6 bg-danger/10 border border-danger/20 rounded-xl">
-                  <AlertCircle className="text-danger mb-2" size={28} />
-                  <p className="text-danger text-sm font-semibold text-center">Matemáticamente imposible</p>
-                  <p className="text-text-muted text-xs text-center mt-1">Añade una aportación mensual mayor a 0 o incrementa la tasa de interés.</p>
+                  <AlertCircle className="text-danger mb-2" size={24} />
+                  <p className="text-danger text-xs font-bold uppercase text-center">Inviable</p>
+                  <p className="text-text-muted text-[10px] text-center mt-1">Aumenta tu ahorro mensual o la rentabilidad esperada.</p>
                 </div>
               ) : (
-                <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-4">
                   {!proyeccion.alcanzado && (
-                    <div className="bg-surface-solid border border-border-subtle rounded-xl p-5 flex items-center justify-between">
+                    <div className="bg-surface-solid border border-border-subtle rounded-xl p-4 flex items-center justify-between">
                       <div>
-                        <p className="text-[10px] uppercase tracking-widest text-text-muted mb-1">Tiempo Estimado</p>
-                        <p className="text-2xl font-black text-text-main tracking-tight">
-                          {proyeccion.anos > 0 && `${proyeccion.anos} años `}
-                          {proyeccion.mesesResto > 0 && `${proyeccion.mesesResto} meses`}
-                          {proyeccion.anos === 0 && proyeccion.mesesResto === 0 && 'Menos de 1 mes'}
+                        <p className="text-[9px] uppercase font-black tracking-tighter text-text-muted mb-1">Tiempo Estimado</p>
+                        <p className="text-xl md:text-2xl font-black text-text-main tracking-tighter leading-none">
+                          {proyeccion.anos > 0 && `${proyeccion.anos}a `}
+                          {proyeccion.mesesResto > 0 && `${proyeccion.mesesResto}m`}
+                          {proyeccion.anos === 0 && proyeccion.mesesResto === 0 && '¡Ya casi!'}
                         </p>
-                        <p className="text-sm font-semibold text-brand-400 mt-1 capitalize">
-                           {fechaEstimada}
+                        <p className="text-[11px] font-bold text-brand-400 mt-2 capitalize">
+                           Para {fechaEstimada}
                         </p>
                       </div>
-                      <div className="p-3 bg-white/5 rounded-full text-brand-400 hidden sm:block">
-                        <CalendarClock size={28} />
+                      <div className="p-3 bg-brand-500/10 rounded-xl text-brand-400">
+                        <CalendarClock size={24} />
                       </div>
                     </div>
                   )}
 
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-surface-solid p-4 rounded-xl border border-border-subtle">
-                      <div className="flex items-center gap-2 mb-2 text-text-muted">
-                        <Wallet size={14} />
-                        <span className="text-[10px] uppercase tracking-widest font-bold">Total Aportado</span>
+                    <div className="bg-surface-solid p-3 md:p-4 rounded-xl border border-border-subtle">
+                      <div className="flex items-center gap-2 mb-1.5 text-text-muted">
+                        <Wallet size={12} />
+                        <span className="text-[9px] uppercase font-black tracking-tighter">Aportado</span>
                       </div>
-                      <p className="text-lg font-bold text-text-main">{formatoEuros(proyeccion.totalAportado)}</p>
-                      <p className="text-xs text-text-muted mt-1">{formatoEuros(obj.aportacionExtra)} / mes</p>
+                      <p className="text-sm md:text-base font-bold text-text-main truncate">{formatoEuros(proyeccion.totalAportado)}</p>
+                      <p className="text-[9px] font-bold text-text-muted mt-0.5">{formatoEuros(obj.aportacionExtra)}/mes</p>
                     </div>
 
-                    <div className="bg-surface-solid p-4 rounded-xl border border-border-subtle">
-                      <div className="flex items-center gap-2 mb-2 text-text-muted">
-                        <TrendingUp size={14} />
-                        <span className="text-[10px] uppercase tracking-widest font-bold">Interés Generado</span>
+                    <div className="bg-surface-solid p-3 md:p-4 rounded-xl border border-border-subtle">
+                      <div className="flex items-center gap-2 mb-1.5 text-text-muted">
+                        <TrendingUp size={12} />
+                        <span className="text-[9px] uppercase font-black tracking-tighter">Interés</span>
                       </div>
-                      <p className={`text-lg font-bold ${proyeccion.totalIntereses > 0 ? 'text-brand-400' : 'text-danger'}`}>
+                      <p className={`text-sm md:text-base font-bold truncate ${proyeccion.totalIntereses > 0 ? 'text-brand-400' : 'text-text-muted'}`}>
                         {formatoEuros(proyeccion.totalIntereses)}
                       </p>
-                      <p className="text-xs text-text-muted mt-1">Al {obj.tasa}% anual</p>
+                      <p className="text-[9px] font-bold text-text-muted mt-0.5">{obj.tasa}% anual</p>
                     </div>
                   </div>
                 </div>
