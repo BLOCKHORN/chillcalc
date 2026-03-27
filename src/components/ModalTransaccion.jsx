@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useStore } from '../store/useStore'
-import { X, Loader2 } from 'lucide-react'
+import { X, Loader2, Calendar, Euro, FileText, Tag, CreditCard } from 'lucide-react'
 
 export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoInicial }) {
   const { cuentas, categorias, agregarTransaccion, editarTransaccion } = useStore()
@@ -15,7 +15,7 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
   const [cargando, setCargando] = useState(false)
 
   useEffect(() => {
-    if (editarDatos) {
+    if (editarDatos && isOpen) {
       setTipo(editarDatos.tipo)
       setMonto(editarDatos.monto)
       setDesc(editarDatos.desc || '')
@@ -27,7 +27,7 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
         const [d, m, a] = editarDatos.fecha.split('/')
         setFecha(`${a}-${m}-${d}`)
       }
-    } else {
+    } else if (isOpen) {
       setTipo(tipoInicial || 'gasto')
       setMonto('')
       setDesc('')
@@ -55,22 +55,17 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
       const datosTx = {
         desc: desc.trim(),
         monto: parseFloat(monto),
-        cuentaId: isNaN(cuentaId) ? cuentaId : parseInt(cuentaId),
+        cuentaId: cuentaId,
         categoria,
         tipo,
-        fecha: `${dia}/${mes}/${año}`
-      }
-
-      if (mostrarPrecioCompra && parseFloat(precioCompra) > 0) {
-        datosTx.precioCompra = parseFloat(precioCompra)
-      } else {
-        datosTx.precioCompra = null
+        fecha: `${dia}/${mes}/${año}`,
+        precioCompra: mostrarPrecioCompra ? parseFloat(precioCompra) : null
       }
 
       if (editarDatos) {
         await editarTransaccion(editarDatos.id, datosTx)
       } else {
-        await agregarTransaccion({ ...datosTx, id: Date.now() })
+        await agregarTransaccion(datosTx)
       }
       
       onClose()
@@ -82,24 +77,30 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-surface-solid border border-border-subtle rounded-2xl w-full max-w-md shadow-2xl">
-        <div className="flex justify-between items-center p-6 border-b border-border-subtle">
-          <h3 className="text-xl font-bold text-white">
-            {editarDatos ? 'Editar Operación' : 'Registrar Operación'}
-          </h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
-            <X size={20} />
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-surface-solid border-t sm:border border-border-subtle rounded-t-3xl sm:rounded-2xl w-full max-w-md shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[85vh] overflow-hidden">
+        
+        <div className="flex justify-between items-center p-6 border-b border-border-subtle shrink-0">
+          <div>
+            <h3 className="text-xl font-bold text-text-main">
+              {editarDatos ? 'Editar Operación' : 'Nueva Operación'}
+            </h3>
+            <p className="text-[10px] font-black uppercase tracking-widest text-text-muted mt-1">
+              {editarDatos ? 'Modificar registro' : 'Registrar flujo de caja'}
+            </p>
+          </div>
+          <button onClick={onClose} className="p-2 text-text-muted hover:text-text-main transition-colors">
+            <X size={24} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4">
-          <div className="grid grid-cols-2 gap-2 p-1 bg-surface rounded-lg border border-border-subtle">
+        <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-5 overflow-y-auto custom-scrollbar">
+          <div className="grid grid-cols-2 gap-2 p-1 bg-surface-solid rounded-xl border border-border-subtle shadow-inner">
             <button
               type="button"
               disabled={cargando}
               onClick={() => setTipo('gasto')}
-              className={`py-2 text-sm font-semibold rounded-md transition-all ${tipo === 'gasto' ? 'bg-danger text-white' : 'text-slate-400 hover:text-white'}`}
+              className={`py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${tipo === 'gasto' ? 'bg-danger text-white shadow-lg shadow-danger/20' : 'text-text-muted hover:text-text-main'}`}
             >
               Gasto
             </button>
@@ -107,101 +108,116 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
               type="button"
               disabled={cargando}
               onClick={() => setTipo('ingreso')}
-              className={`py-2 text-sm font-semibold rounded-md transition-all ${tipo === 'ingreso' ? 'bg-brand-500 text-white' : 'text-slate-400 hover:text-white'}`}
+              className={`py-3 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${tipo === 'ingreso' ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20' : 'text-text-muted hover:text-text-main'}`}
             >
               Ingreso
             </button>
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Monto (€)</label>
-            <input
-              type="number"
-              step="0.01"
-              value={monto}
-              disabled={cargando}
-              onChange={(e) => setMonto(e.target.value)}
-              className="w-full bg-surface border border-border-subtle rounded-lg px-4 py-3 text-white focus:outline-none focus:border-brand-500 transition-colors disabled:opacity-50"
-              placeholder="0.00"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Descripción</label>
-            <input
-              type="text"
-              value={desc}
-              disabled={cargando}
-              onChange={(e) => setDesc(e.target.value)}
-              className="w-full bg-surface border border-border-subtle rounded-lg px-4 py-3 text-white focus:outline-none focus:border-brand-500 transition-colors disabled:opacity-50"
-              placeholder="Ej: Nómina, Compra SPY..."
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Cuenta</label>
-              <select
-                value={cuentaId}
-                disabled={cargando}
-                onChange={(e) => setCuentaId(e.target.value)}
-                className="w-full bg-surface border border-border-subtle rounded-lg px-4 py-3 text-white focus:outline-none focus:border-brand-500 appearance-none disabled:opacity-50"
-              >
-                {cuentas.map(c => (
-                  <option key={c.id} value={c.id}>{c.nombre}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Categoría</label>
-              <select
-                value={categoria}
-                disabled={cargando}
-                onChange={(e) => setCategoria(e.target.value)}
-                className="w-full bg-surface border border-border-subtle rounded-lg px-4 py-3 text-white focus:outline-none focus:border-brand-500 appearance-none disabled:opacity-50"
-              >
-                {categorias.map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {mostrarPrecioCompra && (
-            <div className="animate-in slide-in-from-top-2">
-              <label className="block text-xs font-bold text-brand-400 uppercase tracking-widest mb-2">Precio Compra (€/partic.)</label>
+          <div className="space-y-4">
+            <div className="relative group">
+              <label className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest mb-2 px-1">
+                <Euro size={12} className="text-brand-400" /> Monto (€)
+              </label>
               <input
                 type="number"
                 step="0.01"
-                value={precioCompra}
+                value={monto}
                 disabled={cargando}
-                onChange={(e) => setPrecioCompra(e.target.value)}
-                className="w-full bg-surface border border-brand-500/50 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-brand-500 transition-colors disabled:opacity-50"
-                placeholder="Ej: 510.50"
+                onChange={(e) => setMonto(e.target.value)}
+                className="w-full bg-surface-solid border border-border-subtle rounded-xl px-4 py-4 text-text-main text-lg font-bold focus:outline-none focus:border-brand-500 transition-all disabled:opacity-50 placeholder:text-text-muted/30"
+                placeholder="0.00"
+                required
               />
             </div>
-          )}
 
-          <div>
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Fecha</label>
-            <input
-              type="date"
-              value={fecha}
-              disabled={cargando}
-              onChange={(e) => setFecha(e.target.value)}
-              className="w-full bg-surface border border-border-subtle rounded-lg px-4 py-3 text-white focus:outline-none focus:border-brand-500 disabled:opacity-50"
-            />
+            <div>
+              <label className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest mb-2 px-1">
+                <FileText size={12} /> Descripción
+              </label>
+              <input
+                type="text"
+                value={desc}
+                disabled={cargando}
+                onChange={(e) => setDesc(e.target.value)}
+                className="w-full bg-surface-solid border border-border-subtle rounded-xl px-4 py-3.5 text-text-main text-sm font-medium focus:outline-none focus:border-brand-500 transition-all disabled:opacity-50"
+                placeholder="Nómina, Compra, Inversión..."
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest mb-2 px-1">
+                  <CreditCard size={12} /> Cuenta
+                </label>
+                <select
+                  value={cuentaId}
+                  disabled={cargando}
+                  onChange={(e) => setCuentaId(e.target.value)}
+                  className="w-full bg-surface-solid border border-border-subtle rounded-xl px-3 py-3.5 text-text-main text-xs font-bold focus:outline-none focus:border-brand-500 appearance-none disabled:opacity-50"
+                >
+                  {cuentas.map(c => (
+                    <option key={c.id} value={c.id}>{c.nombre}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest mb-2 px-1">
+                  <Tag size={12} /> Categoría
+                </label>
+                <select
+                  value={categoria}
+                  disabled={cargando}
+                  onChange={(e) => setCategoria(e.target.value)}
+                  className="w-full bg-surface-solid border border-border-subtle rounded-xl px-3 py-3.5 text-text-main text-xs font-bold focus:outline-none focus:border-brand-500 appearance-none disabled:opacity-50"
+                >
+                  {categorias.map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {mostrarPrecioCompra && (
+              <div className="animate-in slide-in-from-top-2">
+                <label className="flex items-center gap-2 text-[10px] font-black text-brand-400 uppercase tracking-widest mb-2 px-1">
+                  Precio Compra (€/u)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={precioCompra}
+                  disabled={cargando}
+                  onChange={(e) => setPrecioCompra(e.target.value)}
+                  className="w-full bg-surface-solid border border-brand-500/30 rounded-xl px-4 py-3.5 text-text-main text-sm font-bold focus:outline-none focus:border-brand-500 transition-all"
+                  placeholder="Precio por unidad"
+                />
+              </div>
+            )}
+
+            <div>
+              <label className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest mb-2 px-1">
+                <Calendar size={12} /> Fecha de Operación
+              </label>
+              <input
+                type="date"
+                value={fecha}
+                disabled={cargando}
+                onChange={(e) => setFecha(e.target.value)}
+                className="w-full bg-surface-solid border border-border-subtle rounded-xl px-4 py-3.5 text-text-main text-sm font-bold focus:outline-none focus:border-brand-500 disabled:opacity-50"
+              />
+            </div>
           </div>
 
-          <button 
-            type="submit" 
-            disabled={cargando}
-            className={`mt-4 w-full py-3 rounded-lg font-bold transition-all flex items-center justify-center gap-2 ${tipo === 'gasto' ? 'bg-danger hover:bg-red-600 text-white' : 'bg-brand-600 hover:bg-brand-500 text-white'} disabled:opacity-50 disabled:cursor-not-allowed`}
-          >
-            {cargando && <Loader2 size={18} className="animate-spin" />}
-            {cargando ? 'Procesando...' : `${editarDatos ? 'Guardar Cambios' : 'Registrar ' + (tipo === 'gasto' ? 'Gasto' : 'Ingreso')}`}
-          </button>
+          <div className="mt-4 pb-4">
+            <button 
+              type="submit" 
+              disabled={cargando}
+              className={`w-full py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center gap-3 active:scale-95 ${tipo === 'gasto' ? 'bg-danger hover:bg-red-600 text-white shadow-lg shadow-danger/20' : 'bg-brand-500 hover:bg-brand-600 text-white shadow-lg shadow-brand-500/20'} disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              {cargando ? <Loader2 size={20} className="animate-spin" /> : editarDatos ? 'Guardar Cambios' : 'Confirmar Operación'}
+            </button>
+          </div>
         </form>
       </div>
     </div>

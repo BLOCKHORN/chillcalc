@@ -53,7 +53,8 @@ export const useStore = create((set, get) => ({
     const transaccionesMapeadas = (resTransacciones.data || []).map(t => ({
       ...t,
       cuentaId: t.cuenta_id,
-      precioCompra: t.precio_compra
+      precioCompra: t.precio_compra,
+      desc: t.descripcion
     }))
 
     const objetivosMapeados = (resObjetivos.data || []).map(o => ({
@@ -163,7 +164,7 @@ export const useStore = create((set, get) => ({
     const txInsert = {
       user_id: user.id,
       cuenta_id: tx.cuentaId,
-      monto: tx.monto,
+      monto: Number(tx.monto),
       descripcion: tx.desc || tx.descripcion,
       categoria: tx.categoria,
       tipo: tx.tipo,
@@ -198,6 +199,50 @@ export const useStore = create((set, get) => ({
       })
       const txFormateada = { ...data[0], cuentaId: data[0].cuenta_id, desc: data[0].descripcion, precioCompra: data[0].precio_compra }
       return { transacciones: [txFormateada, ...state.transacciones], cuentas: nuevasCuentas }
+    })
+  },
+
+  editarTransaccion: async (id, tx) => {
+    const { transacciones, cuentas } = get()
+    const txVieja = transacciones.find(t => t.id === id)
+    if (!txVieja) return
+
+    const txUpdate = {
+      monto: Number(tx.monto),
+      descripcion: tx.desc || tx.descripcion,
+      categoria: tx.categoria,
+      tipo: tx.tipo,
+      fecha: tx.fecha,
+      precio_compra: tx.precioCompra
+    }
+
+    const { data, error } = await supabase.from('transacciones').update(txUpdate).eq('id', id).select()
+    if (error) return
+
+    set((state) => {
+      const nuevasCuentas = state.cuentas.map(c => {
+        if (c.id !== txVieja.cuentaId) return c
+        const nc = { ...c }
+        if (nc.tipo === 'inversion') {
+          const diffMonto = Number(tx.monto) - Number(txVieja.monto)
+          nc.capitalInvertido = Number(nc.capitalInvertido) + diffMonto
+          nc.saldo = Number(nc.saldo) + diffMonto
+        } else {
+          const montoViejo = txVieja.tipo === 'ingreso' ? Number(txVieja.monto) : -Number(txVieja.monto)
+          const montoNuevo = tx.tipo === 'ingreso' ? Number(tx.monto) : -Number(tx.monto)
+          nc.saldo = Number(nc.saldo) - montoViejo + montoNuevo
+        }
+        supabase.from('cuentas').update({ 
+          saldo: nc.saldo, 
+          capital_invertido: nc.capitalInvertido 
+        }).eq('id', nc.id)
+        return nc
+      })
+      const txFormateada = { ...data[0], cuentaId: data[0].cuenta_id, desc: data[0].descripcion, precioCompra: data[0].precio_compra }
+      return {
+        transacciones: state.transacciones.map(t => t.id === id ? txFormateada : t),
+        cuentas: nuevasCuentas
+      }
     })
   },
 
