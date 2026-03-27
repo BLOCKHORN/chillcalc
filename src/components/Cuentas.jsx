@@ -29,7 +29,6 @@ export default function Cuentas() {
   }
 
   const getIcon = useCallback((icono) => {
-    // Usamos text-text-muted para que el icono se adapte al tema
     const props = { size: 24, className: "text-text-muted" }
     switch(icono) {
       case 'bank': return <Building2 {...props} />
@@ -44,7 +43,6 @@ export default function Cuentas() {
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
       <header className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
-          {/* text-text-main para títulos dinámicos */}
           <h2 className="text-2xl font-bold text-text-main mb-1">Cuentas Activas</h2>
           <p className="text-sm text-text-muted">Gestiona tu liquidez y cartera</p>
         </div>
@@ -68,21 +66,26 @@ export default function Cuentas() {
           
           const valSaldo = Number(c.saldo || 0)
           const valInvertido = Number(c.capitalInvertido || 0)
+          const valTae = Number(c.tae || 0)
+          
           const beneficio = esInversion ? (valSaldo - valInvertido) : 0
           const pct = esInversion && valInvertido > 0 ? (beneficio / valInvertido) * 100 : 0
-          const gananciaMensual = esRemunerada ? (valSaldo * (Number(c.tasa) || 0)) / 12 : 0
+          
+          const gananciaAnual = esRemunerada ? (valSaldo * (valTae / 100)) : 0
+          const gananciaMensual = gananciaAnual / 12
 
           return (
             <div key={c.id} className="card flex flex-col justify-between min-h-40 group">
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-3">
-                  {/* bg-surface-solid para fondos de iconos adaptables */}
                   <div className="p-2 bg-surface-solid rounded-lg">
                     {getIcon(c.icono)}
                   </div>
                   <div>
                     <h3 className="font-semibold text-text-main">{c.nombre}</h3>
-                    <span className="text-[10px] uppercase tracking-wider text-text-muted">{c.tipo}</span>
+                    <span className="text-[10px] uppercase tracking-wider text-text-muted">
+                      {esRemunerada ? 'Cuenta Ahorro' : c.tipo}
+                    </span>
                   </div>
                 </div>
                 
@@ -123,10 +126,17 @@ export default function Cuentas() {
                 )}
 
                 {esRemunerada && (
-                  <div className="mt-2 text-xs flex items-center gap-2">
-                    <span className="text-brand-400 font-semibold">+{(Number(c.tasa || 0) * 100).toFixed(1)}% TAE</span>
-                    <span className="text-text-muted">·</span>
-                    <span className="text-text-muted">+{formatoEuros(gananciaMensual)} / mes</span>
+                  <div className="mt-3 pt-3 border-t border-border-subtle flex flex-col gap-1">
+                    <div className="flex justify-between items-center">
+                      <span className="text-brand-400 text-[10px] font-bold uppercase">+{valTae.toFixed(2)}% TAE</span>
+                      <div className="flex gap-2 text-[10px] font-bold">
+                        <span className="text-text-muted uppercase">Bruto Estimado</span>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-text-main text-xs font-semibold">+{formatoEuros(gananciaMensual)} <span className="text-[10px] text-text-muted font-normal">/ mes</span></span>
+                      <span className="text-text-main text-xs font-semibold">+{formatoEuros(gananciaAnual)} <span className="text-[10px] text-text-muted font-normal">/ año</span></span>
+                    </div>
                   </div>
                 )}
               </div>
