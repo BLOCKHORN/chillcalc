@@ -144,8 +144,8 @@ export default function Objetivos() {
                       <div>
                         <p className="text-[9px] uppercase font-black tracking-tighter text-text-muted mb-1">Tiempo Estimado</p>
                         <p className="text-xl md:text-2xl font-black text-text-main tracking-tighter leading-none">
-                          {proyeccion.anos > 0 && `${proyeccion.anos}a `}
-                          {proyeccion.mesesResto > 0 && `${proyeccion.mesesResto}m`}
+                          {proyeccion.anos > 0 && `${proyeccion.anos} ${proyeccion.anos === 1 ? 'Año' : 'Años'} `}
+                          {proyeccion.mesesResto > 0 && `${proyeccion.mesesResto} ${proyeccion.mesesResto === 1 ? 'Mes' : 'Meses'}`}
                           {proyeccion.anos === 0 && proyeccion.mesesResto === 0 && '¡Ya casi!'}
                         </p>
                         <p className="text-[11px] font-bold text-brand-400 mt-2 capitalize">
