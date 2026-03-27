@@ -42,7 +42,6 @@ export default function Cuentas() {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20 md:pb-0 px-1 md:px-0">
       
-      {/* Header optimizado para móvil */}
       <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pt-2">
         <div className="w-full text-center md:text-left">
           <h2 className="text-3xl md:text-2xl font-black md:font-bold text-text-main mb-1 tracking-tighter md:tracking-normal">
@@ -53,7 +52,6 @@ export default function Cuentas() {
           </p>
         </div>
 
-        {/* Botones en grid de 2 columnas para el pulgar */}
         <div className="grid grid-cols-2 md:flex gap-3 w-full md:w-auto">
           <button 
             onClick={handleSincronizar}
@@ -102,7 +100,6 @@ export default function Cuentas() {
                   </div>
                 </div>
                 
-                {/* Botones de acción: siempre visibles en móvil, hover en escritorio */}
                 <div className="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                   <button 
                     onClick={() => setCuentaEditando(c.id)} 
@@ -126,10 +123,25 @@ export default function Cuentas() {
                 
                 {esInversion && (
                   <div className="mt-4 space-y-2 pt-3 border-t border-border-subtle">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-[9px] font-black text-brand-400 bg-brand-500/10 px-2 py-0.5 rounded border border-brand-500/20 uppercase">
+                        {c.ticker || 'Sin Ticker'}
+                      </span>
+                    </div>
+
                     <div className="flex justify-between items-center text-[10px] uppercase font-black">
                       <span className="text-text-muted">Rendimiento</span>
                       <span className={beneficio > 0.01 ? 'text-brand-400' : beneficio < -0.01 ? 'text-danger' : 'text-text-muted'}>
                         {beneficio > 0.01 ? '+' : ''}{formatoEuros(beneficio)} ({pct.toFixed(2)}%)
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between items-center text-[10px] uppercase font-black p-2 bg-brand-500/5 rounded-md border border-brand-500/10">
+                      <span className="text-text-muted flex items-center gap-1">
+                        <Globe size={10} className="text-brand-500" /> Mercado
+                      </span>
+                      <span className="text-text-main">
+                        {c.precioActual > 0 ? formatoEuros(c.precioActual) : '---'}
                       </span>
                     </div>
                   </div>

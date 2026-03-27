@@ -136,15 +136,22 @@ export const useStore = create((set, get) => ({
   },
 
   editarCuenta: async (id, datos) => {
-    const { error } = await supabase.from('cuentas').update({
+    const updateData = {
       nombre: datos.nombre,
       saldo: Number(datos.saldo),
-      tae: Number(datos.tae || 0)
-    }).eq('id', id)
+      tae: Number(datos.tae || 0),
+      ticker: datos.ticker || null,
+      capital_invertido: datos.capitalInvertido !== undefined ? Number(datos.capitalInvertido) : undefined,
+      precio_promedio: datos.precioPromedio !== undefined ? Number(datos.precioPromedio) : undefined
+    }
+
+    Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key])
+
+    const { error } = await supabase.from('cuentas').update(updateData).eq('id', id)
 
     if (!error) {
       set((state) => ({
-        cuentas: state.cuentas.map(c => c.id === id ? { ...c, ...datos, saldo: Number(datos.saldo ?? c.saldo), tae: Number(datos.tae ?? c.tae) } : c)
+        cuentas: state.cuentas.map(c => c.id === id ? { ...c, ...datos } : c)
       }))
     }
   },
@@ -193,7 +200,7 @@ export const useStore = create((set, get) => ({
         supabase.from('cuentas').update({ 
           saldo: nc.saldo, 
           capital_invertido: nc.capitalInvertido, 
-          precio_promedio: nc.precioPromedio 
+          precio_promedio: nc.precio_promedio 
         }).eq('id', nc.id)
         return nc
       })
@@ -269,7 +276,7 @@ export const useStore = create((set, get) => ({
         }
         supabase.from('cuentas').update({ 
           saldo: nc.saldo, 
-          capital_invertido: nc.capitalInvertido, 
+          capital_invertido: nc.capital_invertido, 
           precio_promedio: nc.precio_promedio 
         }).eq('id', nc.id)
         return nc
@@ -284,7 +291,7 @@ export const useStore = create((set, get) => ({
       user_id: user.id,
       nombre: nuevoObjetivo.nombre,
       meta: Number(nuevoObjetivo.meta),
-      aportacion_extra: Number(nuevoObjetivo.aportacionExtra || 0),
+      aportacion_extra: Number(nuevoObjetivo.aportacion_extra || 0),
       tasa: Number(nuevoObjetivo.tasa || 0)
     }
     const { data, error } = await supabase.from('objetivos').insert([objetivoInsert]).select()
