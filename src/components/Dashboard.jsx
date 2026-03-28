@@ -147,10 +147,11 @@ export default function Dashboard() {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24 md:pb-12 w-full">
       
-      <header className="mb-8 flex flex-col md:flex-row justify-between items-center md:items-end gap-6 pt-2">
+      {/* Cabecera Modificada */}
+      <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pt-2">
         <div className="w-full text-center md:text-left">
-          <p className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 flex items-center justify-center md:justify-start gap-2">
-            <Activity size={14} className="text-brand-500" />
+          <p className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center justify-center md:justify-start gap-1.5">
+            <Activity size={12} className="text-brand-500" />
             Patrimonio Neto
           </p>
           <h1 className="text-5xl md:text-6xl font-black tracking-tighter text-gradient leading-none">
@@ -158,26 +159,18 @@ export default function Dashboard() {
           </h1>
         </div>
         
-        <div className="grid grid-cols-2 md:flex md:flex-row gap-2 w-full">
+        <div className="grid grid-cols-2 md:flex gap-3 w-full md:w-auto md:ml-auto">
           <button 
             onClick={() => abrirModal('ingreso')}
-            className="flex items-center justify-center gap-2 px-3 py-3.5 md:py-2 rounded-xl font-bold bg-brand-500/10 text-brand-400 border border-brand-500/20 active:scale-95 transition-all text-sm"
+            className="flex items-center justify-center gap-2 px-6 py-3.5 md:py-2.5 rounded-xl font-bold bg-success/10 text-success hover:bg-success/20 active:scale-95 transition-all text-sm w-full md:w-auto border border-success/20"
           >
             <Plus size={18} /> Ingreso
           </button>
           <button 
             onClick={() => abrirModal('gasto')}
-            className="flex items-center justify-center gap-2 px-3 py-3.5 md:py-2 rounded-xl font-bold bg-danger/10 text-danger border border-danger/20 active:scale-95 transition-all text-sm"
+            className="flex items-center justify-center gap-2 px-6 py-3.5 md:py-2.5 rounded-xl font-bold bg-danger/10 text-danger hover:bg-danger/20 active:scale-95 transition-all text-sm w-full md:w-auto border border-danger/20"
           >
             <Plus size={18} /> Gasto
-          </button>
-          <button 
-            onClick={handleSync}
-            disabled={cargando}
-            className="col-span-2 md:col-span-1 flex items-center justify-center gap-2 px-4 py-3.5 md:py-2 rounded-xl font-bold bg-surface-solid border border-border-subtle text-text-main active:scale-95 transition-all disabled:opacity-50 text-sm"
-          >
-            <RefreshCw size={18} className={cargando ? 'animate-spin' : ''} />
-            {cargando ? 'Sincronizando...' : 'Sincronizar'}
           </button>
         </div>
       </header>

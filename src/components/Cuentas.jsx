@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useStore } from '../store/useStore'
-import { Building2, CreditCard, Banknote, LineChart, Wallet, Settings2, Trash2, Globe, RefreshCw } from 'lucide-react'
+import { Building2, CreditCard, Banknote, LineChart, Wallet, Settings2, Trash2, Globe } from 'lucide-react'
 import ModalCuenta from './ModalCuenta'
 import ModalEditarCuenta from './ModalEditarCuenta'
 import ModalEliminarCuenta from './ModalEliminarCuenta'
@@ -11,22 +11,8 @@ export default function Cuentas() {
   const [modalAbierto, setModalAbierto] = useState(false)
   const [cuentaEditando, setCuentaEditando] = useState(null)
   const [cuentaEliminando, setCuentaEliminando] = useState(null)
-  const [cargandoMercado, setCargandoMercado] = useState(false)
   
   const cuentas = useStore(state => state.cuentas)
-  const actualizarPreciosMercado = useStore(state => state.actualizarPreciosMercado)
-
-  const handleSincronizar = async () => {
-    if (cargandoMercado) return
-    setCargandoMercado(true)
-    try {
-      await actualizarPreciosMercado()
-    } catch (error) {
-      console.error("Fallo en sincronización:", error)
-    } finally {
-      setCargandoMercado(false)
-    }
-  }
 
   const getIcon = useCallback((icono) => {
     const props = { size: 24, className: "text-text-muted" }
@@ -52,18 +38,10 @@ export default function Cuentas() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:flex gap-3 w-full md:w-auto">
-          <button 
-            onClick={handleSincronizar}
-            disabled={cargandoMercado}
-            className="flex items-center justify-center gap-2 px-4 py-3 md:py-2 rounded-xl font-bold bg-surface-solid border border-border-subtle text-text-main active:scale-95 transition-all text-sm"
-          >
-            <RefreshCw size={18} className={cargandoMercado ? 'animate-spin' : ''} />
-            <span className="truncate">{cargandoMercado ? '...' : 'Sincronizar'}</span>
-          </button>
+        <div className="flex w-full md:w-auto md:ml-auto">
           <button 
             onClick={() => setModalAbierto(true)} 
-            className="w-full md:w-auto bg-brand-500 hover:bg-brand-600 text-white py-3 md:py-2 px-6 rounded-xl active:scale-95 transition-all text-sm font-bold shadow-lg shadow-brand-500/20"
+            className="w-full md:w-auto bg-brand-500 hover:bg-brand-600 text-white py-3.5 md:py-2.5 px-8 rounded-xl active:scale-95 transition-all text-sm font-bold shadow-lg shadow-brand-500/20"
           >
             Nueva Cuenta
           </button>
