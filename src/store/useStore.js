@@ -221,11 +221,14 @@ export const useStore = create((set, get) => ({
         } else {
           nc.saldo = Number(nc.saldo) + (tx.tipo === 'ingreso' ? Number(tx.monto) : -Number(tx.monto))
         }
+        
+        // CORRECCIÓN CLAVE AQUÍ ABAJO (nc.precioPromedio y nc.capitalInvertido)
         supabase.from('cuentas').update({ 
           saldo: nc.saldo, 
           capital_invertido: nc.capitalInvertido, 
-          precio_promedio: nc.precio_promedio 
+          precio_promedio: nc.precioPromedio 
         }).eq('id', nc.id)
+        
         return nc
       })
       const txFormateada = { ...data[0], cuentaId: data[0].cuenta_id, desc: data[0].descripcion, precioCompra: data[0].precio_compra }
@@ -263,10 +266,12 @@ export const useStore = create((set, get) => ({
           const montoNuevo = tx.tipo === 'ingreso' ? Number(tx.monto) : -Number(tx.monto)
           nc.saldo = Number(nc.saldo) - montoViejo + montoNuevo
         }
+        
         supabase.from('cuentas').update({ 
           saldo: nc.saldo, 
           capital_invertido: nc.capitalInvertido 
         }).eq('id', nc.id)
+        
         return nc
       })
       const txFormateada = { ...data[0], cuentaId: data[0].cuenta_id, desc: data[0].descripcion, precioCompra: data[0].precio_compra }
@@ -298,11 +303,14 @@ export const useStore = create((set, get) => ({
         } else {
           nc.saldo = Number(nc.saldo) + (tx.tipo === 'ingreso' ? -Number(tx.monto) : Number(tx.monto))
         }
+        
+        // CORRECCIÓN CLAVE AQUÍ ABAJO
         supabase.from('cuentas').update({ 
           saldo: nc.saldo, 
-          capital_invertido: nc.capital_invertido, 
-          precio_promedio: nc.precio_promedio 
+          capital_invertido: nc.capitalInvertido, 
+          precio_promedio: nc.precioPromedio 
         }).eq('id', nc.id)
+        
         return nc
       })
       return { transacciones: state.transacciones.filter(t => t.id !== id), cuentas: nuevasCuentas }
