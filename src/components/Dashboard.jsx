@@ -38,6 +38,20 @@ export default function Dashboard() {
   const mesActualStr = `${String(hoy.getMonth() + 1).padStart(2, '0')}/${hoy.getFullYear()}`
   const [filtroMes, setFiltroMes] = useState(mesActualStr)
 
+  // Cálculos para "Gastado Hoy"
+  const diaHoy = String(hoy.getDate()).padStart(2, '0')
+  const mesHoy = String(hoy.getMonth() + 1).padStart(2, '0')
+  const anoHoy = hoy.getFullYear()
+  const fechaHoyStr = `${diaHoy}/${mesHoy}/${anoHoy}`
+
+  const transaccionesHoy = useMemo(() => {
+    return transacciones.filter(t => t.fecha === fechaHoyStr && t.tipo === 'gasto')
+  }, [transacciones, fechaHoyStr])
+
+  const gastadoHoy = useMemo(() => {
+    return transaccionesHoy.reduce((acc, t) => acc + t.monto, 0)
+  }, [transaccionesHoy])
+
   const patrimonioActual = patrimonioTotal()
   const esOscuro = tema === 'dark'
 
@@ -192,35 +206,80 @@ export default function Dashboard() {
         ))}
       </div>
 
-      <div className="bg-surface-solid/40 backdrop-blur-md border border-border-subtle/50 rounded-3xl p-0 mb-6 overflow-hidden shadow-2xl shadow-black/5 z-10 relative">
-        <div className="p-5 md:p-6 border-b border-border-subtle/50 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5">
-            <TrendingUp className="text-brand-400" size={18} />
-            <h2 className="text-[10px] md:text-sm font-black text-text-main uppercase tracking-widest leading-none">Tendencia Global</h2>
+      {/* 3. Sección Central Dividida: Tendencia Global y Gastado Hoy */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6 z-10 relative">
+        
+        {/* Gráfica Tendencia */}
+        <div className="bg-surface-solid/40 backdrop-blur-md border border-border-subtle/50 rounded-3xl p-0 overflow-hidden shadow-2xl shadow-black/5 flex flex-col">
+          <div className="p-5 md:p-6 border-b border-border-subtle/50 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2.5">
+              <TrendingUp className="text-brand-400" size={18} />
+              <h2 className="text-[10px] md:text-sm font-black text-text-main uppercase tracking-widest leading-none">Tendencia Global</h2>
+            </div>
+            <div className="flex bg-surface-solid rounded-lg p-1 border border-border-subtle shadow-inner">
+              {[{ val: 7, label: '7D' }, { val: 30, label: '30D' }, { val: 'all', label: 'MAX' }].map(btn => (
+                <button key={btn.val} onClick={() => setTrendRango(btn.val)} className={`px-2.5 md:px-3.5 py-1.5 text-[10px] font-bold rounded-md transition-colors ${trendRango === btn.val ? 'bg-surface text-text-main shadow-sm' : 'text-text-muted hover:text-text-main'}`}>
+                  {btn.label}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="flex bg-surface-solid rounded-lg p-1 border border-border-subtle shadow-inner">
-            {[{ val: 7, label: '7D' }, { val: 30, label: '30D' }, { val: 'all', label: 'MAX' }].map(btn => (
-              <button key={btn.val} onClick={() => setTrendRango(btn.val)} className={`px-2.5 md:px-3.5 py-1.5 text-[10px] font-bold rounded-md transition-colors ${trendRango === btn.val ? 'bg-surface text-text-main shadow-sm' : 'text-text-muted hover:text-text-main'}`}>
-                {btn.label}
-              </button>
-            ))}
+          <div className="h-52 md:h-64 w-full p-2 pt-8 pr-6">
+            <ResponsiveContainer width="100%" height="100%">
+              <ReLineChart data={trendData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={coloresGrafico.grid} />
+                <XAxis dataKey="fecha" axisLine={false} tickLine={false} tick={{ fill: coloresGrafico.texto, fontSize: 10, fontWeight: 'bold' }} minTickGap={50} />
+                <YAxis domain={['auto', 'auto']} axisLine={false} tickLine={false} tick={{ fill: coloresGrafico.texto, fontSize: 10, fontWeight: 'bold' }} tickFormatter={(val) => new Intl.NumberFormat('es-ES', { notation: "compact" }).format(val)} width={40} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: coloresGrafico.tooltipBg, border: `1px solid ${coloresGrafico.tooltipBorde}`, borderRadius: '14px', fontSize: '11px', fontWeight: 'bold', padding: '12px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }} 
+                  cursor={{ stroke: esOscuro ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', strokeWidth: 1 }}
+                  formatter={(val) => [formatoEuros(val), 'Saldo']} 
+                />
+                <Line type="monotone" dataKey="saldo" stroke={coloresGrafico.linea} strokeWidth={3} dot={false} activeDot={{ r: 5, strokeWidth: 0, fill: coloresGrafico.linea }} />
+              </ReLineChart>
+            </ResponsiveContainer>
           </div>
         </div>
-        <div className="h-60 md:h-80 w-full p-2 pt-8 pr-6">
-          <ResponsiveContainer width="100%" height="100%">
-            <ReLineChart data={trendData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={coloresGrafico.grid} />
-              <XAxis dataKey="fecha" axisLine={false} tickLine={false} tick={{ fill: coloresGrafico.texto, fontSize: 10, fontWeight: 'bold' }} minTickGap={50} />
-              <YAxis domain={['auto', 'auto']} axisLine={false} tickLine={false} tick={{ fill: coloresGrafico.texto, fontSize: 10, fontWeight: 'bold' }} tickFormatter={(val) => new Intl.NumberFormat('es-ES', { notation: "compact" }).format(val)} width={40} />
-              <Tooltip 
-                contentStyle={{ backgroundColor: coloresGrafico.tooltipBg, border: `1px solid ${coloresGrafico.tooltipBorde}`, borderRadius: '14px', fontSize: '11px', fontWeight: 'bold', padding: '12px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }} 
-                cursor={{ stroke: esOscuro ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', strokeWidth: 1 }}
-                formatter={(val) => [formatoEuros(val), 'Saldo']} 
-              />
-              <Line type="monotone" dataKey="saldo" stroke={coloresGrafico.linea} strokeWidth={3} dot={false} activeDot={{ r: 5, strokeWidth: 0, fill: coloresGrafico.linea }} />
-            </ReLineChart>
-          </ResponsiveContainer>
+
+        {/* Panel Gastado Hoy */}
+        <div className="bg-surface-solid/40 backdrop-blur-md border border-border-subtle/50 rounded-3xl p-6 shadow-2xl shadow-black/5 flex flex-col justify-between h-full min-h-[300px]">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2.5">
+              <Calendar className="text-danger" size={18} />
+              <h2 className="text-[10px] md:text-sm font-black text-text-main uppercase tracking-widest leading-none">Gastado Hoy</h2>
+            </div>
+            <span className="text-[10px] font-bold text-text-muted bg-surface px-2.5 py-1 rounded-md border border-border-subtle">
+              {fechaHoyStr}
+            </span>
+          </div>
+
+          <div className="mb-6">
+            <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1.5">Total quemado</p>
+            <p className={`text-5xl font-black tracking-tighter ${gastadoHoy > 0 ? 'text-danger' : 'text-text-main'}`}>
+              {gastadoHoy > 0 ? '-' : ''}{formatoEuros(gastadoHoy)}
+            </p>
+          </div>
+
+          <div className="flex-1 overflow-y-auto max-h-[140px] custom-scrollbar pr-2 flex flex-col gap-2">
+            {transaccionesHoy.length > 0 ? (
+              transaccionesHoy.map(t => (
+                <div key={t.id} className="flex justify-between items-center p-3.5 bg-surface rounded-xl border border-border-subtle hover:border-border-subtle/80 transition-colors">
+                  <div className="overflow-hidden">
+                    <p className="text-xs font-bold text-text-main truncate">{t.desc || t.categoria}</p>
+                    <p className="text-[9px] text-text-muted uppercase font-black tracking-widest mt-0.5">{t.categoria}</p>
+                  </div>
+                  <span className="text-xs font-black text-danger">-{formatoEuros(t.monto)}</span>
+                </div>
+              ))
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center text-text-muted opacity-60 mt-4">
+                <ListFilter size={24} className="mb-2" />
+                <span className="text-[10px] font-black uppercase tracking-widest">Día invicto</span>
+              </div>
+            )}
+          </div>
         </div>
+
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 z-10 relative">
