@@ -7,6 +7,7 @@ import Dashboard from './components/Dashboard'
 import Cuentas from './components/Cuentas'
 import Transacciones from './components/Transacciones'
 import Objetivos from './components/Objetivos'
+import CompartirGastos from './components/CompartirGastos'
 import BottomNav from './components/BottomNav'
 
 function App() {
@@ -51,6 +52,7 @@ function App() {
       case 'cuentas': return <Cuentas />
       case 'transacciones': return <Transacciones />
       case 'objetivos': return <Objetivos />
+      case 'compartir': return <CompartirGastos />
       default: return <Dashboard />
     }
   }
