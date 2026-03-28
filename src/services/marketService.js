@@ -1,31 +1,23 @@
+const FINNHUB_API_KEY = 'd740k8hr01qno4pvvvu0d740k8hr01qno4pvvvug'
+
 export const getMarketPrice = async (ticker, moneda = 'EUR') => {
   try {
     const cleanTicker = ticker.trim().toUpperCase()
-    // Si el usuario pone SPY o VUSA.L, Yahoo Finance normalmente los lee tal cual o con sus sufijos estándar.
     
-    // Usamos query2.finance.yahoo.com a través de un proxy robusto de YQL
-    const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${cleanTicker}?interval=1d&range=1d`
+    // 1. Llamada oficial a Finnhub (Sin proxies, sin bloqueos)
+    const resStock = await fetch(`https://finnhub.io/api/v1/quote?symbol=${cleanTicker}&token=${FINNHUB_API_KEY}`)
     
-    // Utilizamos allorigins pero con el endpoint /get (que devuelve JSON parseable en lugar de raw)
-    // Esto evita el bloqueo estricto que vimos en el primer intento.
-    const resStock = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`)
+    if (!resStock.ok) throw new Error("Fallo al conectar con Finnhub")
     
-    if (!resStock.ok) throw new Error("Fallo de red al obtener datos de Yahoo")
+    const dataStock = await resStock.json()
     
-    const proxyData = await resStock.json()
-    const dataStock = JSON.parse(proxyData.contents)
-    
-    // Navegamos por la estructura JSON de Yahoo Finance
-    const result = dataStock.chart.result
-    if (!result || !result[0] || !result[0].meta || !result[0].meta.regularMarketPrice) {
-       console.error("No se encontró el precio para el ticker:", cleanTicker)
-       return null
-    }
-
-    const precioRaw = parseFloat(result[0].meta.regularMarketPrice)
+    // Finnhub devuelve 'c' como el precio actual de cotización
+    if (!dataStock.c || dataStock.c === 0) return null
+    const precioRaw = dataStock.c
 
     if (moneda === 'USD') return precioRaw
 
+    // 2. Conversión a Euros (La API de Frankfurter no tiene bloqueos)
     const resForex = await fetch('https://api.frankfurter.dev/v1/latest?base=USD&symbols=EUR')
     if (!resForex.ok) throw new Error("Fallo en API de divisas")
     
@@ -34,7 +26,7 @@ export const getMarketPrice = async (ticker, moneda = 'EUR') => {
 
     return precioRaw * tasa
   } catch (error) {
-    console.error("Fallo en servicio de mercado (Yahoo):", error.message)
+    console.error("Fallo en servicio de mercado:", error.message)
     return null
   }
 }
