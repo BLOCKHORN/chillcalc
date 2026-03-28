@@ -143,6 +143,8 @@ export const useStore = create((set, get) => ({
         moneda: data[0].moneda || 'EUR'
       }
       set((state) => ({ cuentas: [...state.cuentas, cuentaFormateada] }))
+    } else {
+      console.error("Error al crear cuenta en Supabase:", error)
     }
   },
 
@@ -177,6 +179,8 @@ export const useStore = create((set, get) => ({
       set((state) => ({
         cuentas: state.cuentas.map(c => c.id === id ? { ...c, ...datos, saldo: saldoFinal } : c)
       }))
+    } else {
+      console.error("Error al editar cuenta en Supabase:", error)
     }
   },
 
@@ -187,6 +191,8 @@ export const useStore = create((set, get) => ({
         cuentas: state.cuentas.filter(c => c.id !== id),
         transacciones: state.transacciones.filter(t => t.cuentaId !== id)
       }))
+    } else {
+      console.error("Error al eliminar cuenta en Supabase:", error)
     }
   },
 
@@ -204,17 +210,22 @@ export const useStore = create((set, get) => ({
     }
 
     const { data, error } = await supabase.from('transacciones').insert([txInsert]).select()
-    if (error) return
+    if (error) {
+      console.error("Error al guardar transacción:", error)
+      return
+    }
 
     set((state) => {
       const nuevasCuentas = state.cuentas.map(c => {
         if (c.id !== tx.cuentaId) return c
         const nc = { ...c }
+        
         if (nc.tipo === 'inversion') {
           const monto = Number(tx.monto)
           const precioCompra = Number(tx.precioCompra || nc.precioActual || nc.precioPromedio || 1)
           const partAnteriores = nc.precioPromedio > 0 ? nc.capitalInvertido / nc.precioPromedio : 0
           const partNuevas = monto / precioCompra
+          
           nc.capitalInvertido = Number(nc.capitalInvertido) + monto
           nc.precioPromedio = nc.capitalInvertido / (partAnteriores + partNuevas)
           nc.saldo = (partAnteriores + partNuevas) * (nc.precioActual || precioCompra)
@@ -222,15 +233,21 @@ export const useStore = create((set, get) => ({
           nc.saldo = Number(nc.saldo) + (tx.tipo === 'ingreso' ? Number(tx.monto) : -Number(tx.monto))
         }
         
-        // CORRECCIÓN CLAVE AQUÍ ABAJO (nc.precioPromedio y nc.capitalInvertido)
+        // AQUÍ ESTÁ EL CHIVATO: Si Supabase falla al actualizar la cuenta, lo dirá en la consola
         supabase.from('cuentas').update({ 
           saldo: nc.saldo, 
           capital_invertido: nc.capitalInvertido, 
           precio_promedio: nc.precioPromedio 
-        }).eq('id', nc.id)
+        }).eq('id', nc.id).then(({ error: updateError }) => {
+          if (updateError) {
+            console.error("🔥 SUPABASE RECHAZÓ ACTUALIZAR LA CUENTA:", updateError.message)
+            console.error("Detalles del error:", updateError)
+          }
+        })
         
         return nc
       })
+      
       const txFormateada = { ...data[0], cuentaId: data[0].cuenta_id, desc: data[0].descripcion, precioCompra: data[0].precio_compra }
       return { transacciones: [txFormateada, ...state.transacciones], cuentas: nuevasCuentas }
     })
@@ -251,7 +268,10 @@ export const useStore = create((set, get) => ({
     }
 
     const { data, error } = await supabase.from('transacciones').update(txUpdate).eq('id', id).select()
-    if (error) return
+    if (error) {
+      console.error("Error al editar transacción:", error)
+      return
+    }
 
     set((state) => {
       const nuevasCuentas = state.cuentas.map(c => {
@@ -270,7 +290,9 @@ export const useStore = create((set, get) => ({
         supabase.from('cuentas').update({ 
           saldo: nc.saldo, 
           capital_invertido: nc.capitalInvertido 
-        }).eq('id', nc.id)
+        }).eq('id', nc.id).then(({ error: updateError }) => {
+          if (updateError) console.error("Error al actualizar saldo tras editar transacción:", updateError)
+        })
         
         return nc
       })
@@ -286,7 +308,11 @@ export const useStore = create((set, get) => ({
     const tx = get().transacciones.find(t => t.id === id)
     if (!tx) return
     const { error } = await supabase.from('transacciones').delete().eq('id', id)
-    if (error) return
+    if (error) {
+      console.error("Error al eliminar transacción:", error)
+      return
+    }
+    
     set((state) => {
       const nuevasCuentas = state.cuentas.map(c => {
         if (c.id !== tx.cuentaId) return c
@@ -304,12 +330,13 @@ export const useStore = create((set, get) => ({
           nc.saldo = Number(nc.saldo) + (tx.tipo === 'ingreso' ? -Number(tx.monto) : Number(tx.monto))
         }
         
-        // CORRECCIÓN CLAVE AQUÍ ABAJO
         supabase.from('cuentas').update({ 
           saldo: nc.saldo, 
           capital_invertido: nc.capitalInvertido, 
           precio_promedio: nc.precioPromedio 
-        }).eq('id', nc.id)
+        }).eq('id', nc.id).then(({ error: updateError }) => {
+          if (updateError) console.error("Error al actualizar saldo tras eliminar transacción:", updateError)
+        })
         
         return nc
       })
@@ -360,27 +387,41 @@ export const useStore = create((set, get) => ({
 
   crearGrupoSplit: async (nombre, participantesNombres) => {
     const { data: { user } } = await supabase.auth.getUser()
-    const { data: grupo } = await supabase.from('split_grupos').insert([{ nombre, user_id: user.id }]).select().single()
-    if (grupo) {
+    const { data: grupo, error } = await supabase.from('split_grupos').insert([{ nombre, user_id: user.id }]).select().single()
+    if (grupo && !error) {
       const parts = participantesNombres.map(n => ({ grupo_id: grupo.id, nombre: n }))
       await supabase.from('split_participantes').insert(parts)
       await get().cargarDatosNube()
+    } else {
+      console.error("Error al crear grupo:", error)
     }
   },
 
   eliminarGrupoSplit: async (id) => {
-    await supabase.from('split_grupos').delete().eq('id', id)
-    set(state => ({ gruposSplit: state.gruposSplit.filter(g => g.id !== id) }))
+    const { error } = await supabase.from('split_grupos').delete().eq('id', id)
+    if (!error) {
+      set(state => ({ gruposSplit: state.gruposSplit.filter(g => g.id !== id) }))
+    } else {
+      console.error("Error al eliminar grupo:", error)
+    }
   },
 
   agregarGastoSplit: async (gasto) => {
     const { error } = await supabase.from('split_gastos').insert([gasto])
-    if (!error) await get().cargarDatosNube()
+    if (!error) {
+      await get().cargarDatosNube()
+    } else {
+      console.error("Error al agregar gasto:", error)
+    }
   },
 
   eliminarGastoSplit: async (id) => {
     const { error } = await supabase.from('split_gastos').delete().eq('id', id)
-    if (!error) await get().cargarDatosNube()
+    if (!error) {
+      await get().cargarDatosNube()
+    } else {
+      console.error("Error al eliminar gasto:", error)
+    }
   },
 
   patrimonioTotal: () => get().cuentas.reduce((acc, c) => acc + (Number(c.saldo) || 0), 0),

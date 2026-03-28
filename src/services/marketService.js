@@ -1,23 +1,29 @@
-const FINNHUB_API_KEY = 'd740k8hr01qno4pvvvu0d740k8hr01qno4pvvvug'
+const FINNHUB_API_KEY = 'd740k8hr01qno4pvvvu0d740k8hr01qno4pvvvug' // <-- Pon tu clave aquí
 
 export const getMarketPrice = async (ticker, moneda = 'EUR') => {
   try {
-    const cleanTicker = ticker.trim().toUpperCase()
+    let cleanTicker = ticker.trim().toUpperCase()
     
-    // 1. Llamada oficial a Finnhub (Sin proxies, sin bloqueos)
+    // Auto-corrector: Si metes SPY.US, lo deja en SPY para que Finnhub lo entienda
+    if (cleanTicker.endsWith('.US')) {
+      cleanTicker = cleanTicker.replace('.US', '')
+    }
+    
     const resStock = await fetch(`https://finnhub.io/api/v1/quote?symbol=${cleanTicker}&token=${FINNHUB_API_KEY}`)
-    
     if (!resStock.ok) throw new Error("Fallo al conectar con Finnhub")
     
     const dataStock = await resStock.json()
     
-    // Finnhub devuelve 'c' como el precio actual de cotización
-    if (!dataStock.c || dataStock.c === 0) return null
+    // Si Finnhub no encuentra el ticker, devuelve c: 0
+    if (!dataStock.c || dataStock.c === 0) {
+      console.warn(`Finnhub no encontró datos para el ticker: ${cleanTicker}`)
+      return null
+    }
+    
     const precioRaw = dataStock.c
 
     if (moneda === 'USD') return precioRaw
 
-    // 2. Conversión a Euros (La API de Frankfurter no tiene bloqueos)
     const resForex = await fetch('https://api.frankfurter.dev/v1/latest?base=USD&symbols=EUR')
     if (!resForex.ok) throw new Error("Fallo en API de divisas")
     
