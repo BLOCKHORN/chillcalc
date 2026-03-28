@@ -101,8 +101,9 @@ export default function Transacciones() {
               className="bg-transparent text-[11px] lg:text-xs font-bold text-text-main focus:outline-none cursor-pointer w-full uppercase tracking-wider"
             >
               <option value="todas">Todas las Categorías</option>
+              {/* AQUÍ ESTÁ LA CORRECCIÓN: cat.nombre en lugar de cat */}
               {categorias.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
+                <option key={cat.nombre} value={cat.nombre}>{cat.nombre}</option>
               ))}
             </select>
           </div>
