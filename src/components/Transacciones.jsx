@@ -6,6 +6,24 @@ import ModalCategorias from './ModalCategorias'
 
 const formatoEuros = (num) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(num || 0)
 
+// Mapeo de colores para los botones de filtro
+const PALETA_COLORES = {
+  slate: 'text-slate-400 bg-slate-400/10 border-slate-400/20',
+  orange: 'text-orange-400 bg-orange-400/10 border-orange-400/20',
+  amber: 'text-amber-500 bg-amber-500/10 border-amber-500/20',
+  yellow: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20',
+  emerald: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
+  cyan: 'text-cyan-400 bg-cyan-400/10 border-cyan-400/20',
+  sky: 'text-sky-400 bg-sky-400/10 border-sky-400/20',
+  blue: 'text-blue-400 bg-blue-400/10 border-blue-400/20',
+  indigo: 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20',
+  purple: 'text-purple-400 bg-purple-400/10 border-purple-400/20',
+  pink: 'text-pink-400 bg-pink-400/10 border-pink-400/20',
+  rose: 'text-rose-400 bg-rose-400/10 border-rose-400/20',
+  red: 'text-red-500 bg-red-500/10 border-red-500/20',
+  brand: 'text-brand-400 bg-brand-500/10 border-brand-500/20'
+}
+
 export default function Transacciones() {
   const [modalAbierto, setModalAbierto] = useState(false)
   const [modalCategoriasAbierto, setModalCategoriasAbierto] = useState(false)
@@ -43,7 +61,7 @@ export default function Transacciones() {
 
   const getNombreCuenta = (id) => {
     const c = cuentas.find(x => x.id === id)
-    return c ? c.nombre : 'Cuenta eliminada'
+    return c ? c.nombre : 'Cuenta'
   }
 
   const limpiarFiltros = () => {
@@ -62,82 +80,92 @@ export default function Transacciones() {
   }
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-24 md:pb-12 px-1 md:px-0 relative w-full">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-24 px-1 relative w-full">
       
       <div className="absolute top-20 right-10 w-64 h-64 bg-brand-500/5 rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute top-40 left-10 w-48 h-48 bg-sky-500/5 rounded-full blur-[90px] pointer-events-none" />
 
-      <header className="mb-10 flex flex-col xl:flex-row xl:justify-between xl:items-end gap-6 pt-2 relative z-10">
-        <div className="w-full text-center xl:text-left">
-          <p className="text-[10px] md:text-xs font-black text-text-muted uppercase tracking-widest mb-2 flex items-center justify-center xl:justify-start gap-2">
-            <ArrowRightLeft size={14} className="text-brand-400" />
-            Historial
-          </p>
-          <h1 className="text-5xl md:text-6xl font-black tracking-tighter leading-none text-text-main">
-            Movimientos
-          </h1>
-        </div>
-        
-        <div className="grid grid-cols-2 lg:flex lg:flex-row gap-3 w-full xl:w-auto">
-          <div className="flex items-center bg-surface-solid/60 backdrop-blur-md border border-border-subtle/50 rounded-xl px-4 py-3 gap-2 shadow-sm transition-all hover:border-border-subtle/80">
-            <Calendar size={16} className="text-brand-400 shrink-0" />
-            <select 
-              value={filtroMes}
-              onChange={(e) => setFiltroMes(e.target.value)}
-              className="bg-transparent text-[11px] lg:text-xs font-bold text-text-main focus:outline-none cursor-pointer w-full uppercase tracking-wider"
-            >
-              <option value="todos">Todos los Meses</option>
-              {mesesDisponibles.map(m => (
-                <option key={m} value={m}>{m}</option>
-              ))}
-            </select>
+      <header className="mb-8 pt-2 relative z-10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+          <div>
+            <p className="text-[10px] md:text-xs font-black text-text-muted uppercase tracking-widest mb-2 flex items-center justify-center md:justify-start gap-2">
+              <ArrowRightLeft size={14} className="text-brand-400" />
+              Historial
+            </p>
+            <h1 className="text-5xl md:text-6xl font-black tracking-tighter leading-none text-text-main text-center md:text-left">
+              Movimientos
+            </h1>
           </div>
-
-          <div className="flex items-center bg-surface-solid/60 backdrop-blur-md border border-border-subtle/50 rounded-xl px-4 py-3 gap-2 shadow-sm transition-all hover:border-border-subtle/80">
-            <Filter size={16} className="text-brand-400 shrink-0" />
-            <select 
-              value={filtroCategoria}
-              onChange={(e) => setFiltroCategoria(e.target.value)}
-              className="bg-transparent text-[11px] lg:text-xs font-bold text-text-main focus:outline-none cursor-pointer w-full uppercase tracking-wider"
-            >
-              <option value="todas">Todas las Categorías</option>
-              {/* AQUÍ ESTÁ LA CORRECCIÓN: cat.nombre en lugar de cat */}
-              {categorias.map(cat => (
-                <option key={cat.nombre} value={cat.nombre}>{cat.nombre}</option>
-              ))}
-            </select>
-          </div>
-
-          <button 
-            onClick={() => setModalCategoriasAbierto(true)} 
-            className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold border border-border-subtle/50 bg-surface-solid/60 backdrop-blur-md text-text-main text-xs hover:border-border-subtle/80 hover:bg-surface-solid transition-all shadow-sm group"
-          >
-            <Tags size={16} className="text-text-muted group-hover:text-text-main transition-colors" />
-            <span className="hidden lg:inline uppercase tracking-widest">Etiquetas</span>
-          </button>
           
-          <button 
-            onClick={() => setModalAbierto(true)} 
-            className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold bg-brand-500/10 text-brand-400 hover:bg-brand-500/20 active:scale-95 transition-all text-xs border border-brand-500/20 shadow-lg shadow-brand-500/5 group uppercase tracking-widest"
-          >
-            <Plus size={16} className="group-hover:rotate-90 transition-transform" />
-            <span className="hidden lg:inline">Operación</span>
-          </button>
+          <div className="flex gap-2 w-full md:w-auto">
+            <button 
+              onClick={() => setModalCategoriasAbierto(true)} 
+              className="p-3 rounded-xl border border-border-subtle bg-surface-solid/60 backdrop-blur-md text-text-muted hover:text-text-main transition-all active:scale-95"
+            >
+              <Tags size={20} />
+            </button>
+            <button 
+              onClick={() => setModalAbierto(true)} 
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-black bg-brand-500 text-white shadow-lg shadow-brand-500/20 active:scale-95 transition-all text-xs uppercase tracking-widest"
+            >
+              <Plus size={16} strokeWidth={3} /> Operación
+            </button>
+          </div>
+        </div>
+
+        {/* --- NUEVA SECCIÓN DE FILTROS RÁPIDOS (BOTONES) --- */}
+        <div className="space-y-4 bg-surface-solid/40 p-5 rounded-3xl border border-border-subtle/50 backdrop-blur-md shadow-xl mb-8">
+          <div className="flex flex-col gap-3">
+            <span className="text-[9px] font-black text-text-muted uppercase tracking-[0.2em] px-1 flex items-center gap-2">
+              <Filter size={10} /> Categorías
+            </span>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setFiltroCategoria('todas')}
+                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${filtroCategoria === 'todas' ? 'bg-text-main text-surface-solid border-text-main shadow-lg' : 'bg-surface text-text-muted border-border-subtle hover:border-text-muted'}`}
+              >
+                Todas
+              </button>
+              {categorias.map(cat => (
+                <button
+                  key={cat.nombre}
+                  onClick={() => setFiltroCategoria(cat.nombre)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${filtroCategoria === cat.nombre ? `${PALETA_COLORES[cat.color] || PALETA_COLORES.slate} border-current shadow-md scale-105` : 'bg-surface text-text-muted border-border-subtle hover:bg-surface-solid'}`}
+                >
+                  <span>{cat.emoji}</span>
+                  {cat.nombre}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3 pt-4 border-t border-border-subtle/30">
+            <span className="text-[9px] font-black text-text-muted uppercase tracking-[0.2em] px-1 flex items-center gap-2">
+              <Calendar size={10} /> Periodo
+            </span>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setFiltroMes('todos')}
+                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${filtroMes === 'todos' ? 'bg-brand-500 text-white border-brand-500 shadow-lg' : 'bg-surface text-text-muted border-border-subtle hover:border-text-muted'}`}
+              >
+                Siempre
+              </button>
+              {mesesDisponibles.map(m => (
+                <button
+                  key={m}
+                  onClick={() => setFiltroMes(m)}
+                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${filtroMes === m ? 'bg-brand-500/20 text-brand-400 border-brand-400 shadow-md' : 'bg-surface text-text-muted border-border-subtle hover:bg-surface-solid'}`}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </header>
 
-      {(filtroCategoria !== 'todas' || filtroMes !== 'todos') && (
-        <div className="mb-6 flex justify-center xl:justify-start relative z-10 animate-in fade-in duration-300">
-          <button 
-            onClick={limpiarFiltros}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-danger/10 text-danger border border-danger/20 text-[10px] font-black uppercase tracking-widest hover:bg-danger/20 transition-colors shadow-sm"
-          >
-            <X size={12} strokeWidth={3} /> Limpiar Filtros
-          </button>
-        </div>
-      )}
-
-      <div className="bg-surface-solid/40 backdrop-blur-xl border border-border-subtle/50 rounded-3xl overflow-hidden shadow-2xl shadow-black/5 relative z-10">
+      {/* Listado de Transacciones */}
+      <div className="bg-surface-solid/40 backdrop-blur-xl border border-border-subtle/50 rounded-3xl overflow-hidden shadow-2xl relative z-10">
         <div className="w-full flex flex-col">
           {transaccionesFiltradas.length > 0 ? (
             transaccionesFiltradas.map(t => {
@@ -183,17 +211,13 @@ export default function Transacciones() {
                       </button>
                     </div>
                   </div>
-
                 </div>
               )
             })
           ) : (
             <div className="py-24 flex flex-col items-center justify-center text-center">
-              <div className="w-16 h-16 bg-surface-solid rounded-2xl border border-border-subtle/50 flex items-center justify-center mb-4 text-text-muted/30">
-                <Filter size={32} strokeWidth={2} />
-              </div>
               <p className="text-text-main text-sm font-black uppercase tracking-widest mb-1">Cero Movimientos</p>
-              <p className="text-text-muted text-[10px] font-bold uppercase tracking-widest mb-6">No hay registros que coincidan con los filtros.</p>
+              <p className="text-text-muted text-[10px] font-bold uppercase tracking-widest mb-6 opacity-60">No hay registros con estos filtros.</p>
               <button 
                 onClick={limpiarFiltros} 
                 className="px-6 py-3 rounded-xl bg-surface-solid border border-border-subtle text-text-main text-xs font-bold hover:bg-surface hover:border-border-subtle/80 transition-all shadow-sm active:scale-95"
