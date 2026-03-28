@@ -162,7 +162,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-2 md:flex gap-3 w-full md:w-auto md:ml-auto">
           <button 
             onClick={() => abrirModal('ingreso')}
-            className="flex items-center justify-center gap-2 px-6 py-3.5 md:py-2.5 rounded-xl font-bold bg-success/10 text-success hover:bg-success/20 active:scale-95 transition-all text-sm w-full md:w-auto border border-success/20"
+            className="flex items-center justify-center gap-2 px-6 py-3.5 md:py-2.5 rounded-xl font-bold bg-brand-500/10 text-brand-400 hover:bg-brand-500/20 active:scale-95 transition-all text-sm w-full md:w-auto border border-brand-500/20"
           >
             <Plus size={18} /> Ingreso
           </button>
