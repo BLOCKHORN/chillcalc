@@ -1,4 +1,4 @@
-import { LayoutDashboard, Wallet, ArrowLeftRight, Target } from 'lucide-react'
+import { LayoutDashboard, Wallet, ArrowLeftRight, Target, Users } from 'lucide-react'
 import { useStore } from '../store/useStore'
 
 export default function BottomNav() {
@@ -8,11 +8,12 @@ export default function BottomNav() {
     { id: 'dashboard', icon: LayoutDashboard, label: 'Inicio' },
     { id: 'cuentas', icon: Wallet, label: 'Cartera' },
     { id: 'transacciones', icon: ArrowLeftRight, label: 'Movimientos' },
-    { id: 'objetivos', icon: Target, label: 'Metas' }
+    { id: 'objetivos', icon: Target, label: 'Metas' },
+    { id: 'compartir', icon: Users, label: 'Grupos' }
   ]
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-surface-solid border-t border-border-subtle px-6 pb-6 pt-3 flex justify-between items-center backdrop-blur-md bg-opacity-95">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-surface-solid border-t border-border-subtle px-4 pb-6 pt-3 flex justify-between items-center backdrop-blur-md bg-opacity-95">
       {tabs.map((tab) => {
         const Icon = tab.icon
         const activo = vistaActual === tab.id
