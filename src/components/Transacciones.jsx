@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useStore } from '../store/useStore'
-import { ArrowDownRight, ArrowUpRight, Trash2, Edit2, Tags, Filter, Calendar, X, Plus } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, ArrowRightLeft, Trash2, Edit2, Tags, Filter, Calendar, X, Plus } from 'lucide-react'
 import ModalTransaccion from './ModalTransaccion'
 import ModalCategorias from './ModalCategorias'
 
@@ -64,7 +64,6 @@ export default function Transacciones() {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-24 md:pb-12 px-1 md:px-0 relative w-full">
       
-      {/* Soft Glow Backlight */}
       <div className="absolute top-20 right-10 w-64 h-64 bg-brand-500/5 rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute top-40 left-10 w-48 h-48 bg-sky-500/5 rounded-full blur-[90px] pointer-events-none" />
 
@@ -79,7 +78,6 @@ export default function Transacciones() {
           </h1>
         </div>
         
-        {/* Controles y Filtros */}
         <div className="grid grid-cols-2 lg:flex lg:flex-row gap-3 w-full xl:w-auto">
           <div className="flex items-center bg-surface-solid/60 backdrop-blur-md border border-border-subtle/50 rounded-xl px-4 py-3 gap-2 shadow-sm transition-all hover:border-border-subtle/80">
             <Calendar size={16} className="text-brand-400 shrink-0" />
@@ -138,7 +136,6 @@ export default function Transacciones() {
         </div>
       )}
 
-      {/* Lista de Transacciones (Glassmorphism) */}
       <div className="bg-surface-solid/40 backdrop-blur-xl border border-border-subtle/50 rounded-3xl overflow-hidden shadow-2xl shadow-black/5 relative z-10">
         <div className="w-full flex flex-col">
           {transaccionesFiltradas.length > 0 ? (
@@ -192,7 +189,7 @@ export default function Transacciones() {
           ) : (
             <div className="py-24 flex flex-col items-center justify-center text-center">
               <div className="w-16 h-16 bg-surface-solid rounded-2xl border border-border-subtle/50 flex items-center justify-center mb-4 text-text-muted/30">
-                <ListFilter size={32} strokeWidth={2} />
+                <Filter size={32} strokeWidth={2} />
               </div>
               <p className="text-text-main text-sm font-black uppercase tracking-widest mb-1">Cero Movimientos</p>
               <p className="text-text-muted text-[10px] font-bold uppercase tracking-widest mb-6">No hay registros que coincidan con los filtros.</p>
