@@ -254,7 +254,7 @@ export default function Dashboard() {
           </div>
 
           <div className="mb-6">
-            <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1.5">Total quemado</p>
+            <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1.5">Total gastado</p>
             <p className={`text-5xl font-black tracking-tighter ${gastadoHoy > 0 ? 'text-danger' : 'text-text-main'}`}>
               {gastadoHoy > 0 ? '-' : ''}{formatoEuros(gastadoHoy)}
             </p>
