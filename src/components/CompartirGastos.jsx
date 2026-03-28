@@ -52,7 +52,12 @@ export default function CompartirGastos() {
 
   const handleCompartir = async () => {
     const enlace = obtenerEnlaceCompartir(grupoSeleccionado)
-    if (!enlace) return
+    
+    // CORRECCIÓN: Si no hay enlace, avisamos explícitamente al usuario
+    if (!enlace) {
+      alert("⚠️ Error: Este grupo no tiene un enlace de invitación generado. Esto ocurre en grupos creados antes de la actualización. Por favor, crea un grupo nuevo para poder invitar.")
+      return
+    }
 
     const shareData = {
       title: `Gastos: ${grupoSeleccionado.nombre}`,
@@ -64,7 +69,7 @@ export default function CompartirGastos() {
       if (navigator.share && navigator.canShare(shareData)) {
         await navigator.share(shareData)
       } else {
-        await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`)
+        await navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`)
         setCopiado(true)
         setTimeout(() => setCopiado(false), 2000)
       }
@@ -213,7 +218,6 @@ export default function CompartirGastos() {
               </div>
            </header>
            
-           {/* El resto del código de la vista de grupo (Balances y Formulario) sigue igual... */}
            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
              <section className="order-2 lg:order-1">
                 <h4 className="text-[10px] font-black uppercase text-text-muted mb-4 tracking-widest px-1 flex items-center gap-2">
