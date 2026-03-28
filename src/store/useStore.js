@@ -50,7 +50,8 @@ export const useStore = create((set, get) => ({
       precioPromedio: Number(c.precio_promedio || 1),
       precioActual: Number(c.precio_actual || 0),
       tae: Number(c.tae || 0),
-      saldo: Number(c.saldo || 0)
+      saldo: Number(c.saldo || 0),
+      moneda: c.moneda || 'EUR'
     }))
 
     const transaccionesMapeadas = (resTransacciones.data || []).map(t => ({
@@ -90,15 +91,15 @@ export const useStore = create((set, get) => ({
     }
   },
 
-  actualizarPreciosMercado: async () => {
+  actualizarPreciosMercado: async (idEspecifico = null) => {
     const { cuentas } = get()
     const nuevasCuentas = JSON.parse(JSON.stringify(cuentas))
     let exitoGlobal = false
 
     for (let i = 0; i < nuevasCuentas.length; i++) {
       const c = nuevasCuentas[i]
-      if (c.tipo === 'inversion' && c.ticker) {
-        const precioReal = await getMarketPrice(c.ticker)
+      if (c.tipo === 'inversion' && c.ticker && (!idEspecifico || c.id === idEspecifico)) {
+        const precioReal = await getMarketPrice(c.ticker, c.moneda)
         if (precioReal && precioReal > 0) {
           const participaciones = Number(c.capitalInvertido) / (Number(c.precioPromedio) || 1)
           const nuevoSaldo = participaciones * precioReal
@@ -128,7 +129,8 @@ export const useStore = create((set, get) => ({
       ticker: nuevaCuenta.ticker,
       tae: Number(nuevaCuenta.tae || 0),
       capital_invertido: Number(nuevaCuenta.capitalInvertido || 0),
-      precio_promedio: Number(nuevaCuenta.precioPromedio || 1)
+      precio_promedio: Number(nuevaCuenta.precioPromedio || 1),
+      moneda: nuevaCuenta.moneda || 'EUR'
     }
 
     const { data, error } = await supabase.from('cuentas').insert([cuentaInsert]).select()
@@ -137,7 +139,8 @@ export const useStore = create((set, get) => ({
         ...data[0], 
         capitalInvertido: data[0].capital_invertido, 
         precioPromedio: data[0].precio_promedio,
-        tae: data[0].tae
+        tae: data[0].tae,
+        moneda: data[0].moneda || 'EUR'
       }
       set((state) => ({ cuentas: [...state.cuentas, cuentaFormateada] }))
     }
@@ -162,7 +165,8 @@ export const useStore = create((set, get) => ({
       tae: Number(datos.tae || 0),
       ticker: datos.ticker !== undefined ? datos.ticker : cuentaActual.ticker,
       capital_invertido: datos.capitalInvertido !== undefined ? Number(datos.capitalInvertido) : undefined,
-      precio_promedio: datos.precioPromedio !== undefined ? Number(datos.precioPromedio) : undefined
+      precio_promedio: datos.precioPromedio !== undefined ? Number(datos.precioPromedio) : undefined,
+      moneda: datos.moneda !== undefined ? datos.moneda : cuentaActual.moneda
     }
 
     Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key])
@@ -296,7 +300,7 @@ export const useStore = create((set, get) => ({
         }
         supabase.from('cuentas').update({ 
           saldo: nc.saldo, 
-          capital_invertido: nc.capitalInvertido, 
+          capital_invertido: nc.capital_invertido, 
           precio_promedio: nc.precio_promedio 
         }).eq('id', nc.id)
         return nc

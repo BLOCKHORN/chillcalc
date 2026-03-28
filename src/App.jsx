@@ -31,7 +31,19 @@ function App() {
       if (session) useStore.getState().cargarDatosNube()
     })
 
-    return () => subscription.unsubscribe()
+    // Motor automático: Actualiza la bolsa cada 1 hora (3600000 ms)
+    const intervalId = setInterval(() => {
+      const { cuentas, actualizarPreciosMercado } = useStore.getState()
+      if (cuentas.some(c => c.tipo === 'inversion')) {
+        actualizarPreciosMercado()
+      }
+    }, 3600000)
+
+    // Limpiamos tanto la suscripción de Supabase como el temporizador al desmontar
+    return () => {
+      subscription.unsubscribe()
+      clearInterval(intervalId)
+    }
   }, [tema])
 
   if (loading) {

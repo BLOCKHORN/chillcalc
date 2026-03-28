@@ -11,6 +11,7 @@ export default function ModalCuenta({ isOpen, onClose }) {
   const [tae, setTae] = useState('')
   const [icono, setIcono] = useState('bank')
   const [ticker, setTicker] = useState('')
+  const [moneda, setMoneda] = useState('EUR') // <-- Estado para la divisa
 
   if (!isOpen) return null
 
@@ -25,7 +26,8 @@ export default function ModalCuenta({ isOpen, onClose }) {
       icono,
       ticker: tipo === 'inversion' ? ticker : '',
       capitalInvertido: tipo === 'inversion' ? parseFloat(saldo) || 0 : 0,
-      precioPromedio: tipo === 'inversion' ? 1 : 1
+      precioPromedio: tipo === 'inversion' ? 1 : 1,
+      moneda: tipo === 'inversion' ? moneda : 'EUR' // <-- Guardamos la moneda
     }
 
     agregarCuenta(nuevaCuenta)
@@ -35,6 +37,7 @@ export default function ModalCuenta({ isOpen, onClose }) {
     setSaldo('')
     setTae('')
     setTicker('')
+    setMoneda('EUR')
     onClose()
   }
 
@@ -87,11 +90,35 @@ export default function ModalCuenta({ isOpen, onClose }) {
           </div>
 
           {tipo === 'inversion' && (
-            <input 
-              className="w-full bg-surface border border-brand-500/30 rounded-lg px-4 py-3 text-text-main" 
-              placeholder="Ticker (Ej: VUSA.L o SPY.US)" 
-              value={ticker} onChange={e => setTicker(e.target.value)} required
-            />
+            <div className="space-y-4">
+              <input 
+                className="w-full bg-surface border border-brand-500/30 rounded-lg px-4 py-3 text-text-main" 
+                placeholder="Ticker (Ej: VUSA.L o SPY.US)" 
+                value={ticker} onChange={e => setTicker(e.target.value)} required
+              />
+              
+              <div>
+                <label className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest mb-2 px-1">
+                  Moneda de Cotización (Bolsa)
+                </label>
+                <div className="flex gap-2">
+                  <button 
+                    type="button" 
+                    onClick={() => setMoneda('EUR')} 
+                    className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all border ${moneda === 'EUR' ? 'bg-brand-500/10 border-brand-500 text-brand-400' : 'bg-surface-solid border-border-subtle text-text-muted'}`}
+                  >
+                    EUR (€)
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setMoneda('USD')} 
+                    className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all border ${moneda === 'USD' ? 'bg-brand-500/10 border-brand-500 text-brand-400' : 'bg-surface-solid border-border-subtle text-text-muted'}`}
+                  >
+                    USD ($)
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
 
           <button type="submit" className="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold py-3 rounded-lg transition-colors mt-2">

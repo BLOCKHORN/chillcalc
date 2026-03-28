@@ -11,6 +11,7 @@ export default function ModalEditarCuenta({ isOpen, onClose, cuentaId }) {
   const [ticker, setTicker] = useState('')
   const [capitalInvertido, setCapitalInvertido] = useState('')
   const [precioPromedio, setPrecioPromedio] = useState('')
+  const [moneda, setMoneda] = useState('EUR') // <-- Nuevo estado
 
   useEffect(() => {
     const cuenta = cuentas.find(c => c.id === cuentaId)
@@ -22,6 +23,7 @@ export default function ModalEditarCuenta({ isOpen, onClose, cuentaId }) {
       setTicker(cuenta.ticker || '')
       setCapitalInvertido(cuenta.capitalInvertido || '')
       setPrecioPromedio(cuenta.precioPromedio || '')
+      setMoneda(cuenta.moneda || 'EUR') // <-- Cargar moneda existente
     }
   }, [cuentaId, cuentas, isOpen])
 
@@ -36,7 +38,8 @@ export default function ModalEditarCuenta({ isOpen, onClose, cuentaId }) {
       tae: tipo === 'remunerada' ? parseFloat(tae) || 0 : 0,
       ticker: tipo === 'inversion' ? ticker.toUpperCase().trim() : null,
       capitalInvertido: tipo === 'inversion' ? parseFloat(capitalInvertido) || 0 : undefined,
-      precioPromedio: tipo === 'inversion' ? parseFloat(precioPromedio) || 1 : undefined
+      precioPromedio: tipo === 'inversion' ? parseFloat(precioPromedio) || 1 : undefined,
+      moneda: tipo === 'inversion' ? moneda : 'EUR' // <-- Guardar moneda
     }
 
     editarCuenta(cuentaId, datosActualizados)
@@ -116,6 +119,30 @@ export default function ModalEditarCuenta({ isOpen, onClose, cuentaId }) {
                     />
                   </div>
                 </div>
+                
+                {/* Selector de Moneda Inyectado */}
+                <div className="col-span-2">
+                  <label className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest mb-2 px-1">
+                    Moneda de Cotización (Bolsa)
+                  </label>
+                  <div className="flex gap-2">
+                    <button 
+                      type="button" 
+                      onClick={() => setMoneda('EUR')} 
+                      className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all border ${moneda === 'EUR' ? 'bg-brand-500/10 border-brand-500 text-brand-400' : 'bg-surface-solid border-border-subtle text-text-muted hover:text-text-main hover:border-text-muted'}`}
+                    >
+                      EUR (€)
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={() => setMoneda('USD')} 
+                      className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all border ${moneda === 'USD' ? 'bg-brand-500/10 border-brand-500 text-brand-400' : 'bg-surface-solid border-border-subtle text-text-muted hover:text-text-main hover:border-text-muted'}`}
+                    >
+                      USD ($)
+                    </button>
+                  </div>
+                </div>
+
                 <div>
                   <label className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest mb-2 px-1">
                     <TrendingUp size={12} /> Capital Invertido (€)
