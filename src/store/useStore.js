@@ -72,6 +72,7 @@ export const useStore = create((set, get) => ({
       categorias: listaCategorias,
       gruposSplit: resSplit.data || []
     })
+    get().actualizarPreciosMercado()   
   },
 
   agregarCategoria: async (nombre) => {
