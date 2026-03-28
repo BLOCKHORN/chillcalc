@@ -7,6 +7,7 @@ export const useStore = create((set, get) => ({
   transacciones: [],
   objetivos: [],
   categorias: [],
+  gruposSplit: [],
   vistaActual: 'dashboard',
   tema: 'dark',
 
@@ -26,11 +27,12 @@ export const useStore = create((set, get) => ({
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    const [resCuentas, resTransacciones, resObjetivos, resCategorias] = await Promise.all([
+    const [resCuentas, resTransacciones, resObjetivos, resCategorias, resSplit] = await Promise.all([
       supabase.from('cuentas').select('*').order('created_at', { ascending: true }),
       supabase.from('transacciones').select('*').order('created_at', { ascending: false }),
       supabase.from('objetivos').select('*').order('created_at', { ascending: true }),
-      supabase.from('categorias').select('*').order('nombre', { ascending: true })
+      supabase.from('categorias').select('*').order('nombre', { ascending: true }),
+      supabase.from('split_grupos').select('*, split_participantes(*), split_gastos(*)').order('created_at', { ascending: false })
     ])
 
     let listaCategorias = resCategorias.data?.map(c => c.nombre) || []
@@ -67,7 +69,8 @@ export const useStore = create((set, get) => ({
       cuentas: cuentasMapeadas, 
       transacciones: transaccionesMapeadas, 
       objetivos: objetivosMapeados,
-      categorias: listaCategorias
+      categorias: listaCategorias,
+      gruposSplit: resSplit.data || []
     })
   },
 
@@ -143,7 +146,6 @@ export const useStore = create((set, get) => ({
     const cuentaActual = get().cuentas.find(c => c.id === id)
     if (!cuentaActual) return
 
-    // Si es inversión, calculamos un saldo base para que no salga 0,00€ si falla el ticker
     let saldoFinal = Number(datos.saldo)
     if (datos.tipo === 'inversion' || cuentaActual.tipo === 'inversion') {
       const capital = datos.capitalInvertido !== undefined ? Number(datos.capitalInvertido) : Number(cuentaActual.capitalInvertido)
@@ -293,7 +295,7 @@ export const useStore = create((set, get) => ({
         }
         supabase.from('cuentas').update({ 
           saldo: nc.saldo, 
-          capital_invertido: nc.capital_invertido, 
+          capital_invertido: nc.capitalInvertido, 
           precio_promedio: nc.precio_promedio 
         }).eq('id', nc.id)
         return nc
@@ -341,6 +343,31 @@ export const useStore = create((set, get) => ({
         objetivos: state.objetivos.filter(o => o.id !== id)
       }))
     }
+  },
+
+  crearGrupoSplit: async (nombre, participantesNombres) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    const { data: grupo } = await supabase.from('split_grupos').insert([{ nombre, user_id: user.id }]).select().single()
+    if (grupo) {
+      const parts = participantesNombres.map(n => ({ grupo_id: grupo.id, nombre: n }))
+      await supabase.from('split_participantes').insert(parts)
+      await get().cargarDatosNube()
+    }
+  },
+
+  eliminarGrupoSplit: async (id) => {
+    await supabase.from('split_grupos').delete().eq('id', id)
+    set(state => ({ gruposSplit: state.gruposSplit.filter(g => g.id !== id) }))
+  },
+
+  agregarGastoSplit: async (gasto) => {
+    const { error } = await supabase.from('split_gastos').insert([gasto])
+    if (!error) await get().cargarDatosNube()
+  },
+
+  eliminarGastoSplit: async (id) => {
+    const { error } = await supabase.from('split_gastos').delete().eq('id', id)
+    if (!error) await get().cargarDatosNube()
   },
 
   patrimonioTotal: () => get().cuentas.reduce((acc, c) => acc + (Number(c.saldo) || 0), 0),

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, Wallet, ArrowRightLeft, Target, Command, LogOut } from 'lucide-react'
+import { LayoutDashboard, Wallet, ArrowRightLeft, Target, Command, LogOut, Users } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { supabase } from '../lib/supabase'
 import clsx from 'clsx'
@@ -24,6 +24,7 @@ export default function Sidebar() {
     { id: 'cuentas', label: 'Cuentas', icon: Wallet },
     { id: 'transacciones', label: 'Transacciones', icon: ArrowRightLeft },
     { id: 'objetivos', label: 'Objetivos', icon: Target },
+    { id: 'compartir', label: 'Dividir Gastos', icon: Users },
   ]
 
   return (
