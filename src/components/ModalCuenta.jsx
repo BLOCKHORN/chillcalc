@@ -11,7 +11,7 @@ export default function ModalCuenta({ isOpen, onClose }) {
   const [tae, setTae] = useState('')
   const [icono, setIcono] = useState('bank')
   const [ticker, setTicker] = useState('')
-  const [moneda, setMoneda] = useState('EUR') // <-- Estado para la divisa
+  const [moneda, setMoneda] = useState('EUR')
 
   if (!isOpen) return null
 
@@ -21,13 +21,13 @@ export default function ModalCuenta({ isOpen, onClose }) {
     const nuevaCuenta = {
       nombre,
       tipo,
-      saldo: parseFloat(saldo) || 0,
-      tae: tipo === 'remunerada' ? parseFloat(tae) || 0 : 0,
+      saldo: tipo === 'inversion' ? 0 : (parseFloat(saldo) || 0),
+      tae: tipo === 'remunerada' ? (parseFloat(tae) || 0) : 0,
       icono,
-      ticker: tipo === 'inversion' ? ticker : '',
-      capitalInvertido: tipo === 'inversion' ? parseFloat(saldo) || 0 : 0,
-      precioPromedio: tipo === 'inversion' ? 1 : 1,
-      moneda: tipo === 'inversion' ? moneda : 'EUR' // <-- Guardamos la moneda
+      ticker: tipo === 'inversion' ? ticker.toUpperCase().trim() : '',
+      capitalInvertido: 0,
+      precioPromedio: 0,
+      moneda: tipo === 'inversion' ? moneda : 'EUR'
     }
 
     agregarCuenta(nuevaCuenta)
@@ -65,34 +65,36 @@ export default function ModalCuenta({ isOpen, onClose }) {
             <option value="remunerada">Cuenta Ahorro (Remunerada)</option>
           </select>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[10px] font-bold text-text-muted uppercase mb-1.5 ml-1">Saldo (€)</label>
-              <input 
-                type="number" step="0.01" 
-                className="w-full bg-surface border border-border-subtle rounded-lg px-4 py-3 text-text-main" 
-                placeholder="0.00" 
-                value={saldo} onChange={e => setSaldo(e.target.value)} required 
-              />
-            </div>
-            
-            {tipo === 'remunerada' && (
+          {tipo !== 'inversion' && (
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-bold text-brand-500 uppercase mb-1.5 ml-1">Interés TAE (%)</label>
+                <label className="block text-[10px] font-bold text-text-muted uppercase mb-1.5 ml-1">Saldo Inicial (€)</label>
                 <input 
                   type="number" step="0.01" 
-                  className="w-full bg-surface border border-brand-500/30 rounded-lg px-4 py-3 text-text-main focus:border-brand-500 outline-hidden" 
-                  placeholder="4.00" 
-                  value={tae} onChange={e => setTae(e.target.value)} required 
+                  className="w-full bg-surface border border-border-subtle rounded-lg px-4 py-3 text-text-main" 
+                  placeholder="0.00" 
+                  value={saldo} onChange={e => setSaldo(e.target.value)} required={tipo !== 'inversion'} 
                 />
               </div>
-            )}
-          </div>
+              
+              {tipo === 'remunerada' && (
+                <div>
+                  <label className="block text-[10px] font-bold text-brand-500 uppercase mb-1.5 ml-1">Interés TAE (%)</label>
+                  <input 
+                    type="number" step="0.01" 
+                    className="w-full bg-surface border border-brand-500/30 rounded-lg px-4 py-3 text-text-main focus:border-brand-500 outline-none" 
+                    placeholder="4.00" 
+                    value={tae} onChange={e => setTae(e.target.value)} required 
+                  />
+                </div>
+              )}
+            </div>
+          )}
 
           {tipo === 'inversion' && (
             <div className="space-y-4">
               <input 
-                className="w-full bg-surface border border-brand-500/30 rounded-lg px-4 py-3 text-text-main" 
+                className="w-full bg-surface border border-brand-500/30 rounded-lg px-4 py-3 text-text-main focus:border-brand-500 outline-none" 
                 placeholder="Ticker (Ej: VUSA.L o SPY.US)" 
                 value={ticker} onChange={e => setTicker(e.target.value)} required
               />

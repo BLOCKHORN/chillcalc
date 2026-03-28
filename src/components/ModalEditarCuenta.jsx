@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useStore } from '../store/useStore'
-import { X, Globe, TrendingUp, Wallet, Percent } from 'lucide-react'
+import { X, Globe, Wallet, Percent, Lock } from 'lucide-react'
 
 export default function ModalEditarCuenta({ isOpen, onClose, cuentaId }) {
   const { cuentas, editarCuenta } = useStore()
@@ -9,9 +9,7 @@ export default function ModalEditarCuenta({ isOpen, onClose, cuentaId }) {
   const [tae, setTae] = useState('')
   const [tipo, setTipo] = useState('')
   const [ticker, setTicker] = useState('')
-  const [capitalInvertido, setCapitalInvertido] = useState('')
-  const [precioPromedio, setPrecioPromedio] = useState('')
-  const [moneda, setMoneda] = useState('EUR') // <-- Nuevo estado
+  const [moneda, setMoneda] = useState('EUR')
 
   useEffect(() => {
     const cuenta = cuentas.find(c => c.id === cuentaId)
@@ -21,9 +19,7 @@ export default function ModalEditarCuenta({ isOpen, onClose, cuentaId }) {
       setTae(cuenta.tae || 0)
       setTipo(cuenta.tipo)
       setTicker(cuenta.ticker || '')
-      setCapitalInvertido(cuenta.capitalInvertido || '')
-      setPrecioPromedio(cuenta.precioPromedio || '')
-      setMoneda(cuenta.moneda || 'EUR') // <-- Cargar moneda existente
+      setMoneda(cuenta.moneda || 'EUR')
     }
   }, [cuentaId, cuentas, isOpen])
 
@@ -31,15 +27,14 @@ export default function ModalEditarCuenta({ isOpen, onClose, cuentaId }) {
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    const cuentaOriginal = cuentas.find(c => c.id === cuentaId)
     
     const datosActualizados = {
       nombre,
-      saldo: parseFloat(saldo) || 0,
-      tae: tipo === 'remunerada' ? parseFloat(tae) || 0 : 0,
+      saldo: tipo === 'inversion' ? cuentaOriginal.saldo : (parseFloat(saldo) || 0),
+      tae: tipo === 'remunerada' ? (parseFloat(tae) || 0) : 0,
       ticker: tipo === 'inversion' ? ticker.toUpperCase().trim() : null,
-      capitalInvertido: tipo === 'inversion' ? parseFloat(capitalInvertido) || 0 : undefined,
-      precioPromedio: tipo === 'inversion' ? parseFloat(precioPromedio) || 1 : undefined,
-      moneda: tipo === 'inversion' ? moneda : 'EUR' // <-- Guardar moneda
+      moneda: tipo === 'inversion' ? moneda : 'EUR'
     }
 
     editarCuenta(cuentaId, datosActualizados)
@@ -62,7 +57,6 @@ export default function ModalEditarCuenta({ isOpen, onClose, cuentaId }) {
         
         <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-5 overflow-y-auto custom-scrollbar">
           
-          {/* Campo Nombre */}
           <div>
             <label className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest mb-2 px-1">
               Nombre de la Cuenta
@@ -75,53 +69,38 @@ export default function ModalEditarCuenta({ isOpen, onClose, cuentaId }) {
             />
           </div>
 
-          {/* Sección Dinámica según tipo */}
           <div className="grid grid-cols-1 gap-4">
             
-            {/* Saldo Actual (Para todos) */}
-            <div>
-              <label className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest mb-2 px-1">
-                <Wallet size={12} /> Saldo Actual (€)
-              </label>
-              <input 
-                type="number" step="0.01" 
-                className="w-full bg-surface-solid border border-border-subtle rounded-xl px-4 py-3.5 text-text-main font-bold focus:outline-none focus:border-brand-500 transition-all" 
-                value={saldo} 
-                onChange={e => setSaldo(e.target.value)} 
-                required
-              />
-            </div>
+            {tipo !== 'inversion' && (
+              <div>
+                <label className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest mb-2 px-1">
+                  <Wallet size={12} /> Saldo Actual (€)
+                </label>
+                <input 
+                  type="number" step="0.01" 
+                  className="w-full bg-surface-solid border border-border-subtle rounded-xl px-4 py-3.5 text-text-main font-bold focus:outline-none focus:border-brand-500 transition-all" 
+                  value={saldo} 
+                  onChange={e => setSaldo(e.target.value)} 
+                  required
+                />
+              </div>
+            )}
 
-            {/* Campos de Inversión */}
             {tipo === 'inversion' && (
               <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="flex items-center gap-2 text-[10px] font-black text-brand-400 uppercase tracking-widest mb-2 px-1">
-                      <Globe size={12} /> Ticker
-                    </label>
-                    <input 
-                      className="w-full bg-surface-solid border border-brand-500/30 rounded-xl px-4 py-3 text-text-main font-bold focus:border-brand-500 outline-none" 
-                      value={ticker} 
-                      onChange={e => setTicker(e.target.value)} 
-                      placeholder="SPY, AAPL..."
-                    />
-                  </div>
-                  <div>
-                    <label className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest mb-2 px-1">
-                      Precio Medio
-                    </label>
-                    <input 
-                      type="number" step="0.01"
-                      className="w-full bg-surface-solid border border-border-subtle rounded-xl px-4 py-3 text-text-main font-bold outline-none" 
-                      value={precioPromedio} 
-                      onChange={e => setPrecioPromedio(e.target.value)} 
-                    />
-                  </div>
+                <div>
+                  <label className="flex items-center gap-2 text-[10px] font-black text-brand-400 uppercase tracking-widest mb-2 px-1">
+                    <Globe size={12} /> Ticker
+                  </label>
+                  <input 
+                    className="w-full bg-surface-solid border border-brand-500/30 rounded-xl px-4 py-3.5 text-text-main font-bold focus:border-brand-500 outline-none" 
+                    value={ticker} 
+                    onChange={e => setTicker(e.target.value)} 
+                    placeholder="SPY, AAPL..."
+                  />
                 </div>
                 
-                {/* Selector de Moneda Inyectado */}
-                <div className="col-span-2">
+                <div>
                   <label className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest mb-2 px-1">
                     Moneda de Cotización (Bolsa)
                   </label>
@@ -129,35 +108,29 @@ export default function ModalEditarCuenta({ isOpen, onClose, cuentaId }) {
                     <button 
                       type="button" 
                       onClick={() => setMoneda('EUR')} 
-                      className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all border ${moneda === 'EUR' ? 'bg-brand-500/10 border-brand-500 text-brand-400' : 'bg-surface-solid border-border-subtle text-text-muted hover:text-text-main hover:border-text-muted'}`}
+                      className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all border ${moneda === 'EUR' ? 'bg-brand-500/10 border-brand-500 text-brand-400' : 'bg-surface-solid border-border-subtle text-text-muted'}`}
                     >
                       EUR (€)
                     </button>
                     <button 
                       type="button" 
                       onClick={() => setMoneda('USD')} 
-                      className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all border ${moneda === 'USD' ? 'bg-brand-500/10 border-brand-500 text-brand-400' : 'bg-surface-solid border-border-subtle text-text-muted hover:text-text-main hover:border-text-muted'}`}
+                      className={`flex-1 py-3 rounded-xl font-bold text-xs transition-all border ${moneda === 'USD' ? 'bg-brand-500/10 border-brand-500 text-brand-400' : 'bg-surface-solid border-border-subtle text-text-muted'}`}
                     >
                       USD ($)
                     </button>
                   </div>
                 </div>
 
-                <div>
-                  <label className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest mb-2 px-1">
-                    <TrendingUp size={12} /> Capital Invertido (€)
-                  </label>
-                  <input 
-                    type="number" step="0.01"
-                    className="w-full bg-surface-solid border border-border-subtle rounded-xl px-4 py-3 text-text-main font-bold outline-none" 
-                    value={capitalInvertido} 
-                    onChange={e => setCapitalInvertido(e.target.value)} 
-                  />
+                <div className="bg-surface border border-border-subtle rounded-xl p-4 flex items-start gap-3 mt-2 opacity-70">
+                  <Lock size={16} className="text-text-muted shrink-0 mt-0.5" />
+                  <p className="text-[10px] text-text-muted font-bold leading-relaxed">
+                    El saldo, capital invertido y precio medio de esta cuenta se calculan automáticamente basándose en las transacciones que registres. No se pueden editar manualmente.
+                  </p>
                 </div>
               </div>
             )}
 
-            {/* Campo TAE para Remuneradas */}
             {tipo === 'remunerada' && (
               <div className="animate-in slide-in-from-top-2">
                 <label className="flex items-center gap-2 text-[10px] font-black text-brand-500 uppercase tracking-widest mb-2 px-1">
@@ -174,13 +147,7 @@ export default function ModalEditarCuenta({ isOpen, onClose, cuentaId }) {
             )}
           </div>
 
-          <div className="bg-brand-500/5 border border-brand-500/10 rounded-xl p-4 mt-2">
-            <p className="text-[10px] text-brand-400 font-bold leading-relaxed">
-              ⚠️ Al guardar cambios, el sistema recalculará la rentabilidad basándose en el ticker y el capital invertido proporcionados.
-            </p>
-          </div>
-
-          <button type="submit" className="w-full bg-brand-500 hover:bg-brand-600 text-white font-black uppercase tracking-widest text-xs py-4 rounded-xl transition-all shadow-lg shadow-brand-500/20 active:scale-95 mb-6 sm:mb-0">
+          <button type="submit" className="w-full bg-brand-500 hover:bg-brand-600 text-white font-black uppercase tracking-widest text-xs py-4 rounded-xl transition-all shadow-lg shadow-brand-500/20 active:scale-95 mb-6 sm:mb-0 mt-2">
             Guardar Configuración
           </button>
         </form>
