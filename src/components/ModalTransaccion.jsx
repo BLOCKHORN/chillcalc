@@ -2,38 +2,21 @@ import { useState, useEffect } from 'react'
 import { useStore } from '../store/useStore'
 import { X, Loader2, Calendar, Euro, FileText, Tag, CreditCard } from 'lucide-react'
 
-// Helper para asignar emojis y colores a las categorías comunes
-const getCategoryStyle = (catName) => {
-  const normalized = catName.toLowerCase()
-  if (normalized.includes('alimentación') || normalized.includes('comida') || normalized.includes('restaurante')) {
-    return { emoji: '🍽️', colorClass: 'text-orange-400 bg-orange-400/10 border-orange-400/20' }
-  }
-  if (normalized.includes('vivienda') || normalized.includes('alquiler') || normalized.includes('hogar')) {
-    return { emoji: '🏠', colorClass: 'text-blue-400 bg-blue-400/10 border-blue-400/20' }
-  }
-  if (normalized.includes('transporte') || normalized.includes('coche') || normalized.includes('gasolina')) {
-    return { emoji: '🚗', colorClass: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20' }
-  }
-  if (normalized.includes('ocio') || normalized.includes('entretenimiento') || normalized.includes('suscripciones')) {
-    return { emoji: '🎮', colorClass: 'text-purple-400 bg-purple-400/10 border-purple-400/20' }
-  }
-  if (normalized.includes('salud') || normalized.includes('farmacia') || normalized.includes('médico')) {
-    return { emoji: '❤️', colorClass: 'text-rose-400 bg-rose-400/10 border-rose-400/20' }
-  }
-  if (normalized.includes('educación') || normalized.includes('cursos') || normalized.includes('libros')) {
-    return { emoji: '📚', colorClass: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20' }
-  }
-  if (normalized.includes('compras') || normalized.includes('ropa') || normalized.includes('regalos')) {
-    return { emoji: '🛍️', colorClass: 'text-pink-400 bg-pink-400/10 border-pink-400/20' }
-  }
-  if (normalized.includes('nómina') || normalized.includes('salario') || normalized.includes('sueldo')) {
-    return { emoji: '💰', colorClass: 'text-brand-400 bg-brand-500/10 border-brand-500/20' }
-  }
-  if (normalized.includes('inversión') || normalized.includes('dividendos') || normalized.includes('intereses')) {
-    return { emoji: '📈', colorClass: 'text-sky-400 bg-sky-400/10 border-sky-400/20' }
-  }
-  // Fallback para categorías personalizadas
-  return { emoji: '🏷️', colorClass: 'text-text-muted bg-surface border-border-subtle' }
+const PALETA_COLORES = {
+  slate: { bg: 'bg-slate-500', pill: 'text-slate-400 bg-slate-400/10 border-slate-400/20' },
+  orange: { bg: 'bg-orange-500', pill: 'text-orange-400 bg-orange-400/10 border-orange-400/20' },
+  amber: { bg: 'bg-amber-500', pill: 'text-amber-500 bg-amber-500/10 border-amber-500/20' },
+  yellow: { bg: 'bg-yellow-500', pill: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20' },
+  emerald: { bg: 'bg-emerald-500', pill: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20' },
+  cyan: { bg: 'bg-cyan-500', pill: 'text-cyan-400 bg-cyan-400/10 border-cyan-400/20' },
+  sky: { bg: 'bg-sky-500', pill: 'text-sky-400 bg-sky-400/10 border-sky-400/20' },
+  blue: { bg: 'bg-blue-500', pill: 'text-blue-400 bg-blue-400/10 border-blue-400/20' },
+  indigo: { bg: 'bg-indigo-500', pill: 'text-indigo-400 bg-indigo-400/10 border-indigo-400/20' },
+  purple: { bg: 'bg-purple-500', pill: 'text-purple-400 bg-purple-400/10 border-purple-400/20' },
+  pink: { bg: 'bg-pink-500', pill: 'text-pink-400 bg-pink-400/10 border-pink-400/20' },
+  rose: { bg: 'bg-rose-500', pill: 'text-rose-400 bg-rose-400/10 border-rose-400/20' },
+  red: { bg: 'bg-red-500', pill: 'text-red-500 bg-red-500/10 border-red-500/20' },
+  brand: { bg: 'bg-brand-500', pill: 'text-brand-400 bg-brand-500/10 border-brand-500/20' }
 }
 
 export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoInicial }) {
@@ -54,7 +37,8 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
       setMonto(editarDatos.monto)
       setDesc(editarDatos.desc || '')
       setCuentaId(editarDatos.cuentaId)
-      setCategoria(editarDatos.categoria)
+      // CORRECCIÓN: Aseguramos que solo guardamos el nombre (string)
+      setCategoria(typeof editarDatos.categoria === 'object' ? editarDatos.categoria.nombre : editarDatos.categoria)
       setPrecioCompra(editarDatos.precioCompra || '')
       
       if (editarDatos.fecha) {
@@ -66,7 +50,8 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
       setMonto('')
       setDesc('')
       setCuentaId(cuentas[0]?.id || '')
-      setCategoria(categorias[0] || '')
+      // CORRECCIÓN: Si categorias[0] es un objeto, usamos .nombre
+      setCategoria(categorias[0]?.nombre || '')
       setFecha(new Date().toISOString().split('T')[0])
       setPrecioCompra('')
     }
@@ -80,17 +65,15 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!monto || parseFloat(monto) <= 0 || cargando) return
-
     setCargando(true)
 
     try {
       const [año, mes, dia] = fecha.split('-')
-      
       const datosTx = {
         desc: desc.trim(),
         monto: parseFloat(monto),
         cuentaId: cuentaId,
-        categoria,
+        categoria: categoria, // Enviamos el string del nombre
         tipo,
         fecha: `${dia}/${mes}/${año}`,
         precioCompra: mostrarPrecioCompra ? parseFloat(precioCompra) : null
@@ -101,7 +84,6 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
       } else {
         await agregarTransaccion(datosTx)
       }
-      
       onClose()
     } catch (error) {
       console.error(error)
@@ -111,10 +93,9 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-300">
       <div className="bg-surface-solid border-t sm:border border-border-subtle rounded-t-3xl sm:rounded-3xl w-full max-w-lg shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[85vh] overflow-hidden">
         
-        {/* Cabecera */}
         <div className="flex justify-between items-center p-6 border-b border-border-subtle shrink-0 bg-surface-solid/80 backdrop-blur-sm z-10">
           <div>
             <h3 className="text-xl md:text-2xl font-black text-text-main tracking-tight">
@@ -130,8 +111,6 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-6 overflow-y-auto custom-scrollbar relative">
-          
-          {/* Toggle Ingreso/Gasto */}
           <div className="grid grid-cols-2 gap-2 p-1.5 bg-surface rounded-2xl border border-border-subtle/50 shadow-inner">
             <button
               type="button"
@@ -152,8 +131,6 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
           </div>
 
           <div className="space-y-6">
-            
-            {/* Monto */}
             <div className="relative group">
               <label className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest mb-2 px-1">
                 <Euro size={12} className={tipo === 'ingreso' ? 'text-brand-400' : 'text-danger'} /> 
@@ -171,7 +148,6 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
               />
             </div>
 
-            {/* Descripción */}
             <div>
               <label className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest mb-2 px-1">
                 <FileText size={12} /> Concepto
@@ -186,37 +162,30 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
               />
             </div>
 
-            {/* Categorías Visuales (Pills) */}
             <div>
               <label className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest mb-3 px-1">
                 <Tag size={12} /> Categoría
               </label>
               <div className="flex flex-wrap gap-2.5">
                 {categorias.map(cat => {
-                  const style = getCategoryStyle(cat)
-                  const isSelected = categoria === cat
+                  const isSelected = categoria === cat.nombre
+                  const estiloPill = PALETA_COLORES[cat.color]?.pill || PALETA_COLORES['slate'].pill
                   return (
                     <button
-                      key={cat}
+                      key={cat.nombre}
                       type="button"
                       disabled={cargando}
-                      onClick={() => setCategoria(cat)}
-                      className={`
-                        flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border
-                        ${isSelected 
-                          ? `${style.colorClass} shadow-md scale-105 border-opacity-100` 
-                          : 'bg-surface text-text-muted border-border-subtle hover:bg-surface-solid hover:border-border-subtle/80 hover:text-text-main'}
-                      `}
+                      onClick={() => setCategoria(cat.nombre)}
+                      className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border ${isSelected ? `${estiloPill} shadow-md scale-105 border-opacity-100` : 'bg-surface text-text-muted border-border-subtle hover:bg-surface-solid hover:border-border-subtle/80 hover:text-text-main'}`}
                     >
-                      <span className="text-sm">{style.emoji}</span>
-                      <span className={isSelected ? 'text-current' : ''}>{cat}</span>
+                      <span className="text-sm">{cat.emoji}</span>
+                      <span>{cat.nombre}</span>
                     </button>
                   )
                 })}
               </div>
             </div>
 
-            {/* Cuenta y Fecha */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest mb-2 px-1">
@@ -233,7 +202,6 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
                   ))}
                 </select>
               </div>
-
               <div>
                 <label className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest mb-2 px-1">
                   <Calendar size={12} /> Fecha
@@ -247,27 +215,8 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
                 />
               </div>
             </div>
-
-            {/* Input Dinámico Inversiones */}
-            {mostrarPrecioCompra && (
-              <div className="animate-in slide-in-from-top-2 fade-in duration-300 bg-brand-500/5 p-4 rounded-2xl border border-brand-500/20">
-                <label className="flex items-center gap-2 text-[10px] font-black text-brand-400 uppercase tracking-widest mb-2 px-1">
-                  Precio Compra (€/u)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={precioCompra}
-                  disabled={cargando}
-                  onChange={(e) => setPrecioCompra(e.target.value)}
-                  className="w-full bg-surface border border-brand-500/30 rounded-xl px-4 py-3.5 text-text-main text-sm font-bold focus:outline-none focus:border-brand-500 transition-all shadow-inner"
-                  placeholder="Precio por acción/cripto"
-                />
-              </div>
-            )}
           </div>
 
-          {/* Botón de Confirmación */}
           <div className="mt-4 pb-2">
             <button 
               type="submit" 
