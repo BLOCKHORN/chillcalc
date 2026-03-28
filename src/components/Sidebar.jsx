@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, Wallet, ArrowRightLeft, Target, Command, LogOut, Users } from 'lucide-react'
+import { LayoutDashboard, Wallet, ArrowRightLeft, Target, Command, LogOut, Users, Sun, Moon } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { supabase } from '../lib/supabase'
 import clsx from 'clsx'
 
 export default function Sidebar() {
-  const { vistaActual, setVistaActual } = useStore()
+  const { vistaActual, setVistaActual, tema, toggleTema } = useStore()
   const [email, setEmail] = useState('')
 
   useEffect(() => {
@@ -65,6 +65,15 @@ export default function Sidebar() {
       </nav>
 
       <div className="mt-auto pt-6 border-t border-border-subtle flex flex-col gap-4">
+        
+        <button 
+          onClick={toggleTema}
+          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-text-muted hover:text-text-main hover:bg-surface transition-colors w-full text-left mx-1"
+        >
+          {tema === 'dark' ? <Sun size={18} strokeWidth={2} /> : <Moon size={18} strokeWidth={2} />}
+          {tema === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}
+        </button>
+
         <div className="px-3 flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-surface border border-border-subtle flex items-center justify-center text-xs font-bold text-text-muted uppercase shrink-0">
             {email ? email.substring(0, 2) : 'US'}
