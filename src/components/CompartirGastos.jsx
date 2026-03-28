@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useStore } from '../store/useStore'
-import { Users, Plus, Trash2, ArrowRight, ChevronLeft, UserPlus, Receipt, Info } from 'lucide-react'
+import { Users, Plus, Trash2, ArrowRight, ChevronLeft, UserPlus, Receipt, Info, Share2, Check } from 'lucide-react'
 
 const formatoEuros = (num) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(num || 0)
 
@@ -16,13 +16,16 @@ const calcularBalances = (grupo) => {
 }
 
 export default function CompartirGastos() {
-  const { gruposSplit, crearGrupoSplit, eliminarGrupoSplit, agregarGastoSplit, eliminarGastoSplit } = useStore()
+  const { gruposSplit, crearGrupoSplit, eliminarGrupoSplit, agregarGastoSplit, eliminarGastoSplit, obtenerEnlaceCompartir } = useStore()
   const [grupoActivoId, setGrupoActivoId] = useState(null)
   const [pasoCreacion, setPasoCreacion] = useState(false)
   
   const [nombreGrupo, setNombreGrupo] = useState('')
   const [amigos, setAmigos] = useState(['Tú', ''])
   const [formGasto, setFormGasto] = useState({ desc: '', monto: '', pagadoPor: '' })
+  
+  // Estado para el feedback visual del botón de compartir
+  const [copiado, setCopiado] = useState(false)
 
   const grupoSeleccionado = gruposSplit.find(g => g.id === grupoActivoId)
   const balances = useMemo(() => grupoSeleccionado ? calcularBalances(grupoSeleccionado) : [], [grupoSeleccionado])
@@ -45,6 +48,29 @@ export default function CompartirGastos() {
       pagado_por_id: formGasto.pagadoPor
     })
     setFormGasto({ desc: '', monto: '', pagadoPor: '' })
+  }
+
+  const handleCompartir = async () => {
+    const enlace = obtenerEnlaceCompartir(grupoSeleccionado)
+    if (!enlace) return
+
+    const shareData = {
+      title: `Gastos: ${grupoSeleccionado.nombre}`,
+      text: `Únete para ver los gastos de ${grupoSeleccionado.nombre} en ChillCalc 💸👇\n`,
+      url: enlace
+    }
+
+    try {
+      if (navigator.share && navigator.canShare(shareData)) {
+        await navigator.share(shareData)
+      } else {
+        await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`)
+        setCopiado(true)
+        setTimeout(() => setCopiado(false), 2000)
+      }
+    } catch (err) {
+      console.error('Error al compartir:', err)
+    }
   }
 
   if (pasoCreacion) {
@@ -96,84 +122,115 @@ export default function CompartirGastos() {
   }
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24 px-1 md:px-0">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24 px-1 md:px-0 relative w-full">
+      
       {!grupoActivoId ? (
         <>
-          <header className="mb-8 flex flex-col md:flex-row justify-between items-center md:items-end gap-6 pt-2">
-            <div className="w-full text-center md:text-left">
-              <h2 className="text-4xl md:text-3xl font-black text-text-main tracking-tighter leading-tight">Dividir Gastos</h2>
-              <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mt-2">Cuentas claras entre amigos</p>
+          <div className="absolute top-20 right-10 w-64 h-64 bg-brand-500/5 rounded-full blur-[100px] pointer-events-none" />
+          <div className="absolute top-40 left-10 w-48 h-48 bg-sky-500/5 rounded-full blur-[90px] pointer-events-none" />
+
+          <header className="mb-10 flex flex-col xl:flex-row xl:justify-between xl:items-end gap-6 pt-2 relative z-10">
+            <div className="w-full text-center xl:text-left">
+              <p className="text-[10px] md:text-xs font-black text-text-muted uppercase tracking-widest mb-2 flex items-center justify-center xl:justify-start gap-2">
+                <Users size={14} className="text-brand-400" />
+                Cuentas Claras
+              </p>
+              <h1 className="text-5xl md:text-6xl font-black tracking-tighter leading-none text-text-main">
+                Dividir Gastos
+              </h1>
             </div>
+            
             <button 
               onClick={() => setPasoCreacion(true)}
-              className="w-full md:w-auto bg-brand-500 text-white py-4 px-8 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-brand-500/20 active:scale-95 transition-all"
+              className="flex items-center justify-center gap-2 px-6 py-4 rounded-xl font-bold bg-brand-500 text-white shadow-lg shadow-brand-500/20 active:scale-95 transition-all text-xs border border-brand-500/20 group uppercase tracking-widest w-full xl:w-auto"
             >
-              <Plus size={18} className="inline mr-1" /> Nuevo Grupo
+              <Plus size={18} strokeWidth={3} className="group-hover:rotate-90 transition-transform" /> 
+              <span>Nuevo Grupo</span>
             </button>
           </header>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 relative z-10">
             {gruposSplit.map(grupo => (
               <button 
                 key={grupo.id} 
                 onClick={() => setGrupoActivoId(grupo.id)}
-                className="card group hover:border-brand-500/50 transition-all text-left relative overflow-hidden p-5"
+                className="bg-surface-solid/40 backdrop-blur-md border border-border-subtle/50 rounded-3xl p-6 shadow-xl shadow-black/5 flex flex-col group hover:border-brand-500/30 hover:-translate-y-1 transition-all text-left"
               >
                 <div className="flex justify-between items-start mb-6">
-                  <div className="p-3 bg-brand-500/10 rounded-xl text-brand-400 border border-brand-500/20">
-                    <Users size={24} />
+                  <div className="p-3 bg-brand-500/10 rounded-2xl text-brand-400 border border-brand-500/20 shadow-[0_0_15px_rgba(var(--brand-500),0.1)]">
+                    <Users size={24} strokeWidth={2.5} />
                   </div>
-                  <span className="text-[9px] font-black text-text-muted uppercase bg-surface-solid px-3 py-1.5 rounded-lg border border-border-subtle shadow-sm">
+                  <span className="text-[10px] font-black text-text-muted uppercase tracking-widest bg-surface px-3 py-1.5 rounded-lg border border-border-subtle">
                     {grupo.split_participantes?.length} Amigos
                   </span>
                 </div>
-                <h3 className="text-xl font-black text-text-main mb-1 truncate tracking-tight">{grupo.nombre}</h3>
-                <div className="flex items-center gap-2 text-brand-400 font-black text-[10px] uppercase tracking-widest mt-4">
-                  Abrir grupo <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                <h3 className="text-2xl font-black text-text-main mb-2 tracking-tight line-clamp-2">{grupo.nombre}</h3>
+                
+                <div className="mt-auto pt-4 flex items-center gap-2 text-brand-400 font-black text-[10px] uppercase tracking-widest">
+                  Ver cuentas <ArrowRight size={14} strokeWidth={3} className="group-hover:translate-x-1 transition-transform" />
                 </div>
               </button>
             ))}
+
             {gruposSplit.length === 0 && (
-              <div className="col-span-full text-center py-16 border-2 border-dashed border-border-subtle rounded-2xl opacity-50">
-                <Users size={48} className="mx-auto mb-4 text-text-muted" />
-                <p className="text-sm font-bold text-text-main">No tienes viajes activos</p>
-                <p className="text-[10px] uppercase font-bold text-text-muted mt-2 tracking-widest">Crea un grupo para empezar</p>
+              <div className="col-span-full bg-surface-solid/40 backdrop-blur-md border-2 border-dashed border-border-subtle/50 rounded-3xl p-12 text-center flex flex-col items-center justify-center">
+                <div className="w-20 h-20 bg-surface rounded-full flex items-center justify-center mb-4 text-text-muted/30">
+                  <Users size={40} strokeWidth={2} />
+                </div>
+                <p className="text-text-main text-lg font-black uppercase tracking-tight mb-2">Sin viajes activos</p>
+                <p className="text-[10px] uppercase font-bold text-text-muted tracking-widest">Crea un grupo para empezar a dividir cuentas</p>
               </div>
             )}
           </div>
         </>
       ) : (
-        <div className="flex flex-col gap-6">
-           <header className="flex items-center justify-between pt-2">
-              <div className="flex items-center gap-3">
-                <button onClick={() => setGrupoActivoId(null)} className="p-3 bg-surface-solid border border-border-subtle rounded-xl text-text-muted active:scale-90 transition-all shadow-sm">
+        <div className="flex flex-col gap-6 relative z-10">
+           <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
+              <div className="flex items-center gap-3 w-full sm:w-auto overflow-hidden">
+                <button 
+                  onClick={() => setGrupoActivoId(null)} 
+                  className="p-3 bg-surface-solid/60 backdrop-blur-md border border-border-subtle rounded-xl text-text-muted hover:text-text-main active:scale-90 transition-all shadow-sm shrink-0"
+                >
                   <ChevronLeft size={24} />
                 </button>
-                <h3 className="text-2xl font-black text-text-main tracking-tighter truncate max-w-[200px] sm:max-w-none">{grupoSeleccionado?.nombre}</h3>
+                <h3 className="text-3xl md:text-4xl font-black text-text-main tracking-tighter truncate leading-none pb-1">{grupoSeleccionado?.nombre}</h3>
               </div>
-              <button 
-                onClick={() => { if(confirm('¿Seguro que quieres eliminar este viaje?')) { eliminarGrupoSplit(grupoSeleccionado.id); setGrupoActivoId(null); } }} 
-                className="p-3 text-danger/50 hover:text-danger hover:bg-danger/10 rounded-xl transition-all active:scale-90"
-              >
-                <Trash2 size={24} />
-              </button>
+              
+              <div className="flex gap-2 w-full sm:w-auto shrink-0">
+                <button 
+                  onClick={handleCompartir}
+                  className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all border shadow-sm active:scale-95 ${copiado ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-surface-solid/60 backdrop-blur-md text-text-main hover:border-border-subtle/80 border-border-subtle/50'}`}
+                >
+                  {copiado ? <><Check size={16} /> Copiado</> : <><Share2 size={16} className="text-brand-400" /> Invitar</>}
+                </button>
+                <button 
+                  onClick={() => { if(confirm('¿Seguro que quieres eliminar este viaje por completo?')) { eliminarGrupoSplit(grupoSeleccionado.id); setGrupoActivoId(null); } }} 
+                  className="p-3 text-danger/60 bg-danger/5 border border-danger/10 hover:text-danger hover:bg-danger/10 rounded-xl transition-all active:scale-90"
+                  title="Eliminar Grupo"
+                >
+                  <Trash2 size={20} />
+                </button>
+              </div>
            </header>
            
-           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+           {/* El resto del código de la vista de grupo (Balances y Formulario) sigue igual... */}
+           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
              <section className="order-2 lg:order-1">
-                <h4 className="text-[10px] font-black uppercase text-text-muted mb-4 tracking-widest px-1">Resumen de Deudas</h4>
+                <h4 className="text-[10px] font-black uppercase text-text-muted mb-4 tracking-widest px-1 flex items-center gap-2">
+                  <ArrowRightLeft size={12} className="text-brand-400" /> Resumen de Deudas
+                </h4>
                 <div className="space-y-3">
                   {balances.map(p => (
-                    <div key={p.id} className="card flex items-center justify-between p-4 border-l-4 shadow-sm transition-transform active:scale-[0.98]" style={{ borderColor: p.balance >= 0 ? 'var(--brand-500)' : 'var(--danger)' }}>
+                    <div key={p.id} className="bg-surface-solid/40 backdrop-blur-sm flex items-center justify-between p-5 rounded-2xl border border-border-subtle/50 border-l-4 shadow-sm transition-all" style={{ borderLeftColor: p.balance >= 0 ? 'var(--brand-500)' : 'var(--danger)' }}>
                        <div className="overflow-hidden mr-2">
-                          <p className="text-base font-black text-text-main truncate">{p.nombre}</p>
-                          <p className="text-[9px] font-bold text-text-muted uppercase">Pagado: {formatoEuros(p.pagadoTotal)}</p>
+                          <p className="text-lg font-black text-text-main truncate leading-tight">{p.nombre}</p>
+                          <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mt-1">Pagado: <span className="text-text-main">{formatoEuros(p.pagadoTotal)}</span></p>
                        </div>
                        <div className="text-right shrink-0">
-                          <p className={`text-lg font-black leading-none mb-1 ${p.balance >= 0 ? 'text-brand-400' : 'text-danger'}`}>
+                          <p className={`text-2xl font-black leading-none mb-1 tracking-tighter ${p.balance >= 0 ? 'text-brand-400' : 'text-danger'}`}>
                             {p.balance >= 0 ? '+' : ''}{formatoEuros(p.balance)}
                           </p>
-                          <p className="text-[8px] font-black text-text-muted uppercase tracking-tighter">
+                          <p className="text-[9px] font-black text-text-muted uppercase tracking-widest">
                             {p.balance >= 0 ? 'Le deben' : 'Debe dinero'}
                           </p>
                        </div>
@@ -183,50 +240,54 @@ export default function CompartirGastos() {
              </section>
 
              <section className="order-1 lg:order-2">
-                <h4 className="text-[10px] font-black uppercase text-text-muted mb-4 tracking-widest px-1">Registrar Nuevo Gasto</h4>
-                <form onSubmit={handleNuevoGasto} className="card p-5 space-y-4 border-brand-500/20 bg-brand-500/[0.03]">
+                <h4 className="text-[10px] font-black uppercase text-text-muted mb-4 tracking-widest px-1 flex items-center gap-2">
+                  <Receipt size={12} className="text-brand-400" /> Registrar Gasto
+                </h4>
+                <form onSubmit={handleNuevoGasto} className="bg-surface-solid/60 backdrop-blur-md p-6 rounded-3xl space-y-5 border border-border-subtle/50 shadow-xl shadow-black/5">
                   <input 
                     value={formGasto.desc} 
                     onChange={e => setFormGasto({...formGasto, desc: e.target.value})} 
-                    className="w-full bg-surface-solid border border-border-subtle rounded-xl px-4 py-4 text-sm font-bold text-text-main focus:border-brand-500 outline-none placeholder:text-text-muted/40" 
-                    placeholder="¿En qué se gastó? (Cena, Hotel...)" 
+                    className="w-full bg-surface border border-border-subtle rounded-2xl px-5 py-4 text-sm font-bold text-text-main focus:border-brand-500 outline-none placeholder:text-text-muted/40 transition-all shadow-inner" 
+                    placeholder="¿En qué se gastó? (Ej: Cena, Hotel...)" 
                   />
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-4">
                     <input 
                       type="number" step="0.01" 
                       value={formGasto.monto} 
                       onChange={e => setFormGasto({...formGasto, monto: e.target.value})} 
-                      className="w-full bg-surface-solid border border-border-subtle rounded-xl px-4 py-4 text-sm font-black text-text-main outline-none focus:border-brand-500" 
+                      className="w-full bg-surface border border-border-subtle rounded-2xl px-5 py-4 text-lg font-black text-text-main outline-none focus:border-brand-500 transition-all shadow-inner" 
                       placeholder="Monto €" 
                     />
                     <select 
                       value={formGasto.pagadoPor} 
                       onChange={e => setFormGasto({...formGasto, pagadoPor: e.target.value})} 
-                      className="w-full bg-surface-solid border border-border-subtle rounded-xl px-2 py-4 text-[10px] font-black text-text-main outline-none uppercase tracking-tighter focus:border-brand-500"
+                      className="w-full bg-surface border border-border-subtle rounded-2xl px-4 py-4 text-[11px] font-black text-text-main outline-none uppercase tracking-widest focus:border-brand-500 transition-all shadow-inner appearance-none cursor-pointer"
                     >
                       <option value="">¿Quién pagó?</option>
                       {grupoSeleccionado.split_participantes.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
                     </select>
                   </div>
-                  <button type="submit" className="w-full bg-brand-500 text-white py-4 rounded-xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-brand-500/20 active:scale-95 transition-all">
-                    Añadir Gasto al Grupo
+                  <button type="submit" className="w-full bg-brand-500 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-lg shadow-brand-500/20 active:scale-95 transition-all">
+                    Añadir al Grupo
                   </button>
                 </form>
 
                 <div className="mt-8">
                   <div className="flex items-center justify-between mb-4 px-1">
                     <h4 className="text-[10px] font-black uppercase text-text-muted tracking-widest">Historial de Pagos</h4>
-                    <span className="text-[9px] font-bold text-text-muted uppercase">{grupoSeleccionado.split_gastos.length} Movimientos</span>
+                    <span className="text-[9px] font-black text-brand-400 bg-brand-500/10 px-2 py-1 rounded-md uppercase tracking-widest">{grupoSeleccionado.split_gastos.length} Movimientos</span>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {grupoSeleccionado.split_gastos.map(g => (
-                      <div key={g.id} className="flex items-center justify-between p-4 bg-surface-solid rounded-2xl border border-border-subtle group transition-all">
-                        <div className="overflow-hidden flex items-center gap-3">
-                          <div className="p-2 bg-white/5 rounded-lg text-text-muted"><Receipt size={16}/></div>
+                      <div key={g.id} className="flex items-center justify-between p-4 bg-surface-solid/40 backdrop-blur-sm rounded-2xl border border-border-subtle/50 group transition-all hover:bg-surface hover:border-border-subtle">
+                        <div className="overflow-hidden flex items-center gap-4">
+                          <div className="p-2.5 bg-surface rounded-xl border border-border-subtle text-text-muted group-hover:text-brand-400 transition-colors">
+                            <Receipt size={18} />
+                          </div>
                           <div>
-                            <p className="text-xs font-bold text-text-main truncate leading-tight">{g.descripcion}</p>
-                            <p className="text-[9px] text-text-muted font-bold uppercase mt-0.5">
-                              {grupoSeleccionado.split_participantes.find(p => p.id === g.pagado_por_id)?.nombre} • {formatoEuros(g.monto)}
+                            <p className="text-sm font-black text-text-main truncate leading-tight mb-0.5">{g.descripcion}</p>
+                            <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest">
+                              <span className="text-text-main">{grupoSeleccionado.split_participantes.find(p => p.id === g.pagado_por_id)?.nombre}</span> pagó <span className="text-danger font-black">{formatoEuros(g.monto)}</span>
                             </p>
                           </div>
                         </div>
@@ -239,9 +300,9 @@ export default function CompartirGastos() {
                       </div>
                     ))}
                     {grupoSeleccionado.split_gastos.length === 0 && (
-                      <div className="text-center py-10 card bg-transparent border-dashed border-2 border-border-subtle opacity-30">
-                        <Info size={24} className="mx-auto mb-2" />
-                        <p className="text-[10px] font-black uppercase tracking-widest">No hay gastos todavía</p>
+                      <div className="text-center py-12 bg-surface-solid/30 border border-dashed border-border-subtle/50 rounded-3xl">
+                        <Info size={28} className="mx-auto mb-3 text-text-muted/40" />
+                        <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">No hay gastos todavía</p>
                       </div>
                     )}
                   </div>

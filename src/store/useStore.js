@@ -6,7 +6,7 @@ export const useStore = create((set, get) => ({
   cuentas: [],
   transacciones: [],
   objetivos: [],
-  categorias: [], // <-- Ahora será un array de objetos: [{nombre, emoji, color}]
+  categorias: [], 
   gruposSplit: [],
   vistaActual: 'dashboard',
   tema: 'dark',
@@ -35,14 +35,12 @@ export const useStore = create((set, get) => ({
       supabase.from('split_grupos').select('*, split_participantes(*), split_gastos(*)').order('created_at', { ascending: false })
     ])
 
-    // Mapeo adaptado a la nueva estructura de objetos
     let listaCategorias = resCategorias.data?.map(c => ({
       nombre: c.nombre,
       emoji: c.emoji || '🏷️',
       color: c.color || 'slate'
     })) || []
     
-    // Fallback si la base de datos está vacía
     if (listaCategorias.length === 0) {
       const basicas = [
         { nombre: 'Alimentación', emoji: '🍽️', color: 'orange' },
@@ -98,7 +96,6 @@ export const useStore = create((set, get) => ({
     get().actualizarPreciosMercado()   
   },
 
-  // Modificado para recibir un objeto en lugar de un string
   agregarCategoria: async (nuevaCat) => {
     const { data: { user } } = await supabase.auth.getUser()
     const { data, error } = await supabase.from('categorias').insert([{ 
@@ -419,6 +416,8 @@ export const useStore = create((set, get) => ({
     }
   },
 
+  // ---- SECCIÓN SPLIT GASTOS ----
+
   crearGrupoSplit: async (nombre, participantesNombres) => {
     const { data: { user } } = await supabase.auth.getUser()
     const { data: grupo, error } = await supabase.from('split_grupos').insert([{ nombre, user_id: user.id }]).select().single()
@@ -457,6 +456,31 @@ export const useStore = create((set, get) => ({
       console.error("Error al eliminar gasto:", error)
     }
   },
+
+  // NUEVO: Cargar grupo público (Para los invitados sin cuenta)
+  cargarGrupoPublico: async (token) => {
+    const { data: grupo, error } = await supabase
+      .from('split_grupos')
+      .select('*, split_participantes(*), split_gastos(*)')
+      .eq('share_token', token)
+      .single()
+
+    if (error || !grupo) {
+      console.error("Grupo no encontrado o enlace inválido", error)
+      return null
+    }
+    return grupo
+  },
+
+  // NUEVO: Generar enlace para compartir por WhatsApp
+  obtenerEnlaceCompartir: (grupo) => {
+    if (!grupo || !grupo.share_token) return null
+    const baseUrl = window.location.origin
+    // La URL que usaremos será chillcalc.app/split/TU_TOKEN
+    return `${baseUrl}/split/${grupo.share_token}`
+  },
+
+  // ---- MÉTRICAS GLOBALES ----
 
   patrimonioTotal: () => get().cuentas.reduce((acc, c) => acc + (Number(c.saldo) || 0), 0),
 

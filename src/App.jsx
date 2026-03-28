@@ -9,10 +9,12 @@ import Transacciones from './components/Transacciones'
 import Objetivos from './components/Objetivos'
 import CompartirGastos from './components/CompartirGastos'
 import BottomNav from './components/BottomNav'
+import VistaPublicaSplit from './components/VistaPublicaSplit'
 
 function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [tokenPublico, setTokenPublico] = useState(null)
   
   const vistaActual = useStore(state => state.vistaActual)
   const tema = useStore(state => state.tema)
@@ -20,6 +22,18 @@ function App() {
   useEffect(() => {
     document.documentElement.classList.toggle('light-mode', tema === 'light')
 
+    // 1. INTERCEPTOR DE ENLACES PÚBLICOS
+    const path = window.location.pathname
+    if (path.startsWith('/split/')) {
+      const token = path.replace('/split/', '')
+      if (token) {
+        setTokenPublico(token)
+        setLoading(false)
+        return // Cortamos aquí para que no siga pidiendo login
+      }
+    }
+
+    // 2. FLUJO NORMAL DE AUTENTICACIÓN
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setLoading(false)
@@ -39,9 +53,8 @@ function App() {
       }
     }, 3600000)
 
-    // Limpiamos tanto la suscripción de Supabase como el temporizador al desmontar
     return () => {
-      subscription.unsubscribe()
+      subscription?.unsubscribe()
       clearInterval(intervalId)
     }
   }, [tema])
@@ -54,6 +67,12 @@ function App() {
     )
   }
 
+  // 3. MODO INVITADO: Si hay un token en la URL, mostramos la vista pública directamente
+  if (tokenPublico) {
+    return <VistaPublicaSplit token={tokenPublico} />
+  }
+
+  // 4. MODO PRIVADO: Si no hay sesión, pedimos login
   if (!session) {
     return <Auth />
   }
