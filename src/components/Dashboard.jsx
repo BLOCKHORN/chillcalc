@@ -146,8 +146,6 @@ export default function Dashboard() {
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-24 md:pb-12 w-full">
-      
-      {/* 1. Cabecera con Retroiluminación (Glow) y Tipografía Refinada */}
       <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pt-2 relative">
         <div className="absolute -top-12 -left-20 w-60 h-60 bg-brand-500/5 rounded-full blur-[100px] pointer-events-none" />
         <div className="absolute -top-10 -right-20 w-40 h-40 bg-pink-500/5 rounded-full blur-[90px] pointer-events-none" />
@@ -157,10 +155,8 @@ export default function Dashboard() {
             <Activity size={14} className="text-brand-400" />
             Patrimonio Neto
           </p>
-          <h1 className="text-6xl md:text-7xl font-black tracking-tighter leading-none">
-            <span className="bg-linear-to-b from-text-main to-text-main/60 bg-clip-text text-transparent">
-              {formatoEuros(patrimonioActual)}
-            </span>
+          <h1 className="text-6xl md:text-7xl font-black tracking-tighter leading-none text-text-main">
+            {formatoEuros(patrimonioActual)}
           </h1>
         </div>
         
@@ -180,7 +176,6 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* 2. Tarjetas de Cuentas (Glassmorphism) */}
       <div className="flex gap-4 overflow-x-auto pb-6 no-scrollbar -mx-4 px-4 mb-6 z-10 relative">
         {cuentas.map(cuenta => (
           <div key={cuenta.id} className="min-w-[170px] md:min-w-[200px] bg-surface-solid/40 backdrop-blur-lg border border-border-subtle/50 rounded-2xl shadow-xl shadow-brand-500/5 p-5 flex flex-col gap-3 group transition-all hover:border-border-subtle/80 hover:-translate-y-1">
@@ -197,7 +192,6 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* 3. Gráfica de Tendencia */}
       <div className="bg-surface-solid/40 backdrop-blur-md border border-border-subtle/50 rounded-3xl p-0 mb-6 overflow-hidden shadow-2xl shadow-black/5 z-10 relative">
         <div className="p-5 md:p-6 border-b border-border-subtle/50 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
@@ -230,8 +224,6 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 z-10 relative">
-        
-        {/* 4. Tarjeta de Análisis Mensual */}
         <div className="bg-surface-solid/40 backdrop-blur-md border border-border-subtle/50 rounded-3xl p-6 shadow-2xl shadow-black/5 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-2.5">
@@ -250,7 +242,7 @@ export default function Dashboard() {
           </div>
           <div className="mb-8">
             <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1.5">Balance del mes</p>
-            <p className={`text-5xl font-black tracking-tighter ${ingresos - gastos >= 0 ? 'bg-linear-to-b from-text-main to-text-main/60 bg-clip-text text-transparent' : 'text-danger'}`}>
+            <p className={`text-5xl font-black tracking-tighter ${ingresos - gastos >= 0 ? 'text-text-main' : 'text-danger'}`}>
               {ingresos - gastos >= 0 ? '+' : ''}{formatoEuros(ingresos - gastos)}
             </p>
           </div>
@@ -272,7 +264,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* 5. Tarjeta de Distribución de Gastos */}
         <div className="bg-surface-solid/40 backdrop-blur-md border border-border-subtle/50 rounded-3xl flex flex-col p-6 min-h-[350px] shadow-2xl shadow-black/5 overflow-hidden">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-2.5">

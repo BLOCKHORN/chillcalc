@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useStore } from '../store/useStore'
-import { Building2, CreditCard, Banknote, LineChart, Wallet, Settings2, Trash2, Globe } from 'lucide-react'
+import { Building2, CreditCard, Banknote, LineChart, Wallet, Settings2, Trash2, Globe, Plus } from 'lucide-react'
 import ModalCuenta from './ModalCuenta'
 import ModalEditarCuenta from './ModalEditarCuenta'
 import ModalEliminarCuenta from './ModalEliminarCuenta'
@@ -15,40 +15,46 @@ export default function Cuentas() {
   const cuentas = useStore(state => state.cuentas)
 
   const getIcon = useCallback((icono) => {
-    const props = { size: 24, className: "text-text-muted" }
+    const props = { size: 20, className: "text-text-main group-hover:text-brand-400 transition-colors" }
     switch(icono) {
       case 'bank': return <Building2 {...props} />
       case 'card': return <CreditCard {...props} />
       case 'cash': return <Banknote {...props} />
-      case 'chart': return <LineChart size={24} className="text-brand-400" />
+      case 'chart': return <LineChart size={20} className="text-brand-400 drop-shadow-[0_0_8px_rgba(var(--brand-500),0.5)]" />
       default: return <Wallet {...props} />
     }
   }, [])
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20 md:pb-0 px-1 md:px-0">
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 md:pb-0 px-1 md:px-0 relative w-full">
       
-      <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pt-2">
+      {/* Soft Glow Backlight */}
+      <div className="absolute top-10 left-20 w-72 h-72 bg-brand-500/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-40 right-10 w-64 h-64 bg-indigo-500/5 rounded-full blur-[100px] pointer-events-none" />
+
+      <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pt-2 relative z-10">
         <div className="w-full text-center md:text-left">
-          <h2 className="text-3xl md:text-2xl font-black md:font-bold text-text-main mb-1 tracking-tighter md:tracking-normal">
-            Cuentas Activas
-          </h2>
-          <p className="text-[10px] md:text-sm text-text-muted uppercase font-bold tracking-widest">
-            Gestiona tu liquidez y cartera
+          <p className="text-[10px] md:text-xs font-black text-text-muted uppercase tracking-widest mb-2 flex items-center justify-center md:justify-start gap-2">
+            <Wallet size={14} className="text-brand-400" />
+            Tu Bóveda
           </p>
+          <h2 className="text-5xl md:text-6xl font-black text-text-main mb-1 tracking-tighter leading-none">
+            Cuentas
+          </h2>
         </div>
 
         <div className="flex w-full md:w-auto md:ml-auto">
           <button 
             onClick={() => setModalAbierto(true)} 
-            className="w-full md:w-auto bg-brand-500 hover:bg-brand-600 text-white py-3.5 md:py-2.5 px-8 rounded-xl active:scale-95 transition-all text-sm font-bold shadow-lg shadow-brand-500/20"
+            className="flex-1 md:flex-none flex items-center justify-center gap-2.5 px-6 py-3.5 md:py-3 rounded-xl font-bold bg-brand-500/10 text-brand-400 hover:bg-brand-500/20 active:scale-95 transition-all text-sm w-full md:w-auto border border-brand-500/20 shadow-lg shadow-brand-500/5 group uppercase tracking-widest"
           >
-            Nueva Cuenta
+            <Plus size={18} className="group-hover:rotate-90 transition-transform"/> 
+            <span>Nueva Cuenta</span>
           </button>
         </div>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 relative z-10">
         {cuentas.map(c => {
           const esInversion = c.tipo === 'inversion'
           const esRemunerada = c.tipo === 'remunerada'
@@ -64,61 +70,62 @@ export default function Cuentas() {
           const gananciaMensual = gananciaAnual / 12
 
           return (
-            <div key={c.id} className="card flex flex-col justify-between min-h-[160px] group relative overflow-hidden">
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-surface-solid rounded-lg border border-border-subtle">
+            <div key={c.id} className="bg-surface-solid/40 backdrop-blur-xl border border-border-subtle/50 rounded-3xl p-6 flex flex-col justify-between min-h-[200px] group relative transition-all duration-300 hover:-translate-y-1 hover:border-border-subtle/80 shadow-xl shadow-black/5 overflow-hidden">
+              
+              <div className="flex justify-between items-start mb-6">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-surface-solid/60 rounded-2xl border border-border-subtle/50 shadow-sm group-hover:bg-surface transition-colors">
                     {getIcon(c.icono)}
                   </div>
                   <div>
-                    <h3 className="font-bold text-text-main leading-tight">{c.nombre}</h3>
+                    <h3 className="font-black text-lg text-text-main leading-none mb-1.5 truncate max-w-[140px]">{c.nombre}</h3>
                     <span className="text-[9px] uppercase font-black tracking-widest text-text-muted">
                       {esRemunerada ? 'Cuenta Ahorro' : c.tipo}
                     </span>
                   </div>
                 </div>
                 
-                <div className="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                {/* Botones de acción elegantes */}
+                <div className="flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                   <button 
                     onClick={() => setCuentaEditando(c.id)} 
-                    className="p-2.5 md:p-2 text-text-muted hover:text-text-main bg-surface-solid md:bg-transparent rounded-lg border border-border-subtle md:border-transparent"
+                    className="p-2 text-text-muted hover:text-brand-400 bg-surface-solid md:bg-surface-solid/50 rounded-xl border border-border-subtle/50 hover:border-brand-500/30 transition-all active:scale-90"
                   >
-                    <Settings2 size={18} />
+                    <Settings2 size={16} strokeWidth={2.5} />
                   </button>
                   <button 
                     onClick={() => setCuentaEliminando(c.id)} 
-                    className="p-2.5 md:p-2 text-text-muted hover:text-danger bg-surface-solid md:bg-transparent rounded-lg border border-border-subtle md:border-transparent"
+                    className="p-2 text-text-muted hover:text-danger bg-surface-solid md:bg-surface-solid/50 rounded-xl border border-border-subtle/50 hover:border-danger/30 transition-all active:scale-90"
                   >
-                    <Trash2 size={18} />
+                    <Trash2 size={16} strokeWidth={2.5} />
                   </button>
                 </div>
               </div>
               
-              <div>
-                <p className="text-2xl md:text-3xl font-black text-text-main tracking-tight">
+              <div className="flex-1 flex flex-col justify-end">
+                <p className="text-3xl md:text-4xl font-black text-text-main tracking-tighter leading-none mb-2">
                   {formatoEuros(valSaldo)}
                 </p>
                 
                 {esInversion && (
-                  <div className="mt-4 space-y-2 pt-3 border-t border-border-subtle">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-[9px] font-black text-brand-400 bg-brand-500/10 px-2 py-0.5 rounded border border-brand-500/20 uppercase">
+                  <div className="mt-5 space-y-3 pt-4 border-t border-border-subtle/30">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[9px] font-black text-brand-400 bg-brand-500/10 px-2.5 py-1 rounded-lg border border-brand-500/20 uppercase tracking-widest">
                         {c.ticker || 'Sin Ticker'}
                       </span>
+                      <div className="flex flex-col items-end">
+                        <span className="text-[8px] text-text-muted uppercase font-black tracking-widest mb-0.5">Rendimiento</span>
+                        <span className={`text-[11px] font-black tracking-wider ${beneficio > 0.01 ? 'text-brand-400' : beneficio < -0.01 ? 'text-danger' : 'text-text-muted'}`}>
+                          {beneficio > 0.01 ? '+' : ''}{formatoEuros(beneficio)} ({pct.toFixed(2)}%)
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="flex justify-between items-center text-[10px] uppercase font-black">
-                      <span className="text-text-muted">Rendimiento</span>
-                      <span className={beneficio > 0.01 ? 'text-brand-400' : beneficio < -0.01 ? 'text-danger' : 'text-text-muted'}>
-                        {beneficio > 0.01 ? '+' : ''}{formatoEuros(beneficio)} ({pct.toFixed(2)}%)
+                    <div className="flex justify-between items-center text-[10px] uppercase font-black p-3 bg-surface-solid/50 rounded-xl border border-border-subtle/50">
+                      <span className="text-text-muted flex items-center gap-1.5">
+                        <Globe size={12} className="text-brand-400 opacity-70" /> Mercado
                       </span>
-                    </div>
-
-                    <div className="flex justify-between items-center text-[10px] uppercase font-black p-2 bg-brand-500/5 rounded-md border border-brand-500/10">
-                      <span className="text-text-muted flex items-center gap-1">
-                        <Globe size={10} className="text-brand-500" /> Mercado
-                      </span>
-                      <span className="text-text-main">
+                      <span className="text-text-main text-xs">
                         {c.precioActual > 0 ? formatoEuros(c.precioActual) : '---'}
                       </span>
                     </div>
@@ -126,20 +133,20 @@ export default function Cuentas() {
                 )}
 
                 {esRemunerada && (
-                  <div className="mt-4 pt-3 border-t border-border-subtle flex flex-col gap-1.5">
-                    <div className="flex justify-between items-center">
-                      <span className="text-brand-400 text-[10px] font-black uppercase">
+                  <div className="mt-5 pt-4 border-t border-border-subtle/30 flex flex-col gap-3">
+                    <div className="inline-flex">
+                      <span className="text-brand-400 bg-brand-500/10 border border-brand-500/20 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">
                         +{valTae.toFixed(2)}% TAE
                       </span>
                     </div>
-                    <div className="flex justify-between items-center gap-4">
+                    <div className="flex justify-between items-center gap-4 bg-surface-solid/50 rounded-xl border border-border-subtle/50 p-3">
                       <div className="flex flex-col">
-                        <span className="text-[9px] text-text-muted uppercase font-bold">Mensual</span>
-                        <span className="text-text-main text-sm font-bold">+{formatoEuros(gananciaMensual)}</span>
+                        <span className="text-[8px] text-text-muted uppercase font-black tracking-widest mb-0.5">Mensual</span>
+                        <span className="text-text-main text-xs font-black">+{formatoEuros(gananciaMensual)}</span>
                       </div>
                       <div className="flex flex-col text-right">
-                        <span className="text-[9px] text-text-muted uppercase font-bold">Anual</span>
-                        <span className="text-text-main text-sm font-bold">+{formatoEuros(gananciaAnual)}</span>
+                        <span className="text-[8px] text-text-muted uppercase font-black tracking-widest mb-0.5">Anual</span>
+                        <span className="text-text-main text-xs font-black">+{formatoEuros(gananciaAnual)}</span>
                       </div>
                     </div>
                   </div>

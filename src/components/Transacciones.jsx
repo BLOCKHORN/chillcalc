@@ -62,40 +62,47 @@ export default function Transacciones() {
   }
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24 md:pb-8 px-1 md:px-0">
-      <header className="mb-8 flex flex-col lg:flex-row lg:justify-between lg:items-end gap-6 pt-2">
-        <div className="w-full text-center lg:text-left">
-          <h2 className="text-3xl lg:text-2xl font-black lg:font-bold text-text-main mb-1 tracking-tighter lg:tracking-normal">
-            Movimientos
-          </h2>
-          <p className="text-[10px] lg:text-sm text-text-muted uppercase font-bold tracking-widest">
-            Historial y auditoría de flujos
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-24 md:pb-12 px-1 md:px-0 relative w-full">
+      
+      {/* Soft Glow Backlight */}
+      <div className="absolute top-20 right-10 w-64 h-64 bg-brand-500/5 rounded-full blur-[100px] pointer-events-none" />
+      <div className="absolute top-40 left-10 w-48 h-48 bg-sky-500/5 rounded-full blur-[90px] pointer-events-none" />
+
+      <header className="mb-10 flex flex-col xl:flex-row xl:justify-between xl:items-end gap-6 pt-2 relative z-10">
+        <div className="w-full text-center xl:text-left">
+          <p className="text-[10px] md:text-xs font-black text-text-muted uppercase tracking-widest mb-2 flex items-center justify-center xl:justify-start gap-2">
+            <ArrowRightLeft size={14} className="text-brand-400" />
+            Historial
           </p>
+          <h1 className="text-5xl md:text-6xl font-black tracking-tighter leading-none text-text-main">
+            Movimientos
+          </h1>
         </div>
         
-        <div className="grid grid-cols-2 lg:flex lg:flex-row gap-2 w-full lg:w-auto">
-          <div className="flex items-center bg-surface-solid border border-border-subtle rounded-xl px-3 py-3 lg:py-2 gap-2">
-            <Calendar size={14} className="text-text-muted shrink-0" />
+        {/* Controles y Filtros */}
+        <div className="grid grid-cols-2 lg:flex lg:flex-row gap-3 w-full xl:w-auto">
+          <div className="flex items-center bg-surface-solid/60 backdrop-blur-md border border-border-subtle/50 rounded-xl px-4 py-3 gap-2 shadow-sm transition-all hover:border-border-subtle/80">
+            <Calendar size={16} className="text-brand-400 shrink-0" />
             <select 
               value={filtroMes}
               onChange={(e) => setFiltroMes(e.target.value)}
-              className="bg-transparent text-[11px] lg:text-sm font-bold text-text-main focus:outline-none cursor-pointer w-full uppercase"
+              className="bg-transparent text-[11px] lg:text-xs font-bold text-text-main focus:outline-none cursor-pointer w-full uppercase tracking-wider"
             >
-              <option value="todos">Meses</option>
+              <option value="todos">Todos los Meses</option>
               {mesesDisponibles.map(m => (
                 <option key={m} value={m}>{m}</option>
               ))}
             </select>
           </div>
 
-          <div className="flex items-center bg-surface-solid border border-border-subtle rounded-xl px-3 py-3 lg:py-2 gap-2">
-            <Filter size={14} className="text-text-muted shrink-0" />
+          <div className="flex items-center bg-surface-solid/60 backdrop-blur-md border border-border-subtle/50 rounded-xl px-4 py-3 gap-2 shadow-sm transition-all hover:border-border-subtle/80">
+            <Filter size={16} className="text-brand-400 shrink-0" />
             <select 
               value={filtroCategoria}
               onChange={(e) => setFiltroCategoria(e.target.value)}
-              className="bg-transparent text-[11px] lg:text-sm font-bold text-text-main focus:outline-none cursor-pointer w-full uppercase"
+              className="bg-transparent text-[11px] lg:text-xs font-bold text-text-main focus:outline-none cursor-pointer w-full uppercase tracking-wider"
             >
-              <option value="todas">Categorías</option>
+              <option value="todas">Todas las Categorías</option>
               {categorias.map(cat => (
                 <option key={cat} value={cat}>{cat}</option>
               ))}
@@ -104,81 +111,96 @@ export default function Transacciones() {
 
           <button 
             onClick={() => setModalCategoriasAbierto(true)} 
-            className="flex items-center justify-center gap-2 px-4 py-3 lg:py-2 rounded-xl font-bold border border-border-subtle bg-surface-solid text-text-main text-sm active:scale-95 transition-all"
+            className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl font-bold border border-border-subtle/50 bg-surface-solid/60 backdrop-blur-md text-text-main text-xs hover:border-border-subtle/80 hover:bg-surface-solid transition-all shadow-sm group"
           >
-            <Tags size={18} />
-            <span className="lg:inline">Etiquetas</span>
+            <Tags size={16} className="text-text-muted group-hover:text-text-main transition-colors" />
+            <span className="hidden lg:inline uppercase tracking-widest">Etiquetas</span>
           </button>
           
           <button 
             onClick={() => setModalAbierto(true)} 
-            className="flex items-center justify-center gap-2 bg-brand-500 hover:bg-brand-600 text-white py-3 lg:py-2 px-6 rounded-xl active:scale-95 transition-all text-sm font-bold shadow-lg shadow-brand-500/20"
+            className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold bg-brand-500/10 text-brand-400 hover:bg-brand-500/20 active:scale-95 transition-all text-xs border border-brand-500/20 shadow-lg shadow-brand-500/5 group uppercase tracking-widest"
           >
-            <Plus size={18} /> Operación
+            <Plus size={16} className="group-hover:rotate-90 transition-transform" />
+            <span className="hidden lg:inline">Operación</span>
           </button>
         </div>
       </header>
 
       {(filtroCategoria !== 'todas' || filtroMes !== 'todos') && (
-        <div className="mb-4 flex justify-center lg:justify-start">
+        <div className="mb-6 flex justify-center xl:justify-start relative z-10 animate-in fade-in duration-300">
           <button 
             onClick={limpiarFiltros}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/20 text-[10px] font-black uppercase tracking-widest"
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-danger/10 text-danger border border-danger/20 text-[10px] font-black uppercase tracking-widest hover:bg-danger/20 transition-colors shadow-sm"
           >
-            <X size={12} /> Limpiar Filtros
+            <X size={12} strokeWidth={3} /> Limpiar Filtros
           </button>
         </div>
       )}
 
-      <div className="card p-0 overflow-hidden border-border-subtle">
-        <div className="w-full">
+      {/* Lista de Transacciones (Glassmorphism) */}
+      <div className="bg-surface-solid/40 backdrop-blur-xl border border-border-subtle/50 rounded-3xl overflow-hidden shadow-2xl shadow-black/5 relative z-10">
+        <div className="w-full flex flex-col">
           {transaccionesFiltradas.length > 0 ? (
             transaccionesFiltradas.map(t => {
               const esIngreso = t.tipo === 'ingreso'
               return (
-                <div key={t.id} className="flex flex-col lg:flex-row lg:items-center justify-between p-4 border-b border-border-subtle last:border-0 hover:bg-surface transition-colors group relative">
-                  <div className="flex items-center gap-4 mb-3 lg:mb-0">
-                    <div className={`p-2.5 rounded-xl border ${esIngreso ? 'bg-brand-500/10 text-brand-400 border-brand-500/20' : 'bg-danger/10 text-danger border-danger/20'}`}>
-                      {esIngreso ? <ArrowUpRight size={20} strokeWidth={2.5} /> : <ArrowDownRight size={20} strokeWidth={2.5} />}
+                <div key={t.id} className="flex flex-col lg:flex-row lg:items-center justify-between p-5 border-b border-border-subtle/50 last:border-0 hover:bg-surface-solid/60 transition-colors group relative">
+                  
+                  <div className="flex items-center gap-4 mb-4 lg:mb-0 w-full lg:w-1/2">
+                    <div className={`p-3 rounded-2xl border flex-shrink-0 ${esIngreso ? 'bg-brand-500/10 text-brand-400 border-brand-500/20 shadow-[0_0_15px_rgba(var(--brand-500),0.1)]' : 'bg-danger/10 text-danger border-danger/20 shadow-[0_0_15px_rgba(239,68,68,0.1)]'}`}>
+                      {esIngreso ? <ArrowUpRight size={20} strokeWidth={3} /> : <ArrowDownRight size={20} strokeWidth={3} />}
                     </div>
                     <div className="overflow-hidden">
-                      <p className="font-bold text-text-main text-sm lg:text-base leading-tight truncate">
+                      <p className="font-black text-text-main text-base lg:text-lg leading-none truncate mb-1.5 group-hover:text-brand-400 transition-colors">
                         {t.desc || t.categoria}
                       </p>
-                      <p className="text-[10px] lg:text-xs text-text-muted font-medium mt-0.5">
-                        <span className="text-brand-400 font-bold uppercase">{t.categoria}</span> · {t.fecha} · {getNombreCuenta(t.cuentaId)}
-                      </p>
+                      <div className="flex items-center gap-2 text-[10px] text-text-muted font-bold uppercase tracking-widest">
+                        <span className="text-text-main bg-surface rounded-md px-1.5 py-0.5 border border-border-subtle/50">{t.categoria}</span> 
+                        <span>•</span>
+                        <span>{t.fecha}</span>
+                        <span>•</span>
+                        <span className="truncate max-w-[100px] lg:max-w-[150px]">{getNombreCuenta(t.cuentaId)}</span>
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between lg:justify-end gap-6 border-t lg:border-t-0 border-border-subtle/50 pt-3 lg:pt-0">
-                    <div className={`text-base lg:text-lg font-black tracking-tight ${esIngreso ? 'text-brand-400' : 'text-danger'}`}>
+                  <div className="flex items-center justify-between lg:justify-end gap-6 border-t border-border-subtle/30 lg:border-t-0 pt-4 lg:pt-0 w-full lg:w-1/2">
+                    <div className={`text-xl lg:text-2xl font-black tracking-tighter ${esIngreso ? 'text-text-main' : 'text-danger'}`}>
                       {esIngreso ? '+' : '-'}{formatoEuros(t.monto)}
                     </div>
                     
-                    <div className="flex gap-1.5">
+                    <div className="flex gap-2">
                       <button 
                         onClick={() => abrirEdicion(t)}
-                        className="p-2.5 text-text-muted hover:text-text-main bg-surface-solid lg:bg-transparent rounded-lg border border-border-subtle lg:border-transparent transition-all active:scale-90"
+                        className="p-2 text-text-muted hover:text-text-main hover:bg-surface rounded-xl border border-transparent hover:border-border-subtle/50 transition-all active:scale-90"
                       >
-                        <Edit2 size={16} />
+                        <Edit2 size={18} strokeWidth={2.5} />
                       </button>
                       <button 
                         onClick={() => eliminarTransaccion(t.id)}
-                        className="p-2.5 text-text-muted hover:text-danger bg-surface-solid lg:bg-transparent rounded-lg border border-border-subtle lg:border-transparent transition-all active:scale-90"
+                        className="p-2 text-text-muted hover:text-danger hover:bg-danger/10 rounded-xl border border-transparent hover:border-danger/20 transition-all active:scale-90"
                       >
-                        <Trash2 size={16} />
+                        <Trash2 size={18} strokeWidth={2.5} />
                       </button>
                     </div>
                   </div>
+
                 </div>
               )
             })
           ) : (
-            <div className="p-16 text-center">
-              <p className="text-text-muted text-[10px] font-black uppercase tracking-widest mb-4">Cero movimientos encontrados</p>
-              <button onClick={limpiarFiltros} className="px-6 py-2 rounded-xl bg-surface-solid border border-border-subtle text-text-main text-xs font-bold hover:bg-surface transition-all">
-                Restablecer vista
+            <div className="py-24 flex flex-col items-center justify-center text-center">
+              <div className="w-16 h-16 bg-surface-solid rounded-2xl border border-border-subtle/50 flex items-center justify-center mb-4 text-text-muted/30">
+                <ListFilter size={32} strokeWidth={2} />
+              </div>
+              <p className="text-text-main text-sm font-black uppercase tracking-widest mb-1">Cero Movimientos</p>
+              <p className="text-text-muted text-[10px] font-bold uppercase tracking-widest mb-6">No hay registros que coincidan con los filtros.</p>
+              <button 
+                onClick={limpiarFiltros} 
+                className="px-6 py-3 rounded-xl bg-surface-solid border border-border-subtle text-text-main text-xs font-bold hover:bg-surface hover:border-border-subtle/80 transition-all shadow-sm active:scale-95"
+              >
+                Restablecer Vista
               </button>
             </div>
           )}
