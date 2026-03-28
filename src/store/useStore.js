@@ -6,7 +6,7 @@ export const useStore = create((set, get) => ({
   cuentas: [],
   transacciones: [],
   objetivos: [],
-  categorias: [],
+  categorias: [], // <-- Ahora será un array de objetos: [{nombre, emoji, color}]
   gruposSplit: [],
   vistaActual: 'dashboard',
   tema: 'dark',
@@ -35,13 +35,35 @@ export const useStore = create((set, get) => ({
       supabase.from('split_grupos').select('*, split_participantes(*), split_gastos(*)').order('created_at', { ascending: false })
     ])
 
-    let listaCategorias = resCategorias.data?.map(c => c.nombre) || []
+    // Mapeo adaptado a la nueva estructura de objetos
+    let listaCategorias = resCategorias.data?.map(c => ({
+      nombre: c.nombre,
+      emoji: c.emoji || '🏷️',
+      color: c.color || 'slate'
+    })) || []
     
+    // Fallback si la base de datos está vacía
     if (listaCategorias.length === 0) {
-      const basicas = ['Alimentación', 'Vivienda', 'Transporte', 'Ocio', 'Salud', 'Educación', 'Compras', 'Otros']
-      const inserts = basicas.map(cat => ({ user_id: user.id, nombre: cat }))
+      const basicas = [
+        { nombre: 'Alimentación', emoji: '🍽️', color: 'orange' },
+        { nombre: 'Vivienda', emoji: '🏠', color: 'blue' },
+        { nombre: 'Transporte', emoji: '🚗', color: 'emerald' },
+        { nombre: 'Ocio', emoji: '🎮', color: 'purple' },
+        { nombre: 'Salud', emoji: '❤️', color: 'rose' },
+        { nombre: 'Educación', emoji: '📚', color: 'yellow' },
+        { nombre: 'Compras', emoji: '🛍️', color: 'pink' },
+        { nombre: 'Otros', emoji: '🏷️', color: 'slate' }
+      ]
+      
+      const inserts = basicas.map(cat => ({ 
+        user_id: user.id, 
+        nombre: cat.nombre,
+        emoji: cat.emoji,
+        color: cat.color
+      }))
+      
       const { data } = await supabase.from('categorias').insert(inserts).select()
-      listaCategorias = data?.map(c => c.nombre) || basicas
+      listaCategorias = data?.map(c => ({ nombre: c.nombre, emoji: c.emoji, color: c.color })) || basicas
     }
 
     const cuentasMapeadas = (resCuentas.data || []).map(c => ({
@@ -76,18 +98,31 @@ export const useStore = create((set, get) => ({
     get().actualizarPreciosMercado()   
   },
 
-  agregarCategoria: async (nombre) => {
+  // Modificado para recibir un objeto en lugar de un string
+  agregarCategoria: async (nuevaCat) => {
     const { data: { user } } = await supabase.auth.getUser()
-    const { error } = await supabase.from('categorias').insert([{ user_id: user.id, nombre }])
-    if (!error) {
-      set((state) => ({ categorias: [...state.categorias, nombre].sort() }))
+    const { data, error } = await supabase.from('categorias').insert([{ 
+      user_id: user.id, 
+      nombre: nuevaCat.nombre,
+      emoji: nuevaCat.emoji || '🏷️',
+      color: nuevaCat.color || 'slate'
+    }]).select()
+    
+    if (!error && data) {
+      set((state) => ({ 
+        categorias: [...state.categorias, { nombre: data[0].nombre, emoji: data[0].emoji, color: data[0].color }].sort((a, b) => a.nombre.localeCompare(b.nombre)) 
+      }))
+    } else {
+      console.error("Error al guardar categoría:", error)
     }
   },
 
   eliminarCategoria: async (nombre) => {
     const { error } = await supabase.from('categorias').delete().eq('nombre', nombre)
     if (!error) {
-      set((state) => ({ categorias: state.categorias.filter(c => c !== nombre) }))
+      set((state) => ({ categorias: state.categorias.filter(c => c.nombre !== nombre) }))
+    } else {
+      console.error("Error al eliminar categoría:", error)
     }
   },
 
@@ -233,7 +268,6 @@ export const useStore = create((set, get) => ({
           nc.saldo = Number(nc.saldo) + (tx.tipo === 'ingreso' ? Number(tx.monto) : -Number(tx.monto))
         }
         
-        // AQUÍ ESTÁ EL CHIVATO: Si Supabase falla al actualizar la cuenta, lo dirá en la consola
         supabase.from('cuentas').update({ 
           saldo: nc.saldo, 
           capital_invertido: nc.capitalInvertido, 
