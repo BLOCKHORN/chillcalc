@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useStore } from '../store/useStore'
-import { Users, Plus, Trash2, ArrowRight, ChevronLeft, UserPlus, Receipt, Info, Share2, Check } from 'lucide-react'
+import { Users, Plus, Trash2, ArrowRight, ChevronLeft, UserPlus, Receipt, Info, Share2, Check, ArrowRightLeft } from 'lucide-react'
 
 const formatoEuros = (num) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(num || 0)
 
