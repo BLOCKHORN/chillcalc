@@ -1,24 +1,28 @@
 export const getMarketPrice = async (ticker, moneda = 'EUR') => {
   try {
     const cleanTicker = ticker.trim().toUpperCase()
-    const stooqSymbol = cleanTicker === 'SPY' ? 'SPY.US' : cleanTicker
+    // Si el usuario pone SPY o VUSA.L, Yahoo Finance normalmente los lee tal cual o con sus sufijos estándar.
     
-    const targetUrl = `https://stooq.com/q/l/?s=${stooqSymbol}&f=sd2t2ohlcv&h&e=json`
+    // Usamos query2.finance.yahoo.com a través de un proxy robusto de YQL
+    const targetUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${cleanTicker}?interval=1d&range=1d`
     
-    // 1. Proxy principal (rápido y estable)
-    let resStock = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`)
+    // Utilizamos allorigins pero con el endpoint /get (que devuelve JSON parseable en lugar de raw)
+    // Esto evita el bloqueo estricto que vimos en el primer intento.
+    const resStock = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`)
     
-    // 2. Si el primero falla por saturación, usamos el de respaldo automáticamente
-    if (!resStock.ok) {
-        resStock = await fetch(`https://corsproxy.io/?${encodeURIComponent(targetUrl)}`)
+    if (!resStock.ok) throw new Error("Fallo de red al obtener datos de Yahoo")
+    
+    const proxyData = await resStock.json()
+    const dataStock = JSON.parse(proxyData.contents)
+    
+    // Navegamos por la estructura JSON de Yahoo Finance
+    const result = dataStock.chart.result
+    if (!result || !result[0] || !result[0].meta || !result[0].meta.regularMarketPrice) {
+       console.error("No se encontró el precio para el ticker:", cleanTicker)
+       return null
     }
 
-    if (!resStock.ok) throw new Error("Proxys de mercado saturados")
-    
-    const dataStock = await resStock.json()
-    
-    if (!dataStock.symbols || !dataStock.symbols[0]) return null
-    const precioRaw = parseFloat(dataStock.symbols[0].close)
+    const precioRaw = parseFloat(result[0].meta.regularMarketPrice)
 
     if (moneda === 'USD') return precioRaw
 
@@ -30,7 +34,7 @@ export const getMarketPrice = async (ticker, moneda = 'EUR') => {
 
     return precioRaw * tasa
   } catch (error) {
-    console.error("Fallo en servicio de mercado:", error.message)
+    console.error("Fallo en servicio de mercado (Yahoo):", error.message)
     return null
   }
 }
