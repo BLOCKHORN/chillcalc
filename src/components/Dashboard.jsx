@@ -3,7 +3,8 @@ import { useStore } from '../store/useStore'
 import { 
   Activity, ArrowUpRight, ArrowDownRight, Wallet, 
   BarChart3, ListFilter, Building2, 
-  CreditCard, Banknote, LineChart, ChevronLeft, ArrowRight, Calendar, RefreshCw, Plus, Sun, Moon, TrendingUp
+  CreditCard, Banknote, LineChart, ChevronLeft, ArrowRight, Calendar, RefreshCw, Plus, Sun, Moon, TrendingUp,
+  Percent
 } from 'lucide-react'
 import { 
   LineChart as ReLineChart, Line, XAxis, YAxis, 
@@ -38,7 +39,6 @@ export default function Dashboard() {
   const mesActualStr = `${String(hoy.getMonth() + 1).padStart(2, '0')}/${hoy.getFullYear()}`
   const [filtroMes, setFiltroMes] = useState(mesActualStr)
 
-  // Cálculos para "Gastado Hoy"
   const diaHoy = String(hoy.getDate()).padStart(2, '0')
   const mesHoy = String(hoy.getMonth() + 1).padStart(2, '0')
   const anoHoy = hoy.getFullYear()
@@ -152,10 +152,13 @@ export default function Dashboard() {
       .map(nombre => ({ nombre, valor: catMap[nombre].total, transacciones: catMap[nombre].items }))
       .sort((a, b) => b.valor - a.valor)
 
-    return { ingresos: ing, gastos: gas, categorias: cats }
+    // Cálculo de la Tasa de Ahorro
+    const tasaAhorro = ing > 0 ? Math.max(0, ((ing - gas) / ing) * 100) : 0
+
+    return { ingresos: ing, gastos: gas, categorias: cats, tasaAhorro }
   }, [transacciones, filtroMes, cuentas])
 
-  const { ingresos, gastos, categorias } = stats
+  const { ingresos, gastos, categorias, tasaAhorro } = stats
   const catDetalle = categorias.find(c => c.nombre === catSeleccionada)
 
   return (
@@ -206,10 +209,7 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* 3. Sección Central Dividida: Tendencia Global y Gastado Hoy */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6 z-10 relative">
-        
-        {/* Gráfica Tendencia */}
         <div className="bg-surface-solid/40 backdrop-blur-md border border-border-subtle/50 rounded-3xl p-0 overflow-hidden shadow-2xl shadow-black/5 flex flex-col">
           <div className="p-5 md:p-6 border-b border-border-subtle/50 flex items-center justify-between gap-4">
             <div className="flex items-center gap-2.5">
@@ -241,7 +241,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Panel Gastado Hoy */}
         <div className="bg-surface-solid/40 backdrop-blur-md border border-border-subtle/50 rounded-3xl p-6 shadow-2xl shadow-black/5 flex flex-col justify-between h-full min-h-[300px]">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2.5">
@@ -279,11 +278,10 @@ export default function Dashboard() {
             )}
           </div>
         </div>
-
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 z-10 relative">
-        <div className="bg-surface-solid/40 backdrop-blur-md border border-border-subtle/50 rounded-3xl p-6 shadow-2xl shadow-black/5 flex flex-col justify-between">
+        <div className="bg-surface-solid/40 backdrop-blur-md border border-border-subtle/50 rounded-3xl p-6 shadow-2xl shadow-black/5 flex flex-col">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-2.5">
               <Wallet className="text-sky-500" size={18} />
@@ -299,12 +297,40 @@ export default function Dashboard() {
               ))}
             </select>
           </div>
+
+          {/* Bloque de Tasa de Ahorro Integrado */}
+          <div className="mb-8 p-5 bg-surface-solid/60 rounded-2xl border border-border-subtle/50 relative overflow-hidden group">
+            <div className="flex justify-between items-end mb-4">
+              <div>
+                <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                  <Percent size={12} className="text-brand-400" /> Tasa de Ahorro
+                </p>
+                <p className={`text-4xl font-black tracking-tighter ${tasaAhorro > 20 ? 'text-brand-400' : tasaAhorro > 0 ? 'text-warning' : 'text-danger'}`}>
+                  {tasaAhorro.toFixed(1)}%
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-[9px] font-black text-text-muted uppercase tracking-widest">Salud Financiera</p>
+                <p className="text-[10px] font-bold text-text-main">
+                  {tasaAhorro >= 30 ? '🔥 Excelente' : tasaAhorro >= 15 ? '✅ Saludable' : '⚠️ Ajustado'}
+                </p>
+              </div>
+            </div>
+            <div className="w-full bg-surface h-2 rounded-full overflow-hidden border border-border-subtle shadow-inner">
+               <div 
+                className={`h-full transition-all duration-1000 ease-out rounded-full ${tasaAhorro > 20 ? 'bg-brand-500' : tasaAhorro > 0 ? 'bg-warning' : 'bg-danger'}`}
+                style={{ width: `${Math.min(100, tasaAhorro)}%` }}
+               />
+            </div>
+          </div>
+
           <div className="mb-8">
-            <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1.5">Balance del mes</p>
+            <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1.5">Balance neto</p>
             <p className={`text-5xl font-black tracking-tighter ${ingresos - gastos >= 0 ? 'text-text-main' : 'text-danger'}`}>
               {ingresos - gastos >= 0 ? '+' : ''}{formatoEuros(ingresos - gastos)}
             </p>
           </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex items-center gap-4 p-5 bg-surface rounded-xl border border-border-subtle group transition-colors hover:border-brand-500/30">
               <ArrowUpRight className="text-brand-400 group-hover:scale-110 transition-transform" size={26} />
