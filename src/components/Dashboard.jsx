@@ -8,7 +8,8 @@ import {
 } from 'lucide-react'
 import { 
   LineChart as ReLineChart, Line, XAxis, YAxis, 
-  CartesianGrid, Tooltip, ResponsiveContainer 
+  CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell
 } from 'recharts'
 import ModalTransaccion from './ModalTransaccion'
 
@@ -26,13 +27,16 @@ const inicioDelDia = (fecha) => {
 }
 
 export default function Dashboard() {
-  const { patrimonioTotal, transacciones, cuentas, suscripciones, pagarSuscripcion, setVistaActual, actualizarPreciosMercado, tema } = useStore()
+  const { 
+    patrimonioTotal, transacciones, cuentas, suscripciones, 
+    pagarSuscripcion, setVistaActual, actualizarPreciosMercado, 
+    tema, categorias: categoriasGlobales 
+  } = useStore()
   
   const [modalAbierto, setModalAbierto] = useState(false)
   const [tipoInicial, setTipoInicial] = useState('gasto')
   const [trendRango, setTrendRango] = useState(30)
   const [catSeleccionada, setCatSeleccionada] = useState(null)
-  const [mostrarTodasCats, setMostrarTodasCats] = useState(false)
   const [cargando, setCargando] = useState(false)
   
   const hoy = new Date()
@@ -43,7 +47,7 @@ export default function Dashboard() {
   const mesHoy = String(hoy.getMonth() + 1).padStart(2, '0')
   const anoHoy = hoy.getFullYear()
   const fechaHoyStr = `${diaHoy}/${mesHoy}/${anoHoy}`
-  const fechaSQLHoyStr = `${anoHoy}-${mesHoy}-${diaHoy}` // Formato YYYY-MM-DD para comparar con SQL
+  const fechaSQLHoyStr = `${anoHoy}-${mesHoy}-${diaHoy}`
 
   const transaccionesHoy = useMemo(() => {
     return transacciones.filter(t => t.fecha === fechaHoyStr && t.tipo === 'gasto')
@@ -66,6 +70,17 @@ export default function Dashboard() {
     linea: esOscuro ? '#10b981' : '#059669',
     tooltipBg: esOscuro ? '#18181b' : '#ffffff',
     tooltipBorde: esOscuro ? '#27272a' : '#e2e8f0'
+  }
+
+  const mapaColores = {
+    orange: '#f97316',
+    blue: '#3b82f6',
+    emerald: '#10b981',
+    purple: '#a855f7',
+    rose: '#f43f5e',
+    yellow: '#eab308',
+    pink: '#ec4899',
+    slate: '#64748b'
   }
 
   const handleSync = async () => {
@@ -203,7 +218,6 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* BLOQUE DE ALERTAS: Suscripciones Pendientes */}
       {suscripcionesPendientes.length > 0 && (
         <div className="mb-6 z-10 relative">
           <div className="bg-danger/10 border border-danger/30 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg shadow-danger/5">
@@ -426,29 +440,59 @@ export default function Dashboard() {
               <p className="text-[10px] uppercase font-black tracking-widest">Sin movimientos</p>
             </div>
           ) : (
-            <div className="flex flex-col gap-5 flex-1">
+            <div className="flex flex-col flex-1 h-full">
               {!catSeleccionada ? (
-                <>
-                  {(mostrarTodasCats ? categorias : categorias.slice(0, 5)).map((cat, idx) => (
-                    <button key={cat.nombre} onClick={() => setCatSeleccionada(cat.nombre)} className="group w-full text-left transition-all">
-                      <div className="flex justify-between items-center mb-1.5 gap-2">
-                        <span className="text-[10px] font-black text-text-main group-hover:text-text-main uppercase tracking-widest truncate leading-none">
-                          {cat.nombre}
-                        </span>
-                        <span className="text-xs font-black text-text-main leading-none shrink-0">{formatoEuros(cat.valor)}</span>
-                      </div>
-                      <div className="w-full bg-surface-solid/50 rounded-full h-1.5 border border-border-subtle/30 overflow-hidden relative">
-                        <div className="absolute inset-0 bg-linear-to-r from-danger/20 to-danger blur-sm opacity-60 rounded-full" style={{ width: `${(cat.valor / (categorias[0]?.valor || 1)) * 100}%` }} />
-                        <div className="bg-danger h-full relative z-10 rounded-full" style={{ width: `${(cat.valor / (categorias[0]?.valor || 1)) * 100}%`, opacity: 1 - (idx * 0.1) }} />
-                      </div>
-                    </button>
-                  ))}
-                  {categorias.length > 5 && (
-                    <button onClick={() => setMostrarTodasCats(!mostrarTodasCats)} className="text-[10px] font-black text-brand-400 uppercase mt-2 tracking-widest text-center hover:text-brand-300 transition-colors">
-                      {mostrarTodasCats ? 'Ver menos' : `Ver todas (${categorias.length})`}
-                    </button>
-                  )}
-                </>
+                <div className="flex flex-col md:flex-row items-center gap-6 flex-1 h-full pt-2">
+                  <div className="w-48 h-48 shrink-0 relative flex items-center justify-center">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={categorias}
+                          dataKey="valor"
+                          nameKey="nombre"
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={65}
+                          outerRadius={85}
+                          stroke="none"
+                          paddingAngle={2}
+                          onClick={(entry) => setCatSeleccionada(entry.nombre)}
+                        >
+                          {categorias.map((entry, index) => {
+                            const catConfig = categoriasGlobales.find(c => c.nombre === entry.nombre)
+                            const hexColor = mapaColores[catConfig?.color] || mapaColores.slate
+                            return <Cell key={`cell-${index}`} fill={hexColor} className="cursor-pointer outline-none hover:opacity-80 transition-all" />
+                          })}
+                        </Pie>
+                        <Tooltip
+                          contentStyle={{ backgroundColor: coloresGrafico.tooltipBg, border: `1px solid ${coloresGrafico.tooltipBorde}`, borderRadius: '12px', fontSize: '12px', fontWeight: 'bold', padding: '10px 14px', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                          itemStyle={{ color: coloresGrafico.texto }}
+                          formatter={(val) => formatoEuros(val)}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                      <span className="text-[9px] font-black text-text-muted uppercase tracking-widest">Gastos</span>
+                      <span className="text-sm font-black text-text-main leading-none mt-1">{formatoEuros(gastos)}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 w-full flex flex-col gap-1 overflow-y-auto max-h-[220px] custom-scrollbar pr-2">
+                    {categorias.map(cat => {
+                      const catConfig = categoriasGlobales.find(c => c.nombre === cat.nombre)
+                      const hexColor = mapaColores[catConfig?.color] || mapaColores.slate
+                      return (
+                        <button key={cat.nombre} onClick={() => setCatSeleccionada(cat.nombre)} className="flex items-center justify-between p-3 rounded-xl hover:bg-surface-solid/50 border border-transparent hover:border-border-subtle/50 transition-all w-full text-left group">
+                          <div className="flex items-center gap-3">
+                            <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: hexColor }} />
+                            <span className="text-[11px] font-black text-text-main uppercase tracking-widest truncate">{cat.nombre}</span>
+                          </div>
+                          <span className="text-xs font-black text-text-main">{formatoEuros(cat.valor)}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
               ) : (
                 <div className="flex flex-col gap-3 overflow-y-auto max-h-[250px] pr-1 custom-scrollbar">
                   {catDetalle?.transacciones.map(t => (
