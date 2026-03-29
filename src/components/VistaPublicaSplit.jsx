@@ -49,11 +49,16 @@ export default function VistaPublicaSplit({ token }) {
     
     setEnviando(true)
     
+    // Capturamos la fecha actual en formato DD/MM/YYYY
+    const hoy = new Date()
+    const fechaActual = `${String(hoy.getDate()).padStart(2, '0')}/${String(hoy.getMonth() + 1).padStart(2, '0')}/${hoy.getFullYear()}`
+
     const { error: insertError } = await supabase.from('split_gastos').insert([{
       grupo_id: grupo.id,
       descripcion: formGasto.desc,
       monto: parseFloat(formGasto.monto),
-      pagado_por_id: formGasto.pagadoPor
+      pagado_por_id: formGasto.pagadoPor,
+      fecha: fechaActual // Añadimos la fecha a la inserción
     }])
 
     if (!insertError) {
@@ -184,8 +189,8 @@ export default function VistaPublicaSplit({ token }) {
                       </div>
                       <div>
                         <p className="text-sm font-black text-text-main truncate leading-tight mb-0.5">{g.descripcion}</p>
-                        <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest">
-                          <span className="text-text-main">{grupo.split_participantes.find(p => p.id === g.pagado_por_id)?.nombre}</span> pago <span className="text-brand-400 font-black">{formatoEuros(g.monto)}</span>
+                        <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest mt-1">
+                          <span>{g.fecha || 'N/A'}</span> • <span className="text-text-main">{grupo.split_participantes.find(p => p.id === g.pagado_por_id)?.nombre}</span> pago <span className="text-brand-400 font-black">{formatoEuros(g.monto)}</span>
                         </p>
                       </div>
                     </div>

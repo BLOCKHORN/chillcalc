@@ -24,7 +24,6 @@ export default function CompartirGastos() {
   const [amigos, setAmigos] = useState(['Tú', ''])
   const [formGasto, setFormGasto] = useState({ desc: '', monto: '', pagadoPor: '' })
   
-  // Estado para el feedback visual del botón de compartir
   const [copiado, setCopiado] = useState(false)
 
   const grupoSeleccionado = gruposSplit.find(g => g.id === grupoActivoId)
@@ -41,11 +40,16 @@ export default function CompartirGastos() {
   const handleNuevoGasto = async (e) => {
     e.preventDefault()
     if (!formGasto.desc || !formGasto.monto || !formGasto.pagadoPor) return
+
+    const hoy = new Date()
+    const fechaActual = `${String(hoy.getDate()).padStart(2, '0')}/${String(hoy.getMonth() + 1).padStart(2, '0')}/${hoy.getFullYear()}`
+
     await agregarGastoSplit({
       grupo_id: grupoActivoId,
       descripcion: formGasto.desc,
       monto: parseFloat(formGasto.monto),
-      pagado_por_id: formGasto.pagadoPor
+      pagado_por_id: formGasto.pagadoPor,
+      fecha: fechaActual
     })
     setFormGasto({ desc: '', monto: '', pagadoPor: '' })
   }
@@ -53,15 +57,14 @@ export default function CompartirGastos() {
   const handleCompartir = async () => {
     const enlace = obtenerEnlaceCompartir(grupoSeleccionado)
     
-    // CORRECCIÓN: Si no hay enlace, avisamos explícitamente al usuario
     if (!enlace) {
-      alert("⚠️ Error: Este grupo no tiene un enlace de invitación generado. Esto ocurre en grupos creados antes de la actualización. Por favor, crea un grupo nuevo para poder invitar.")
+      alert("Error: Este grupo no tiene un enlace de invitación generado. Crea un grupo nuevo para poder invitar.")
       return
     }
 
     const shareData = {
       title: `Gastos: ${grupoSeleccionado.nombre}`,
-      text: `Únete para ver los gastos de ${grupoSeleccionado.nombre} en ChillCalc 💸👇\n`,
+      text: `Únete para ver los gastos de ${grupoSeleccionado.nombre} en ChillCalc \n`,
       url: enlace
     }
 
@@ -74,7 +77,7 @@ export default function CompartirGastos() {
         setTimeout(() => setCopiado(false), 2000)
       }
     } catch (err) {
-      console.error('Error al compartir:', err)
+      console.error(err)
     }
   }
 
@@ -211,7 +214,6 @@ export default function CompartirGastos() {
                 <button 
                   onClick={() => { if(confirm('¿Seguro que quieres eliminar este viaje por completo?')) { eliminarGrupoSplit(grupoSeleccionado.id); setGrupoActivoId(null); } }} 
                   className="p-3 text-danger/60 bg-danger/5 border border-danger/10 hover:text-danger hover:bg-danger/10 rounded-xl transition-all active:scale-90"
-                  title="Eliminar Grupo"
                 >
                   <Trash2 size={20} />
                 </button>
@@ -251,7 +253,7 @@ export default function CompartirGastos() {
                   <input 
                     value={formGasto.desc} 
                     onChange={e => setFormGasto({...formGasto, desc: e.target.value})} 
-                    className="w-full bg-surface border border-border-subtle rounded-2xl px-5 py-4 text-sm font-bold text-text-main focus:border-brand-500 outline-none placeholder:text-text-muted/40 transition-all shadow-inner" 
+                    className="w-full bg-surface border border-border-subtle rounded-2xl px-5 py-4 text-sm font-bold text-text-main focus:border-brand-500 outline-none transition-all shadow-inner" 
                     placeholder="¿En qué se gastó? (Ej: Cena, Hotel...)" 
                   />
                   <div className="grid grid-cols-2 gap-4">
@@ -290,8 +292,8 @@ export default function CompartirGastos() {
                           </div>
                           <div>
                             <p className="text-sm font-black text-text-main truncate leading-tight mb-0.5">{g.descripcion}</p>
-                            <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest">
-                              <span className="text-text-main">{grupoSeleccionado.split_participantes.find(p => p.id === g.pagado_por_id)?.nombre}</span> pagó <span className="text-danger font-black">{formatoEuros(g.monto)}</span>
+                            <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest mt-1">
+                              <span>{g.fecha || 'N/A'}</span> • <span className="text-text-main">{grupoSeleccionado.split_participantes.find(p => p.id === g.pagado_por_id)?.nombre}</span> pagó <span className="text-danger font-black">{formatoEuros(g.monto)}</span>
                             </p>
                           </div>
                         </div>
