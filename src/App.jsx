@@ -8,6 +8,7 @@ import Cuentas from './components/Cuentas'
 import Transacciones from './components/Transacciones'
 import Objetivos from './components/Objetivos'
 import CompartirGastos from './components/CompartirGastos'
+import Suscripciones from './components/Suscripciones'
 import BottomNav from './components/BottomNav'
 import VistaPublicaSplit from './components/VistaPublicaSplit'
 
@@ -82,6 +83,7 @@ function App() {
       case 'dashboard': return <Dashboard />
       case 'cuentas': return <Cuentas />
       case 'transacciones': return <Transacciones />
+      case 'suscripciones': return <Suscripciones />
       case 'objetivos': return <Objetivos />
       case 'compartir': return <CompartirGastos />
       default: return <Dashboard />

@@ -8,6 +8,7 @@ export const useStore = create((set, get) => ({
   objetivos: [],
   categorias: [], 
   gruposSplit: [],
+  suscripciones: [], // NUEVO: Estado para las suscripciones
   vistaActual: 'dashboard',
   tema: 'dark',
 
@@ -27,12 +28,13 @@ export const useStore = create((set, get) => ({
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 
-    const [resCuentas, resTransacciones, resObjetivos, resCategorias, resSplit] = await Promise.all([
+    const [resCuentas, resTransacciones, resObjetivos, resCategorias, resSplit, resSuscripciones] = await Promise.all([
       supabase.from('cuentas').select('*').order('created_at', { ascending: true }),
       supabase.from('transacciones').select('*').order('created_at', { ascending: false }),
       supabase.from('objetivos').select('*').order('created_at', { ascending: true }),
       supabase.from('categorias').select('*').order('nombre', { ascending: true }),
-      supabase.from('split_grupos').select('*, split_participantes(*), split_gastos(*)').order('created_at', { ascending: false })
+      supabase.from('split_grupos').select('*, split_participantes(*), split_gastos(*)').order('created_at', { ascending: false }),
+      supabase.from('suscripciones').select('*').order('proximo_cobro', { ascending: true }) // NUEVO: Cargar suscripciones ordenadas por fecha
     ])
 
     let listaCategorias = resCategorias.data?.map(c => ({
@@ -91,7 +93,8 @@ export const useStore = create((set, get) => ({
       transacciones: transaccionesMapeadas, 
       objetivos: objetivosMapeados,
       categorias: listaCategorias,
-      gruposSplit: resSplit.data || []
+      gruposSplit: resSplit.data || [],
+      suscripciones: resSuscripciones.data || [] // NUEVO: Guardar en el estado
     })
     get().actualizarPreciosMercado()   
   },
@@ -416,8 +419,6 @@ export const useStore = create((set, get) => ({
     }
   },
 
-  // ---- SECCIÓN SPLIT GASTOS ----
-
   crearGrupoSplit: async (nombre, participantesNombres) => {
     const { data: { user } } = await supabase.auth.getUser()
     const { data: grupo, error } = await supabase.from('split_grupos').insert([{ nombre, user_id: user.id }]).select().single()
@@ -457,7 +458,6 @@ export const useStore = create((set, get) => ({
     }
   },
 
-  // NUEVO: Cargar grupo público (Para los invitados sin cuenta)
   cargarGrupoPublico: async (token) => {
     const { data: grupo, error } = await supabase
       .from('split_grupos')
@@ -472,12 +472,83 @@ export const useStore = create((set, get) => ({
     return grupo
   },
 
-  // NUEVO: Generar enlace para compartir por WhatsApp
   obtenerEnlaceCompartir: (grupo) => {
     if (!grupo || !grupo.share_token) return null
     const baseUrl = window.location.origin
-    // La URL que usaremos será chillcalc.app/split/TU_TOKEN
     return `${baseUrl}/split/${grupo.share_token}`
+  },
+
+  // ---- SECCIÓN SUSCRIPCIONES ----
+
+  agregarSuscripcion: async (sub) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    const { data, error } = await supabase.from('suscripciones').insert([{
+      user_id: user.id,
+      nombre: sub.nombre,
+      monto: Number(sub.monto),
+      frecuencia: sub.frecuencia,
+      proximo_cobro: sub.proximoCobro,
+      cuenta_id: sub.cuentaId,
+      categoria: sub.categoria
+    }]).select()
+
+    if (!error && data) {
+      set(state => ({
+        suscripciones: [...state.suscripciones, data[0]].sort((a, b) => new Date(a.proximo_cobro) - new Date(b.proximo_cobro))
+      }))
+    } else {
+      console.error("Error al añadir suscripcion", error)
+    }
+  },
+
+  eliminarSuscripcion: async (id) => {
+    const { error } = await supabase.from('suscripciones').delete().eq('id', id)
+    if (!error) {
+      set(state => ({ suscripciones: state.suscripciones.filter(s => s.id !== id) }))
+    } else {
+      console.error("Error al eliminar suscripcion", error)
+    }
+  },
+
+  pagarSuscripcion: async (id) => {
+    const sub = get().suscripciones.find(s => s.id === id)
+    if (!sub) return
+
+    const hoy = new Date()
+    const fechaTx = `${String(hoy.getDate()).padStart(2, '0')}/${String(hoy.getMonth() + 1).padStart(2, '0')}/${hoy.getFullYear()}`
+
+    // 1. Añadimos el gasto a las transacciones
+    await get().agregarTransaccion({
+      cuentaId: sub.cuenta_id,
+      monto: sub.monto,
+      desc: sub.nombre,
+      categoria: sub.categoria,
+      tipo: 'gasto',
+      fecha: fechaTx
+    })
+
+    // 2. Calculamos la nueva fecha
+    const [year, month, day] = sub.proximo_cobro.split('-')
+    const fechaCobro = new Date(year, month - 1, day)
+    
+    if (sub.frecuencia === 'mensual') {
+      fechaCobro.setMonth(fechaCobro.getMonth() + 1)
+    } else if (sub.frecuencia === 'anual') {
+      fechaCobro.setFullYear(fechaCobro.getFullYear() + 1)
+    }
+
+    const nuevoProximoCobro = `${fechaCobro.getFullYear()}-${String(fechaCobro.getMonth() + 1).padStart(2, '0')}-${String(fechaCobro.getDate()).padStart(2, '0')}`
+
+    // 3. Actualizamos la suscripcion
+    const { error } = await supabase.from('suscripciones').update({ proximo_cobro: nuevoProximoCobro }).eq('id', id)
+    
+    if (!error) {
+      set(state => ({
+        suscripciones: state.suscripciones.map(s => s.id === id ? { ...s, proximo_cobro: nuevoProximoCobro } : s).sort((a, b) => new Date(a.proximo_cobro) - new Date(b.proximo_cobro))
+      }))
+    } else {
+      console.error("Error al actualizar fecha de cobro", error)
+    }
   },
 
   // ---- MÉTRICAS GLOBALES ----

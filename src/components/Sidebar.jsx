@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, Wallet, ArrowRightLeft, Target, Command, LogOut, Users, Sun, Moon } from 'lucide-react'
+import { LayoutDashboard, Wallet, ArrowRightLeft, Target, Command, LogOut, Users, Sun, Moon, CalendarClock } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { supabase } from '../lib/supabase'
 import clsx from 'clsx'
@@ -23,6 +23,7 @@ export default function Sidebar() {
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'cuentas', label: 'Cuentas', icon: Wallet },
     { id: 'transacciones', label: 'Transacciones', icon: ArrowRightLeft },
+    { id: 'suscripciones', label: 'Suscripciones', icon: CalendarClock },
     { id: 'objetivos', label: 'Objetivos', icon: Target },
     { id: 'compartir', label: 'Dividir Gastos', icon: Users },
   ]
@@ -30,7 +31,6 @@ export default function Sidebar() {
   return (
     <aside className="w-64 bg-surface-solid/80 backdrop-blur-xl border-r border-border-subtle/50 p-6 flex flex-col h-screen sticky top-0 transition-colors duration-300 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
       
-      {/* Logo y Branding */}
       <div className="flex items-center gap-3 px-3 mb-10 mt-2">
         <div className="w-9 h-9 rounded-xl bg-linear-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white shadow-lg shadow-brand-500/20 border border-brand-400/30 relative group cursor-default">
           <div className="absolute inset-0 bg-white/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -41,7 +41,6 @@ export default function Sidebar() {
         </span>
       </div>
       
-      {/* Menú de Navegación */}
       <nav className="flex flex-col gap-2">
         <div className="px-3 mb-2 text-[10px] font-black text-text-muted uppercase tracking-widest opacity-80">
           Menú Principal
@@ -70,7 +69,6 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Sección Inferior (Opciones de Usuario) */}
       <div className="mt-auto pt-6 border-t border-border-subtle/50 flex flex-col gap-3">
         
         <button 
