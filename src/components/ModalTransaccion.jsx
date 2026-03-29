@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useStore } from '../store/useStore'
-import { X, Loader2, Calendar, Euro, FileText, Tag, CreditCard } from 'lucide-react'
+import { X, Loader2, Calendar, Euro, FileText, Tag, CreditCard, ArrowRightLeft } from 'lucide-react'
 
 const PALETA_COLORES = {
   slate: { bg: 'bg-slate-500', pill: 'text-slate-400 bg-slate-400/10 border-slate-400/20' },
@@ -26,6 +26,7 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
   const [monto, setMonto] = useState('')
   const [desc, setDesc] = useState('')
   const [cuentaId, setCuentaId] = useState('')
+  const [cuentaDestinoId, setCuentaDestinoId] = useState('')
   const [categoria, setCategoria] = useState('')
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0])
   const [precioCompra, setPrecioCompra] = useState('')
@@ -37,7 +38,7 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
       setMonto(editarDatos.monto)
       setDesc(editarDatos.desc || '')
       setCuentaId(editarDatos.cuentaId)
-      // CORRECCIÓN: Aseguramos que solo guardamos el nombre (string)
+      setCuentaDestinoId(editarDatos.cuentaDestinoId || (cuentas.length > 1 ? cuentas[1].id : ''))
       setCategoria(typeof editarDatos.categoria === 'object' ? editarDatos.categoria.nombre : editarDatos.categoria)
       setPrecioCompra(editarDatos.precioCompra || '')
       
@@ -50,7 +51,7 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
       setMonto('')
       setDesc('')
       setCuentaId(cuentas[0]?.id || '')
-      // CORRECCIÓN: Si categorias[0] es un objeto, usamos .nombre
+      setCuentaDestinoId(cuentas.length > 1 ? cuentas[1].id : '')
       setCategoria(categorias[0]?.nombre || '')
       setFecha(new Date().toISOString().split('T')[0])
       setPrecioCompra('')
@@ -65,6 +66,12 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!monto || parseFloat(monto) <= 0 || cargando) return
+    
+    if (tipo === 'transferencia' && cuentaId === cuentaDestinoId) {
+      alert("La cuenta de origen y destino no pueden ser la misma.")
+      return
+    }
+
     setCargando(true)
 
     try {
@@ -73,7 +80,8 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
         desc: desc.trim(),
         monto: parseFloat(monto),
         cuentaId: cuentaId,
-        categoria: categoria, // Enviamos el string del nombre
+        cuentaDestinoId: tipo === 'transferencia' ? cuentaDestinoId : null,
+        categoria: tipo === 'transferencia' ? 'Traspaso' : categoria,
         tipo,
         fecha: `${dia}/${mes}/${año}`,
         precioCompra: mostrarPrecioCompra ? parseFloat(precioCompra) : null
@@ -90,6 +98,12 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
     } finally {
       setCargando(false)
     }
+  }
+
+  const getEstiloBotonSubmit = () => {
+    if (tipo === 'gasto') return 'bg-danger/10 text-danger border-danger/20 hover:bg-danger/20'
+    if (tipo === 'ingreso') return 'bg-brand-500/10 text-brand-400 border-brand-500/20 hover:bg-brand-500/20'
+    return 'bg-sky-500/10 text-sky-400 border-sky-500/20 hover:bg-sky-500/20'
   }
 
   return (
@@ -111,12 +125,12 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-6 overflow-y-auto custom-scrollbar relative">
-          <div className="grid grid-cols-2 gap-2 p-1.5 bg-surface rounded-2xl border border-border-subtle/50 shadow-inner">
+          <div className="grid grid-cols-3 gap-2 p-1.5 bg-surface rounded-2xl border border-border-subtle/50 shadow-inner">
             <button
               type="button"
               disabled={cargando}
               onClick={() => setTipo('gasto')}
-              className={`py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${tipo === 'gasto' ? 'bg-danger text-white shadow-lg shadow-danger/20 scale-[1.02]' : 'text-text-muted hover:text-text-main hover:bg-surface-solid/50'}`}
+              className={`py-3 text-[10px] sm:text-xs font-black uppercase tracking-widest rounded-xl transition-all ${tipo === 'gasto' ? 'bg-danger text-white shadow-lg shadow-danger/20 scale-[1.02]' : 'text-text-muted hover:text-text-main hover:bg-surface-solid/50'}`}
             >
               Gasto
             </button>
@@ -124,16 +138,24 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
               type="button"
               disabled={cargando}
               onClick={() => setTipo('ingreso')}
-              className={`py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${tipo === 'ingreso' ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20 scale-[1.02]' : 'text-text-muted hover:text-text-main hover:bg-surface-solid/50'}`}
+              className={`py-3 text-[10px] sm:text-xs font-black uppercase tracking-widest rounded-xl transition-all ${tipo === 'ingreso' ? 'bg-brand-500 text-white shadow-lg shadow-brand-500/20 scale-[1.02]' : 'text-text-muted hover:text-text-main hover:bg-surface-solid/50'}`}
             >
               Ingreso
+            </button>
+            <button
+              type="button"
+              disabled={cargando}
+              onClick={() => setTipo('transferencia')}
+              className={`py-3 text-[10px] sm:text-xs font-black uppercase tracking-widest rounded-xl transition-all ${tipo === 'transferencia' ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20 scale-[1.02]' : 'text-text-muted hover:text-text-main hover:bg-surface-solid/50'}`}
+            >
+              Traspaso
             </button>
           </div>
 
           <div className="space-y-6">
             <div className="relative group">
               <label className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest mb-2 px-1">
-                <Euro size={12} className={tipo === 'ingreso' ? 'text-brand-400' : 'text-danger'} /> 
+                <Euro size={12} className={tipo === 'gasto' ? 'text-danger' : tipo === 'ingreso' ? 'text-brand-400' : 'text-sky-400'} /> 
                 Cantidad
               </label>
               <input
@@ -158,35 +180,69 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
                 disabled={cargando}
                 onChange={(e) => setDesc(e.target.value)}
                 className="w-full bg-surface border border-border-subtle rounded-xl px-4 py-3.5 text-text-main text-sm font-bold focus:outline-none focus:border-brand-500 transition-all disabled:opacity-50 shadow-sm"
-                placeholder="Ej. Café, Nómina, Amazon..."
+                placeholder={tipo === 'transferencia' ? 'Ej. Retirada cajero, Ahorro mensual...' : 'Ej. Café, Nómina, Amazon...'}
               />
             </div>
 
-            <div>
-              <label className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest mb-3 px-1">
-                <Tag size={12} /> Categoría
-              </label>
-              <div className="flex flex-wrap gap-2.5">
-                {categorias.map(cat => {
-                  const isSelected = categoria === cat.nombre
-                  const estiloPill = PALETA_COLORES[cat.color]?.pill || PALETA_COLORES['slate'].pill
-                  return (
-                    <button
-                      key={cat.nombre}
-                      type="button"
-                      disabled={cargando}
-                      onClick={() => setCategoria(cat.nombre)}
-                      className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border ${isSelected ? `${estiloPill} shadow-md scale-105 border-opacity-100` : 'bg-surface text-text-muted border-border-subtle hover:bg-surface-solid hover:border-border-subtle/80 hover:text-text-main'}`}
-                    >
-                      <span className="text-sm">{cat.emoji}</span>
-                      <span>{cat.nombre}</span>
-                    </button>
-                  )
-                })}
+            {tipo !== 'transferencia' && (
+              <div>
+                <label className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest mb-3 px-1">
+                  <Tag size={12} /> Categoría
+                </label>
+                <div className="flex flex-wrap gap-2.5">
+                  {categorias.map(cat => {
+                    const isSelected = categoria === cat.nombre
+                    const estiloPill = PALETA_COLORES[cat.color]?.pill || PALETA_COLORES['slate'].pill
+                    return (
+                      <button
+                        key={cat.nombre}
+                        type="button"
+                        disabled={cargando}
+                        onClick={() => setCategoria(cat.nombre)}
+                        className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border ${isSelected ? `${estiloPill} shadow-md scale-105 border-opacity-100` : 'bg-surface text-text-muted border-border-subtle hover:bg-surface-solid hover:border-border-subtle/80 hover:text-text-main'}`}
+                      >
+                        <span className="text-sm">{cat.emoji}</span>
+                        <span>{cat.nombre}</span>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
-            </div>
+            )}
 
-            <div className="grid grid-cols-2 gap-4">
+            {tipo === 'transferencia' ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-surface rounded-2xl p-4 border border-border-subtle/50 relative">
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-surface-solid p-2 rounded-full border border-border-subtle text-text-muted hidden sm:block z-10">
+                  <ArrowRightLeft size={16} />
+                </div>
+                <div>
+                  <label className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest mb-2 px-1">
+                    Origen
+                  </label>
+                  <select
+                    value={cuentaId}
+                    disabled={cargando}
+                    onChange={(e) => setCuentaId(e.target.value)}
+                    className="w-full bg-surface-solid border border-border-subtle rounded-xl px-4 py-3.5 text-text-main text-xs font-bold focus:outline-none focus:border-sky-500 appearance-none disabled:opacity-50 shadow-sm uppercase tracking-wider"
+                  >
+                    {cuentas.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest mb-2 px-1">
+                    Destino
+                  </label>
+                  <select
+                    value={cuentaDestinoId}
+                    disabled={cargando}
+                    onChange={(e) => setCuentaDestinoId(e.target.value)}
+                    className="w-full bg-surface-solid border border-border-subtle rounded-xl px-4 py-3.5 text-text-main text-xs font-bold focus:outline-none focus:border-sky-500 appearance-none disabled:opacity-50 shadow-sm uppercase tracking-wider"
+                  >
+                    {cuentas.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                  </select>
+                </div>
+              </div>
+            ) : (
               <div>
                 <label className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest mb-2 px-1">
                   <CreditCard size={12} /> Bóveda
@@ -197,23 +253,22 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
                   onChange={(e) => setCuentaId(e.target.value)}
                   className="w-full bg-surface border border-border-subtle rounded-xl px-4 py-3.5 text-text-main text-xs font-bold focus:outline-none focus:border-brand-500 appearance-none disabled:opacity-50 shadow-sm uppercase tracking-wider"
                 >
-                  {cuentas.map(c => (
-                    <option key={c.id} value={c.id}>{c.nombre}</option>
-                  ))}
+                  {cuentas.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
                 </select>
               </div>
-              <div>
-                <label className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest mb-2 px-1">
-                  <Calendar size={12} /> Fecha
-                </label>
-                <input
-                  type="date"
-                  value={fecha}
-                  disabled={cargando}
-                  onChange={(e) => setFecha(e.target.value)}
-                  className="w-full bg-surface border border-border-subtle rounded-xl px-4 py-3.5 text-text-main text-xs font-bold focus:outline-none focus:border-brand-500 disabled:opacity-50 shadow-sm uppercase tracking-wider"
-                />
-              </div>
+            )}
+
+            <div>
+              <label className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest mb-2 px-1">
+                <Calendar size={12} /> Fecha
+              </label>
+              <input
+                type="date"
+                value={fecha}
+                disabled={cargando}
+                onChange={(e) => setFecha(e.target.value)}
+                className="w-full bg-surface border border-border-subtle rounded-xl px-4 py-3.5 text-text-main text-xs font-bold focus:outline-none focus:border-brand-500 disabled:opacity-50 shadow-sm uppercase tracking-wider"
+              />
             </div>
           </div>
 
@@ -221,7 +276,7 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
             <button 
               type="submit" 
               disabled={cargando}
-              className={`w-full py-4 rounded-xl font-black uppercase tracking-widest text-sm transition-all flex items-center justify-center gap-3 active:scale-95 border ${tipo === 'gasto' ? 'bg-danger/10 text-danger border-danger/20 hover:bg-danger/20' : 'bg-brand-500/10 text-brand-400 border-brand-500/20 hover:bg-brand-500/20'} disabled:opacity-50 disabled:cursor-not-allowed`}
+              className={`w-full py-4 rounded-xl font-black uppercase tracking-widest text-sm transition-all flex items-center justify-center gap-3 active:scale-95 border ${getEstiloBotonSubmit()} disabled:opacity-50 disabled:cursor-not-allowed`}
             >
               {cargando ? <Loader2 size={20} className="animate-spin" /> : editarDatos ? 'Guardar Cambios' : 'Confirmar Operación'}
             </button>
