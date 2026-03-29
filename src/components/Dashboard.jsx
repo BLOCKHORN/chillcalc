@@ -3,8 +3,8 @@ import { useStore } from '../store/useStore'
 import { 
   Activity, ArrowUpRight, ArrowDownRight, Wallet, 
   BarChart3, ListFilter, Building2, 
-  CreditCard, Banknote, LineChart, ChevronLeft, ArrowRight, Calendar, RefreshCw, Plus, Sun, Moon, TrendingUp,
-  Percent
+  CreditCard, Banknote, LineChart, ChevronLeft, Calendar, Plus, TrendingUp,
+  Percent, AlertCircle, Check, CalendarClock
 } from 'lucide-react'
 import { 
   LineChart as ReLineChart, Line, XAxis, YAxis, 
@@ -26,7 +26,7 @@ const inicioDelDia = (fecha) => {
 }
 
 export default function Dashboard() {
-  const { patrimonioTotal, transacciones, cuentas, actualizarPreciosMercado, tema, toggleTema } = useStore()
+  const { patrimonioTotal, transacciones, cuentas, suscripciones, pagarSuscripcion, setVistaActual, actualizarPreciosMercado, tema } = useStore()
   
   const [modalAbierto, setModalAbierto] = useState(false)
   const [tipoInicial, setTipoInicial] = useState('gasto')
@@ -43,6 +43,7 @@ export default function Dashboard() {
   const mesHoy = String(hoy.getMonth() + 1).padStart(2, '0')
   const anoHoy = hoy.getFullYear()
   const fechaHoyStr = `${diaHoy}/${mesHoy}/${anoHoy}`
+  const fechaSQLHoyStr = `${anoHoy}-${mesHoy}-${diaHoy}` // Formato YYYY-MM-DD para comparar con SQL
 
   const transaccionesHoy = useMemo(() => {
     return transacciones.filter(t => t.fecha === fechaHoyStr && t.tipo === 'gasto')
@@ -51,6 +52,10 @@ export default function Dashboard() {
   const gastadoHoy = useMemo(() => {
     return transaccionesHoy.reduce((acc, t) => acc + t.monto, 0)
   }, [transaccionesHoy])
+
+  const suscripcionesPendientes = useMemo(() => {
+    return suscripciones.filter(sub => sub.proximo_cobro <= fechaSQLHoyStr)
+  }, [suscripciones, fechaSQLHoyStr])
 
   const patrimonioActual = patrimonioTotal()
   const esOscuro = tema === 'dark'
@@ -77,6 +82,12 @@ export default function Dashboard() {
   const abrirModal = (tipo) => {
     setTipoInicial(tipo)
     setModalAbierto(true)
+  }
+
+  const procesarPagoSuscripcion = async (id, nombre) => {
+    if(confirm(`¿Confirmas el pago de ${nombre}? Se registrará el gasto y se actualizará la fecha de cobro.`)) {
+      await pagarSuscripcion(id)
+    }
   }
 
   const getIcon = (icono) => {
@@ -152,7 +163,6 @@ export default function Dashboard() {
       .map(nombre => ({ nombre, valor: catMap[nombre].total, transacciones: catMap[nombre].items }))
       .sort((a, b) => b.valor - a.valor)
 
-    // Cálculo de la Tasa de Ahorro
     const tasaAhorro = ing > 0 ? Math.max(0, ((ing - gas) / ing) * 100) : 0
 
     return { ingresos: ing, gastos: gas, categorias: cats, tasaAhorro }
@@ -163,7 +173,7 @@ export default function Dashboard() {
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-24 md:pb-12 w-full">
-      <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pt-2 relative">
+      <header className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pt-2 relative">
         <div className="absolute -top-12 -left-20 w-60 h-60 bg-brand-500/5 rounded-full blur-[100px] pointer-events-none" />
         <div className="absolute -top-10 -right-20 w-40 h-40 bg-pink-500/5 rounded-full blur-[90px] pointer-events-none" />
 
@@ -192,6 +202,52 @@ export default function Dashboard() {
           </button>
         </div>
       </header>
+
+      {/* BLOQUE DE ALERTAS: Suscripciones Pendientes */}
+      {suscripcionesPendientes.length > 0 && (
+        <div className="mb-6 z-10 relative">
+          <div className="bg-danger/10 border border-danger/30 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg shadow-danger/5">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-danger text-white rounded-xl shadow-inner shrink-0 hidden sm:block">
+                <CalendarClock size={20} strokeWidth={2.5} />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-danger uppercase tracking-widest flex items-center gap-2 mb-1">
+                  <AlertCircle size={14} className="sm:hidden" />
+                  {suscripcionesPendientes.length} {suscripcionesPendientes.length === 1 ? 'Cobro pendiente' : 'Cobros pendientes'}
+                </h3>
+                <p className="text-xs font-bold text-text-main opacity-80">
+                  {suscripcionesPendientes.map(s => s.nombre).join(', ')}
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex gap-2 w-full sm:w-auto">
+              <button 
+                onClick={() => setVistaActual('suscripciones')}
+                className="flex-1 sm:flex-none px-4 py-3 sm:py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-surface border border-border-subtle text-text-muted hover:text-text-main transition-colors text-center"
+              >
+                Ver Todas
+              </button>
+              {suscripcionesPendientes.length === 1 ? (
+                <button 
+                  onClick={() => procesarPagoSuscripcion(suscripcionesPendientes[0].id, suscripcionesPendientes[0].nombre)}
+                  className="flex-1 sm:flex-none px-4 py-3 sm:py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-danger text-white hover:bg-danger/90 transition-all active:scale-95 shadow-md flex items-center justify-center gap-1.5"
+                >
+                  <Check size={14} strokeWidth={3} /> Pagar Ya
+                </button>
+              ) : (
+                <button 
+                  onClick={() => setVistaActual('suscripciones')}
+                  className="flex-1 sm:flex-none px-4 py-3 sm:py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-danger text-white hover:bg-danger/90 transition-all active:scale-95 shadow-md text-center"
+                >
+                  Pagar
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex gap-4 overflow-x-auto pb-6 no-scrollbar -mx-4 px-4 mb-6 z-10 relative">
         {cuentas.map(cuenta => (
@@ -298,7 +354,6 @@ export default function Dashboard() {
             </select>
           </div>
 
-          {/* Bloque de Tasa de Ahorro Integrado */}
           <div className="mb-8 p-5 bg-surface-solid/60 rounded-2xl border border-border-subtle/50 relative overflow-hidden group">
             <div className="flex justify-between items-end mb-4">
               <div>
