@@ -139,7 +139,9 @@ export default function Dashboard() {
 
     transacciones.forEach(tx => {
       const fechaTx = inicioDelDia(parseFecha(tx.fecha)).getTime()
-      txsPorDia[fechaTx] = (txsPorDia[fechaTx] || 0) + (tx.tipo === 'ingreso' ? tx.monto : -tx.monto)
+      if (tx.tipo !== 'transferencia') {
+        txsPorDia[fechaTx] = (txsPorDia[fechaTx] || 0) + (tx.tipo === 'ingreso' ? tx.monto : -tx.monto)
+      }
     })
 
     let cursor = new Date(start)
@@ -159,14 +161,14 @@ export default function Dashboard() {
       const [_, m, a] = t.fecha.split('/')
       const coincideMes = `${m}/${a}` === filtroMes
       const cuenta = cuentas.find(c => c.id === t.cuentaId)
-      return coincideMes && cuenta?.tipo !== 'inversion'
+      return coincideMes && cuenta?.tipo !== 'inversion' && t.tipo !== 'transferencia'
     })
 
     let ing = 0, gas = 0
     const catMap = {}
     txsFiltradas.forEach(tx => {
       if (tx.tipo === 'ingreso') ing += tx.monto
-      else {
+      else if (tx.tipo === 'gasto') {
         gas += tx.monto
         if (!catMap[tx.categoria]) catMap[tx.categoria] = { total: 0, items: [] }
         catMap[tx.categoria].total += tx.monto
