@@ -37,35 +37,13 @@ export const useStore = create((set, get) => ({
       supabase.from('suscripciones').select('*').order('proximo_cobro', { ascending: true })
     ])
 
-    let listaCategorias = resCategorias.data?.map(c => ({
+    // CORRECCIÓN: Guardar SIEMPRE el id real. Y NUNCA insertar por defecto si está vacío.
+    const listaCategorias = resCategorias.data?.map(c => ({
       id: c.id,
       nombre: c.nombre,
       emoji: c.emoji || '🏷️',
       color: c.color || 'slate'
     })) || []
-    
-    if (listaCategorias.length === 0) {
-      const basicas = [
-        { nombre: 'Alimentación', emoji: '🍽️', color: 'orange' },
-        { nombre: 'Vivienda', emoji: '🏠', color: 'blue' },
-        { nombre: 'Transporte', emoji: '🚗', color: 'emerald' },
-        { nombre: 'Ocio', emoji: '🎮', color: 'purple' },
-        { nombre: 'Salud', emoji: '❤️', color: 'rose' },
-        { nombre: 'Educación', emoji: '📚', color: 'yellow' },
-        { nombre: 'Compras', emoji: '🛍️', color: 'pink' },
-        { nombre: 'Otros', emoji: '🏷️', color: 'slate' }
-      ]
-      
-      const inserts = basicas.map(cat => ({ 
-        user_id: user.id, 
-        nombre: cat.nombre,
-        emoji: cat.emoji,
-        color: cat.color
-      }))
-      
-      const { data } = await supabase.from('categorias').insert(inserts).select()
-      listaCategorias = data?.map(c => ({ id: c.id, nombre: c.nombre, emoji: c.emoji, color: c.color })) || basicas
-    }
 
     const cuentasMapeadas = (resCuentas.data || []).map(c => ({
       ...c,
@@ -112,13 +90,19 @@ export const useStore = create((set, get) => ({
     
     if (!error) {
       await get().cargarDatosNube()
+    } else {
+      console.error("Error al crear categoría:", error)
     }
   },
 
   eliminarCategoria: async (id) => {
+    // Solo borramos por ID, es la única forma segura.
     const { error } = await supabase.from('categorias').delete().eq('id', id)
+    
     if (!error) {
       await get().cargarDatosNube()
+    } else {
+      console.error("Error al eliminar categoría:", error)
     }
   },
 
@@ -166,14 +150,7 @@ export const useStore = create((set, get) => ({
 
     const { data, error } = await supabase.from('cuentas').insert([cuentaInsert]).select()
     if (!error && data) {
-      const cuentaFormateada = { 
-        ...data[0], 
-        capitalInvertido: data[0].capital_invertido, 
-        precioPromedio: data[0].precio_promedio,
-        tae: data[0].tae,
-        moneda: data[0].moneda || 'EUR'
-      }
-      set((state) => ({ cuentas: [...state.cuentas, cuentaFormateada] }))
+      await get().cargarDatosNube()
     }
   },
 
@@ -205,19 +182,14 @@ export const useStore = create((set, get) => ({
     const { error } = await supabase.from('cuentas').update(updateData).eq('id', id)
 
     if (!error) {
-      set((state) => ({
-        cuentas: state.cuentas.map(c => c.id === id ? { ...c, ...datos, saldo: saldoFinal } : c)
-      }))
+      await get().cargarDatosNube()
     }
   },
 
   eliminarCuenta: async (id) => {
     const { error } = await supabase.from('cuentas').delete().eq('id', id)
     if (!error) {
-      set((state) => ({
-        cuentas: state.cuentas.filter(c => c.id !== id),
-        transacciones: state.transacciones.filter(t => t.cuentaId !== id)
-      }))
+      await get().cargarDatosNube()
     }
   },
 
@@ -230,87 +202,35 @@ export const useStore = create((set, get) => ({
       monto: Number(tx.monto),
       descripcion: tx.desc || tx.descripcion,
       categoria: tx.tipo === 'transferencia' ? 'Traspaso' : tx.categoria,
+      categoria_id: tx.categoriaId,
       tipo: tx.tipo,
       fecha: tx.fecha,
       precio_compra: tx.precioCompra
     }
 
-    const { data, error } = await supabase.from('transacciones').insert([txInsert]).select()
+    const { error } = await supabase.from('transacciones').insert([txInsert])
     if (error) {
       console.error("Error al guardar transacción:", error)
       return
     }
 
-    set((state) => {
-      const nuevasCuentas = state.cuentas.map(c => {
-        const nc = { ...c }
-        let actualizarDB = false
-
-        if (nc.id === tx.cuentaId) {
-          if (tx.tipo === 'transferencia') {
-            nc.saldo = Number(nc.saldo) - Number(tx.monto)
-            actualizarDB = true
-          } else if (nc.tipo === 'inversion') {
-            const monto = Number(tx.monto)
-            const precioCompra = Number(tx.precioCompra || nc.precioActual || nc.precioPromedio || 1)
-            const partAnteriores = nc.precioPromedio > 0 ? nc.capitalInvertido / nc.precioPromedio : 0
-            const partNuevas = monto / precioCompra
-            nc.capitalInvertido = Number(nc.capitalInvertido) + monto
-            nc.precioPromedio = nc.capitalInvertido / (partAnteriores + partNuevas)
-            nc.saldo = (partAnteriores + partNuevas) * (nc.precioActual || precioCompra)
-            actualizarDB = true
-          } else {
-            nc.saldo = Number(nc.saldo) + (tx.tipo === 'ingreso' ? Number(tx.monto) : -Number(tx.monto))
-            actualizarDB = true
-          }
-        }
-
-        if (tx.tipo === 'transferencia' && nc.id === tx.cuentaDestinoId) {
-          nc.saldo = Number(nc.saldo) + Number(tx.monto)
-          actualizarDB = true
-        }
-
-        if (actualizarDB) {
-          supabase.from('cuentas').update({ 
-            saldo: nc.saldo, 
-            capital_invertido: nc.capitalInvertido, 
-            precio_promedio: nc.precioPromedio 
-          }).eq('id', nc.id).then(({ error: updateError }) => {
-            if (updateError) console.error("Error al actualizar cuenta:", updateError)
-          })
-        }
-
-        return nc
-      })
-      
-      const txFormateada = { 
-        ...data[0], 
-        cuentaId: data[0].cuenta_id, 
-        cuentaDestinoId: data[0].cuenta_destino_id,
-        desc: data[0].descripcion, 
-        precioCompra: data[0].precio_compra 
-      }
-      return { transacciones: [txFormateada, ...state.transacciones], cuentas: nuevasCuentas }
-    })
+    await get().cargarDatosNube()
   },
 
   editarTransaccion: async (id, tx) => {
-    const { transacciones } = get()
-    const txVieja = transacciones.find(t => t.id === id)
-    if (!txVieja) return
-
     const txUpdate = {
       cuenta_id: tx.cuentaId,
       cuenta_destino_id: tx.tipo === 'transferencia' ? tx.cuentaDestinoId : null,
       monto: Number(tx.monto),
       descripcion: tx.desc || tx.descripcion,
       categoria: tx.tipo === 'transferencia' ? 'Traspaso' : tx.categoria,
+      categoria_id: tx.categoriaId,
       tipo: tx.tipo,
       fecha: tx.fecha,
       precio_compra: tx.precioCompra
     }
 
-    const { error } = await supabase.from('transacciones').update(txUpdate).eq('id', id).select()
+    const { error } = await supabase.from('transacciones').update(txUpdate).eq('id', id)
     if (error) {
       console.error("Error al editar transacción:", error)
       return
@@ -320,58 +240,12 @@ export const useStore = create((set, get) => ({
   },
 
   eliminarTransaccion: async (id) => {
-    const tx = get().transacciones.find(t => t.id === id)
-    if (!tx) return
     const { error } = await supabase.from('transacciones').delete().eq('id', id)
     if (error) {
       console.error("Error al eliminar transacción:", error)
       return
     }
-    
-    set((state) => {
-      const nuevasCuentas = state.cuentas.map(c => {
-        const nc = { ...c }
-        let actualizarDB = false
-
-        if (nc.id === tx.cuentaId) {
-          if (tx.tipo === 'transferencia') {
-            nc.saldo = Number(nc.saldo) + Number(tx.monto)
-            actualizarDB = true
-          } else if (nc.tipo === 'inversion') {
-            const monto = Number(tx.monto)
-            const precioCompra = Number(tx.precioCompra || nc.precioPromedio || 1)
-            const partEliminadas = monto / precioCompra
-            const partTotales = nc.precioPromedio > 0 ? nc.capitalInvertido / nc.precioPromedio : 0
-            const partRestantes = Math.max(0, partTotales - partEliminadas)
-            nc.capitalInvertido = Math.max(0, nc.capitalInvertido - monto)
-            nc.precioPromedio = partRestantes > 0 ? nc.capitalInvertido / partRestantes : 0
-            nc.saldo = partRestantes * (nc.precioActual || nc.precioPromedio)
-            actualizarDB = true
-          } else {
-            nc.saldo = Number(nc.saldo) + (tx.tipo === 'ingreso' ? -Number(tx.monto) : Number(tx.monto))
-            actualizarDB = true
-          }
-        }
-
-        if (tx.tipo === 'transferencia' && nc.id === tx.cuentaDestinoId) {
-          nc.saldo = Number(nc.saldo) - Number(tx.monto)
-          actualizarDB = true
-        }
-
-        if (actualizarDB) {
-          supabase.from('cuentas').update({ 
-            saldo: nc.saldo, 
-            capital_invertido: nc.capitalInvertido, 
-            precio_promedio: nc.precioPromedio 
-          }).eq('id', nc.id).then(({ error: updateError }) => {
-            if (updateError) console.error("Error al revertir saldo de cuenta:", updateError)
-          })
-        }
-
-        return nc
-      })
-      return { transacciones: state.transacciones.filter(t => t.id !== id), cuentas: nuevasCuentas }
-    })
+    await get().cargarDatosNube()
   },
 
   agregarObjetivo: async (nuevoObjetivo) => {
@@ -383,10 +257,9 @@ export const useStore = create((set, get) => ({
       aportacion_extra: Number(nuevoObjetivo.aportacion_extra || 0),
       tasa: Number(nuevoObjetivo.tasa || 0)
     }
-    const { data, error } = await supabase.from('objetivos').insert([objetivoInsert]).select()
-    if (!error && data) {
-      const objFormateado = { ...data[0], aportacionExtra: data[0].aportacion_extra }
-      set((state) => ({ objetivos: [...state.objetivos, objFormateado] }))
+    const { error } = await supabase.from('objetivos').insert([objetivoInsert])
+    if (!error) {
+      await get().cargarDatosNube()
     }
   },
 
@@ -400,18 +273,14 @@ export const useStore = create((set, get) => ({
     Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key])
     const { error } = await supabase.from('objetivos').update(updateData).eq('id', id)
     if (!error) {
-      set((state) => ({
-        objetivos: state.objetivos.map(o => o.id === id ? { ...o, ...datos } : o)
-      }))
+      await get().cargarDatosNube()
     }
   },
 
   eliminarObjetivo: async (id) => {
     const { error } = await supabase.from('objetivos').delete().eq('id', id)
     if (!error) {
-      set((state) => ({
-        objetivos: state.objetivos.filter(o => o.id !== id)
-      }))
+      await get().cargarDatosNube()
     }
   },
 
@@ -428,7 +297,7 @@ export const useStore = create((set, get) => ({
   eliminarGrupoSplit: async (id) => {
     const { error } = await supabase.from('split_grupos').delete().eq('id', id)
     if (!error) {
-      set(state => ({ gruposSplit: state.gruposSplit.filter(g => g.id !== id) }))
+      await get().cargarDatosNube()
     }
   },
 
@@ -465,7 +334,7 @@ export const useStore = create((set, get) => ({
 
   agregarSuscripcion: async (sub) => {
     const { data: { user } } = await supabase.auth.getUser()
-    const { data, error } = await supabase.from('suscripciones').insert([{
+    const { error } = await supabase.from('suscripciones').insert([{
       user_id: user.id,
       nombre: sub.nombre,
       monto: Number(sub.monto),
@@ -473,19 +342,17 @@ export const useStore = create((set, get) => ({
       proximo_cobro: sub.proximoCobro,
       cuenta_id: sub.cuentaId,
       categoria: sub.categoria
-    }]).select()
+    }])
 
-    if (!error && data) {
-      set(state => ({
-        suscripciones: [...state.suscripciones, data[0]].sort((a, b) => new Date(a.proximo_cobro) - new Date(b.proximo_cobro))
-      }))
+    if (!error) {
+      await get().cargarDatosNube()
     }
   },
 
   eliminarSuscripcion: async (id) => {
     const { error } = await supabase.from('suscripciones').delete().eq('id', id)
     if (!error) {
-      set(state => ({ suscripciones: state.suscripciones.filter(s => s.id !== id) }))
+      await get().cargarDatosNube()
     }
   },
 
@@ -519,9 +386,7 @@ export const useStore = create((set, get) => ({
     const { error } = await supabase.from('suscripciones').update({ proximo_cobro: nuevoProximoCobro }).eq('id', id)
     
     if (!error) {
-      set(state => ({
-        suscripciones: state.suscripciones.map(s => s.id === id ? { ...s, proximo_cobro: nuevoProximoCobro } : s).sort((a, b) => new Date(a.proximo_cobro) - new Date(b.proximo_cobro))
-      }))
+      await get().cargarDatosNube()
     }
   },
 
