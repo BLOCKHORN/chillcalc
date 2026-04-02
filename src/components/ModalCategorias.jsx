@@ -41,7 +41,8 @@ export default function ModalCategorias({ isOpen, onClose }) {
       return
     }
 
-    // Enviamos el objeto completo a Supabase
+    // Enviamos el objeto completo a Supabase.
+    // OJO: agregarCategoria en useStore.js DEBE hacer un await get().cargarDatosNube() al final.
     await agregarCategoria({
       nombre: catNombre,
       emoji: nuevoEmoji || '🏷️',
@@ -55,13 +56,19 @@ export default function ModalCategorias({ isOpen, onClose }) {
     setError('')
   }
 
-  const handleEliminar = async (catNombre) => {
-    const enUso = transacciones.some(t => t.categoria === catNombre)
+  // Ahora pasamos la categoría entera para tener el ID y el Nombre
+  const handleEliminar = async (cat) => {
+    // Si tienes guardado categoriaId en las transacciones úsalo. Si no, usamos el nombre como fallback.
+    const enUso = transacciones.some(t => t.categoriaId === cat.id || t.categoria === cat.nombre)
+    
     if (enUso) {
-      setError(`No se puede eliminar "${catNombre}" porque tiene transacciones asociadas`)
+      setError(`No se puede eliminar "${cat.nombre}" porque tiene transacciones asociadas`)
       return
     }
-    await eliminarCategoria(catNombre)
+    
+    // IMPORTANTE: Le pasamos el ID a eliminarCategoria, no el nombre.
+    // Esto requiere el cambio en useStore.js que te pasé antes.
+    await eliminarCategoria(cat.id || cat.nombre)
     setError('')
   }
 
@@ -104,12 +111,13 @@ export default function ModalCategorias({ isOpen, onClose }) {
               </div>
             ) : (
               categorias.map(cat => {
-                // Comprobamos si la categoría está siendo usada en alguna transacción
-                const enUso = transacciones.some(t => t.categoria === cat.nombre)
+                // Comprobamos si la categoría está siendo usada. (Fallback a nombre por si tienes transacciones viejas)
+                const enUso = transacciones.some(t => t.categoriaId === cat.id || t.categoria === cat.nombre)
                 const estiloPill = PALETA_COLORES[cat.color]?.pill || PALETA_COLORES['slate'].pill
 
                 return (
-                  <div key={cat.nombre} className="flex items-center justify-between p-4 bg-surface rounded-2xl border border-border-subtle hover:border-border-subtle/80 transition-colors group">
+                  // Usamos cat.id preferiblemente para la key
+                  <div key={cat.id || cat.nombre} className="flex items-center justify-between p-4 bg-surface rounded-2xl border border-border-subtle hover:border-border-subtle/80 transition-colors group">
                     <div className="flex items-center gap-4">
                       {/* Píldora visual */}
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg border shadow-sm ${estiloPill}`}>
@@ -127,7 +135,7 @@ export default function ModalCategorias({ isOpen, onClose }) {
                     </div>
                     
                     <button 
-                      onClick={() => handleEliminar(cat.nombre)}
+                      onClick={() => handleEliminar(cat)}
                       disabled={enUso}
                       className={`p-2.5 rounded-xl transition-all ${enUso ? 'opacity-20 cursor-not-allowed' : 'text-text-muted hover:text-danger hover:bg-danger/10 border border-transparent hover:border-danger/20 active:scale-90'}`}
                     >

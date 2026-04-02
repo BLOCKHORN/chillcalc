@@ -38,6 +38,7 @@ export const useStore = create((set, get) => ({
     ])
 
     let listaCategorias = resCategorias.data?.map(c => ({
+      id: c.id,
       nombre: c.nombre,
       emoji: c.emoji || '🏷️',
       color: c.color || 'slate'
@@ -63,7 +64,7 @@ export const useStore = create((set, get) => ({
       }))
       
       const { data } = await supabase.from('categorias').insert(inserts).select()
-      listaCategorias = data?.map(c => ({ nombre: c.nombre, emoji: c.emoji, color: c.color })) || basicas
+      listaCategorias = data?.map(c => ({ id: c.id, nombre: c.nombre, emoji: c.emoji, color: c.color })) || basicas
     }
 
     const cuentasMapeadas = (resCuentas.data || []).map(c => ({
@@ -102,24 +103,22 @@ export const useStore = create((set, get) => ({
 
   agregarCategoria: async (nuevaCat) => {
     const { data: { user } } = await supabase.auth.getUser()
-    const { data, error } = await supabase.from('categorias').insert([{ 
+    const { error } = await supabase.from('categorias').insert([{ 
       user_id: user.id, 
       nombre: nuevaCat.nombre,
       emoji: nuevaCat.emoji || '🏷️',
       color: nuevaCat.color || 'slate'
-    }]).select()
+    }])
     
-    if (!error && data) {
-      set((state) => ({ 
-        categorias: [...state.categorias, { nombre: data[0].nombre, emoji: data[0].emoji, color: data[0].color }].sort((a, b) => a.nombre.localeCompare(b.nombre)) 
-      }))
+    if (!error) {
+      await get().cargarDatosNube()
     }
   },
 
-  eliminarCategoria: async (nombre) => {
-    const { error } = await supabase.from('categorias').delete().eq('nombre', nombre)
+  eliminarCategoria: async (id) => {
+    const { error } = await supabase.from('categorias').delete().eq('id', id)
     if (!error) {
-      set((state) => ({ categorias: state.categorias.filter(c => c.nombre !== nombre) }))
+      await get().cargarDatosNube()
     }
   },
 
