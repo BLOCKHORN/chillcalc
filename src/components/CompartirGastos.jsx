@@ -314,22 +314,29 @@ export default function CompartirGastos() {
                   <ArrowRightLeft size={12} className="text-brand-400" /> Resumen de Deudas
                 </h4>
                 <div className="space-y-3 mb-8">
-                  {balances.map(p => (
-                    <div key={p.id} className="bg-surface-solid/40 backdrop-blur-sm flex items-center justify-between p-5 rounded-2xl border border-border-subtle/50 border-l-4 shadow-sm transition-all" style={{ borderLeftColor: p.balance >= 0 ? 'var(--brand-500)' : 'var(--danger)' }}>
-                       <div className="overflow-hidden mr-2">
-                          <p className="text-lg font-black text-text-main truncate leading-tight">{p.nombre}</p>
-                          <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mt-1">Pagado: <span className="text-text-main">{formatoEuros(p.pagadoTotal)}</span></p>
-                       </div>
-                       <div className="text-right shrink-0">
-                          <p className={`text-2xl font-black leading-none mb-1 tracking-tighter ${p.balance >= 0 ? 'text-brand-400' : 'text-danger'}`}>
-                            {p.balance >= 0 ? '+' : ''}{formatoEuros(p.balance)}
-                          </p>
-                          <p className="text-[9px] font-black text-text-muted uppercase tracking-widest">
-                            {p.balance >= 0 ? 'Le deben' : 'Debe dinero'}
-                          </p>
-                       </div>
-                    </div>
-                  ))}
+                  {balances.map(p => {
+  const estaSaldado = Math.abs(p.balance) < 0.01
+  const colorTexto = estaSaldado ? 'text-text-main' : (p.balance > 0 ? 'text-brand-400' : 'text-danger')
+  const colorBorde = estaSaldado ? 'var(--border-subtle)' : (p.balance > 0 ? 'var(--brand-500)' : 'var(--danger)')
+  const etiqueta = estaSaldado ? 'Saldado' : (p.balance > 0 ? 'Le deben' : 'Debe dinero')
+
+  return (
+    <div key={p.id} className="bg-surface-solid/40 backdrop-blur-sm flex items-center justify-between p-5 rounded-2xl border border-border-subtle/50 border-l-4 shadow-sm transition-all" style={{ borderLeftColor: colorBorde }}>
+       <div className="overflow-hidden mr-2">
+          <p className="text-lg font-black text-text-main truncate leading-tight">{p.nombre}</p>
+          <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mt-1">Pagado: <span className="text-text-main">{formatoEuros(p.pagadoTotal)}</span></p>
+       </div>
+       <div className="text-right shrink-0">
+          <p className={`text-2xl font-black leading-none mb-1 tracking-tighter ${colorTexto}`}>
+            {p.balance > 0.01 ? '+' : ''}{formatoEuros(estaSaldado ? 0 : p.balance)}
+          </p>
+          <p className="text-[9px] font-black text-text-muted uppercase tracking-widest">
+            {etiqueta}
+          </p>
+       </div>
+    </div>
+  )
+})}
                 </div>
 
                 {transferenciasSugeridas.length > 0 && (
