@@ -211,11 +211,11 @@ export const useStore = create((set, get) => ({
     const { error: txError } = await supabase.from('transacciones').insert([txInsert])
     
     if (txError) {
-      console.error(txError)
+      alert("Error en BD: " + txError.message)
       return
     }
 
-    const cuentaOrigen = get().cuentas.find(c => c.id === tx.cuentaId)
+    const cuentaOrigen = get().cuentas.find(c => String(c.id) === String(tx.cuentaId))
     
     if (cuentaOrigen) {
       let nuevoSaldoOrigen = Number(cuentaOrigen.saldo)
@@ -230,7 +230,7 @@ export const useStore = create((set, get) => ({
     }
 
     if (tx.tipo === 'transferencia') {
-      const cuentaDestino = get().cuentas.find(c => c.id === tx.cuentaDestinoId)
+      const cuentaDestino = get().cuentas.find(c => String(c.id) === String(tx.cuentaDestinoId))
       if (cuentaDestino) {
         const nuevoSaldoDestino = Number(cuentaDestino.saldo) + Number(tx.monto)
         await supabase.from('cuentas').update({ saldo: nuevoSaldoDestino }).eq('id', cuentaDestino.id)
@@ -270,7 +270,7 @@ export const useStore = create((set, get) => ({
 
     const { error } = await supabase.from('transacciones').update(txUpdate).eq('id', id)
     if (error) {
-      console.error(error)
+      alert("Error al editar en BD: " + error.message)
       return
     }
 
@@ -278,17 +278,16 @@ export const useStore = create((set, get) => ({
   },
 
   eliminarTransaccion: async (id) => {
-    const tx = get().transacciones.find(t => t.id === id)
+    const tx = get().transacciones.find(t => String(t.id) === String(id))
     if (!tx) return
 
     const { error: delError } = await supabase.from('transacciones').delete().eq('id', id)
     if (delError) {
-      console.error("Error al eliminar transacción:", delError)
+      alert("Error al eliminar en BD: " + delError.message)
       return
     }
 
-    // Revertir el saldo
-    const cuentaOrigen = get().cuentas.find(c => c.id === tx.cuentaId)
+    const cuentaOrigen = get().cuentas.find(c => String(c.id) === String(tx.cuentaId))
     if (cuentaOrigen) {
       let saldoRevertido = Number(cuentaOrigen.saldo)
       if (tx.tipo === 'gasto' || tx.tipo === 'transferencia') {
@@ -300,7 +299,7 @@ export const useStore = create((set, get) => ({
     }
 
     if (tx.tipo === 'transferencia') {
-      const cuentaDestino = get().cuentas.find(c => c.id === tx.cuentaDestinoId)
+      const cuentaDestino = get().cuentas.find(c => String(c.id) === String(tx.cuentaDestinoId))
       if (cuentaDestino) {
          const saldoRevertidoDestino = Number(cuentaDestino.saldo) - Number(tx.monto)
          await supabase.from('cuentas').update({ saldo: saldoRevertidoDestino }).eq('id', cuentaDestino.id)
