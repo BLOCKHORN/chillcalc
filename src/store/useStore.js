@@ -257,6 +257,38 @@ export const useStore = create((set, get) => ({
   },
 
   editarTransaccion: async (id, tx) => {
+    const txVieja = get().transacciones.find(t => String(t.id) === String(id))
+    if (!txVieja) return
+
+    const cuentasActualizadas = JSON.parse(JSON.stringify(get().cuentas))
+
+    const revertirSaldo = (cuentaId, tipo, monto, destinoId) => {
+      const cOrigen = cuentasActualizadas.find(c => String(c.id) === String(cuentaId))
+      if (cOrigen) {
+        if (tipo === 'gasto' || tipo === 'transferencia') cOrigen.saldo += Number(monto)
+        if (tipo === 'ingreso' && cOrigen.tipo !== 'inversion') cOrigen.saldo -= Number(monto)
+      }
+      if (tipo === 'transferencia') {
+        const cDestino = cuentasActualizadas.find(c => String(c.id) === String(destinoId))
+        if (cDestino) cDestino.saldo -= Number(monto)
+      }
+    }
+
+    const aplicarSaldo = (cuentaId, tipo, monto, destinoId) => {
+      const cOrigen = cuentasActualizadas.find(c => String(c.id) === String(cuentaId))
+      if (cOrigen) {
+        if (tipo === 'gasto' || tipo === 'transferencia') cOrigen.saldo -= Number(monto)
+        if (tipo === 'ingreso' && cOrigen.tipo !== 'inversion') cOrigen.saldo += Number(monto)
+      }
+      if (tipo === 'transferencia') {
+        const cDestino = cuentasActualizadas.find(c => String(c.id) === String(destinoId))
+        if (cDestino) cDestino.saldo += Number(monto)
+      }
+    }
+
+    revertirSaldo(txVieja.cuentaId, txVieja.tipo, txVieja.monto, txVieja.cuentaDestinoId)
+    aplicarSaldo(tx.cuentaId, tx.tipo, tx.monto, tx.cuentaDestinoId)
+
     const txUpdate = {
       cuenta_id: tx.cuentaId,
       cuenta_destino_id: tx.tipo === 'transferencia' ? tx.cuentaDestinoId : null,
@@ -272,6 +304,18 @@ export const useStore = create((set, get) => ({
     if (error) {
       alert("Error al editar en BD: " + error.message)
       return
+    }
+
+    const cuentasAfectadas = [...new Set([
+      String(txVieja.cuentaId), String(txVieja.cuentaDestinoId),
+      String(tx.cuentaId), String(tx.cuentaDestinoId)
+    ].filter(Boolean))]
+
+    for (let cid of cuentasAfectadas) {
+      const cuenta = cuentasActualizadas.find(c => String(c.id) === cid)
+      if (cuenta) {
+        await supabase.from('cuentas').update({ saldo: cuenta.saldo }).eq('id', cuenta.id)
+      }
     }
 
     await get().cargarDatosNube()
