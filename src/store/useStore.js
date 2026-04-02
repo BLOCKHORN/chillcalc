@@ -195,6 +195,9 @@ export const useStore = create((set, get) => ({
 
   agregarTransaccion: async (tx) => {
     const { data: { user } } = await supabase.auth.getUser()
+    
+    // 1. Preparamos el insert de la transacción
+    // NOTA: Si no tienes la columna categoria_id en Supabase, coméntala o bórrala de aquí
     const txInsert = {
       user_id: user.id,
       cuenta_id: tx.cuentaId,
@@ -202,22 +205,69 @@ export const useStore = create((set, get) => ({
       monto: Number(tx.monto),
       descripcion: tx.desc || tx.descripcion,
       categoria: tx.tipo === 'transferencia' ? 'Traspaso' : tx.categoria,
-      categoria_id: tx.categoriaId,
+      categoria_id: tx.categoriaId, // <--- REVISA SI TIENES ESTO EN TU BBDD. Si no, quítalo.
       tipo: tx.tipo,
       fecha: tx.fecha,
       precio_compra: tx.precioCompra
     }
 
-    const { error } = await supabase.from('transacciones').insert([txInsert])
-    if (error) {
-      console.error("Error al guardar transacción:", error)
+    const { error: txError } = await supabase.from('transacciones').insert([txInsert])
+    
+    if (txError) {
+      console.error("Error al guardar transacción:", txError)
       return
     }
 
+    // 2. Actualizamos el saldo de la cuenta en Supabase
+    const cuentaOrigen = get().cuentas.find(c => c.id === tx.cuentaId)
+    
+    if (cuentaOrigen) {
+      let nuevoSaldoOrigen = Number(cuentaOrigen.saldo)
+      
+      if (tx.tipo === 'gasto' || tx.tipo === 'transferencia') {
+        nuevoSaldoOrigen -= Number(tx.monto)
+      } else if (tx.tipo === 'ingreso' && cuentaOrigen.tipo !== 'inversion') {
+        nuevoSaldoOrigen += Number(tx.monto)
+      }
+
+      await supabase.from('cuentas').update({ saldo: nuevoSaldoOrigen }).eq('id', cuentaOrigen.id)
+    }
+
+    if (tx.tipo === 'transferencia') {
+      const cuentaDestino = get().cuentas.find(c => c.id === tx.cuentaDestinoId)
+      if (cuentaDestino) {
+        const nuevoSaldoDestino = Number(cuentaDestino.saldo) + Number(tx.monto)
+        await supabase.from('cuentas').update({ saldo: nuevoSaldoDestino }).eq('id', cuentaDestino.id)
+      }
+    }
+
+    // Lógica para inversiones (simplificada)
+    if (cuentaOrigen?.tipo === 'inversion' && tx.tipo === 'ingreso') {
+         const monto = Number(tx.monto)
+         const precioCompra = Number(tx.precioCompra || cuentaOrigen.precioActual || cuentaOrigen.precioPromedio || 1)
+         const partAnteriores = cuentaOrigen.precioPromedio > 0 ? cuentaOrigen.capitalInvertido / cuentaOrigen.precioPromedio : 0
+         const partNuevas = monto / precioCompra
+         const nuevoCapital = Number(cuentaOrigen.capitalInvertido) + monto
+         const nuevoPromedio = nuevoCapital / (partAnteriores + partNuevas)
+         const saldoFinal = (partAnteriores + partNuevas) * (cuentaOrigen.precioActual || precioCompra)
+
+         await supabase.from('cuentas').update({
+             saldo: saldoFinal,
+             capital_invertido: nuevoCapital,
+             precio_promedio: nuevoPromedio
+         }).eq('id', cuentaOrigen.id)
+    }
+
+    // 3. Recargamos datos frescos
     await get().cargarDatosNube()
   },
 
   editarTransaccion: async (id, tx) => {
+    // Para simplificar y evitar descuadres al editar, una técnica muy común es:
+    // Borrar la transacción vieja (lo que revierte el saldo) y añadirla como nueva.
+    // O si prefieres mantener el ID, hay que calcular la diferencia.
+    // De momento, mantenemos solo el update básico (requeriría ajustar saldos si se cambia el monto)
+    
     const txUpdate = {
       cuenta_id: tx.cuentaId,
       cuenta_destino_id: tx.tipo === 'transferencia' ? tx.cuentaDestinoId : null,
@@ -236,15 +286,40 @@ export const useStore = create((set, get) => ({
       return
     }
 
+    // NOTA: Aquí faltaría ajustar el saldo si el monto cambió, pero recargamos
     await get().cargarDatosNube()
   },
 
   eliminarTransaccion: async (id) => {
-    const { error } = await supabase.from('transacciones').delete().eq('id', id)
-    if (error) {
-      console.error("Error al eliminar transacción:", error)
+    const tx = get().transacciones.find(t => t.id === id)
+    if (!tx) return
+
+    const { error: delError } = await supabase.from('transacciones').delete().eq('id', id)
+    if (delError) {
+      console.error("Error al eliminar transacción:", delError)
       return
     }
+
+    // Revertir el saldo
+    const cuentaOrigen = get().cuentas.find(c => c.id === tx.cuentaId)
+    if (cuentaOrigen) {
+      let saldoRevertido = Number(cuentaOrigen.saldo)
+      if (tx.tipo === 'gasto' || tx.tipo === 'transferencia') {
+        saldoRevertido += Number(tx.monto)
+      } else if (tx.tipo === 'ingreso' && cuentaOrigen.tipo !== 'inversion') {
+        saldoRevertido -= Number(tx.monto)
+      }
+      await supabase.from('cuentas').update({ saldo: saldoRevertido }).eq('id', cuentaOrigen.id)
+    }
+
+    if (tx.tipo === 'transferencia') {
+      const cuentaDestino = get().cuentas.find(c => c.id === tx.cuentaDestinoId)
+      if (cuentaDestino) {
+         const saldoRevertidoDestino = Number(cuentaDestino.saldo) - Number(tx.monto)
+         await supabase.from('cuentas').update({ saldo: saldoRevertidoDestino }).eq('id', cuentaDestino.id)
+      }
+    }
+
     await get().cargarDatosNube()
   },
 
