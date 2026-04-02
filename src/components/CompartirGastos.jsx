@@ -60,9 +60,11 @@ export default function CompartirGastos() {
   }, [grupoSeleccionado])
 
   const gastadoPorTi = useMemo(() => {
-    const tu = balances.find(b => b.nombre.toLowerCase() === 'tú')
-    return tu ? tu.pagadoTotal : 0
-  }, [balances])
+    if (!grupoSeleccionado?.split_participantes?.length || !balances.length) return 0
+    const miId = grupoSeleccionado.split_participantes[0].id
+    const miBalance = balances.find(b => b.id === miId)
+    return miBalance ? miBalance.pagadoTotal : 0
+  }, [balances, grupoSeleccionado])
 
   const gastosOrdenados = useMemo(() => {
     if (!grupoSeleccionado?.split_gastos) return []
@@ -278,7 +280,7 @@ export default function CompartirGastos() {
            </div>
            
            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-2">
-             <section className="order-1">
+             <section className="order-2 lg:order-1">
                 <h4 className="text-[10px] font-black uppercase text-text-muted mb-4 tracking-widest px-1 flex items-center gap-2">
                   <ArrowRightLeft size={12} className="text-brand-400" /> Resumen de Deudas
                 </h4>
@@ -322,7 +324,7 @@ export default function CompartirGastos() {
                 )}
              </section>
 
-             <section className="order-2">
+             <section className="order-1 lg:order-2">
                 <h4 className="text-[10px] font-black uppercase text-text-muted mb-4 tracking-widest px-1 flex items-center gap-2">
                   <Receipt size={12} className="text-brand-400" /> Registrar Gasto
                 </h4>
@@ -347,7 +349,11 @@ export default function CompartirGastos() {
                       className="w-full bg-surface border border-border-subtle rounded-2xl px-4 py-4 text-[11px] font-black text-text-main outline-none uppercase tracking-widest focus:border-brand-500 transition-all shadow-inner appearance-none cursor-pointer"
                     >
                       <option value="">Quien pago?</option>
-                      {grupoSeleccionado.split_participantes.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+                      {grupoSeleccionado.split_participantes.map((p, index) => (
+                        <option key={p.id} value={p.id}>
+                          {index === 0 ? `${p.nombre} (Tú)` : p.nombre}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <button type="submit" className="w-full bg-brand-500 text-white py-4 rounded-2xl font-black uppercase tracking-widest text-[11px] shadow-lg shadow-brand-500/20 active:scale-95 transition-all">
@@ -361,27 +367,33 @@ export default function CompartirGastos() {
                     <span className="text-[9px] font-black text-brand-400 bg-brand-500/10 px-2 py-1 rounded-md uppercase tracking-widest">{gastosOrdenados.length} Movimientos</span>
                   </div>
                   <div className="space-y-3">
-                    {gastosOrdenados.map(g => (
-                      <div key={g.id} className="flex items-center justify-between p-4 bg-surface-solid/40 backdrop-blur-sm rounded-2xl border border-border-subtle/50 group transition-all hover:bg-surface hover:border-border-subtle">
-                        <div className="overflow-hidden flex items-center gap-4">
-                          <div className="p-2.5 bg-surface rounded-xl border border-border-subtle text-text-muted group-hover:text-brand-400 transition-colors">
-                            <Receipt size={18} />
+                    {gastosOrdenados.map(g => {
+                      const participante = grupoSeleccionado.split_participantes.find(p => p.id === g.pagado_por_id)
+                      const indexParticipante = grupoSeleccionado.split_participantes.indexOf(participante)
+                      const nombreMostrar = indexParticipante === 0 ? `${participante?.nombre} (Tú)` : participante?.nombre
+
+                      return (
+                        <div key={g.id} className="flex items-center justify-between p-4 bg-surface-solid/40 backdrop-blur-sm rounded-2xl border border-border-subtle/50 group transition-all hover:bg-surface hover:border-border-subtle">
+                          <div className="overflow-hidden flex items-center gap-4">
+                            <div className="p-2.5 bg-surface rounded-xl border border-border-subtle text-text-muted group-hover:text-brand-400 transition-colors">
+                              <Receipt size={18} />
+                            </div>
+                            <div>
+                              <p className="text-sm font-black text-text-main truncate leading-tight mb-0.5">{g.descripcion}</p>
+                              <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest mt-1">
+                                <span>{g.fecha || 'N/A'}</span> • <span className="text-text-main">{nombreMostrar}</span> pago <span className="text-danger font-black">{formatoEuros(g.monto)}</span>
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm font-black text-text-main truncate leading-tight mb-0.5">{g.descripcion}</p>
-                            <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest mt-1">
-                              <span>{g.fecha || 'N/A'}</span> • <span className="text-text-main">{grupoSeleccionado.split_participantes.find(p => p.id === g.pagado_por_id)?.nombre}</span> pago <span className="text-danger font-black">{formatoEuros(g.monto)}</span>
-                            </p>
-                          </div>
+                          <button 
+                            onClick={() => { if(confirm('Borrar este gasto?')) eliminarGastoSplit(g.id) }} 
+                            className="p-2 text-text-muted hover:text-danger active:scale-90 transition-all md:opacity-0 md:group-hover:opacity-100"
+                          >
+                            <Trash2 size={18} />
+                          </button>
                         </div>
-                        <button 
-                          onClick={() => { if(confirm('Borrar este gasto?')) eliminarGastoSplit(g.id) }} 
-                          className="p-2 text-text-muted hover:text-danger active:scale-90 transition-all md:opacity-0 md:group-hover:opacity-100"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      </div>
-                    ))}
+                      )
+                    })}
                     {gastosOrdenados.length === 0 && (
                       <div className="text-center py-12 bg-surface-solid/30 border border-dashed border-border-subtle/50 rounded-3xl">
                         <Info size={28} className="mx-auto mb-3 text-text-muted/40" />
