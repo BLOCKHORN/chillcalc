@@ -5,14 +5,31 @@ import { Users, Plus, Trash2, ArrowRight, ChevronLeft, UserPlus, Receipt, Info, 
 const formatoEuros = (num) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(num || 0)
 
 const calcularBalances = (grupo) => {
-  const { split_participantes: integrantes, split_gastos: gastos } = grupo
+  const { split_participantes: integrantes, split_gastos: gastos, split_liquidaciones: liquidaciones = [] } = grupo
   if (!integrantes || integrantes.length === 0) return []
+  
   const balances = {}
   integrantes.forEach(p => balances[p.id] = 0)
+  
   const totalGastado = gastos.reduce((acc, g) => acc + Number(g.monto), 0)
   const cuotaPorPersona = totalGastado / integrantes.length
+  
   gastos.forEach(g => balances[g.pagado_por_id] += Number(g.monto))
-  return integrantes.map(p => ({ ...p, balance: balances[p.id] - cuotaPorPersona, pagadoTotal: balances[p.id] }))
+
+  return integrantes.map(p => {
+    let balanceBase = balances[p.id] - cuotaPorPersona
+    
+    const pagosHechos = liquidaciones.filter(l => l.deudor_id === p.id).reduce((acc, l) => acc + Number(l.monto), 0)
+    const pagosRecibidos = liquidaciones.filter(l => l.acreedor_id === p.id).reduce((acc, l) => acc + Number(l.monto), 0)
+    
+    const balanceFinal = balanceBase + pagosHechos - pagosRecibidos
+
+    return { 
+      ...p, 
+      balance: balanceFinal, 
+      pagadoTotal: balances[p.id] 
+    }
+  })
 }
 
 export default function CompartirGastos() {
@@ -34,7 +51,6 @@ export default function CompartirGastos() {
     if (!balances.length) return []
     const deudores = balances.filter(b => b.balance < -0.01).map(b => ({ ...b, balance: Math.abs(b.balance) })).sort((a, b) => b.balance - a.balance)
     const acreedores = balances.filter(b => b.balance > 0.01).map(b => ({ ...b })).sort((a, b) => b.balance - a.balance)
-    const liquidacionesDB = grupoSeleccionado?.split_liquidaciones || []
     
     const trans = []
     let i = 0
@@ -44,16 +60,8 @@ export default function CompartirGastos() {
       const d = deudores[i]
       const a = acreedores[j]
       const monto = Math.min(d.balance, a.balance)
-      
-      const estaPagado = liquidacionesDB.some(liq => 
-        liq.deudor_id === d.id && 
-        liq.acreedor_id === a.id && 
-        Math.abs(Number(liq.monto) - monto) < 0.05
-      )
 
-      if (!estaPagado) {
-        trans.push({ de: d.nombre, deId: d.id, para: a.nombre, paraId: a.id, monto })
-      }
+      trans.push({ de: d.nombre, deId: d.id, para: a.nombre, paraId: a.id, monto })
       
       d.balance -= monto
       a.balance -= monto
@@ -62,7 +70,7 @@ export default function CompartirGastos() {
       if (a.balance < 0.01) j++
     }
     return trans
-  }, [balances, grupoSeleccionado])
+  }, [balances])
 
   const totalGrupo = useMemo(() => {
     return grupoSeleccionado?.split_gastos?.reduce((acc, g) => acc + Number(g.monto), 0) || 0
