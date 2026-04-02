@@ -33,7 +33,7 @@ export const useStore = create((set, get) => ({
       supabase.from('transacciones').select('*').order('created_at', { ascending: false }),
       supabase.from('objetivos').select('*').order('created_at', { ascending: true }),
       supabase.from('categorias').select('*').order('nombre', { ascending: true }),
-      supabase.from('split_grupos').select('*, split_participantes(*), split_gastos(*)').order('created_at', { ascending: false }),
+      supabase.from('split_grupos').select('*, split_participantes(*), split_gastos(*), split_liquidaciones(*)').order('created_at', { ascending: false }),
       supabase.from('suscripciones').select('*').order('proximo_cobro', { ascending: true })
     ])
 
@@ -420,6 +420,20 @@ export const useStore = create((set, get) => ({
     }
   },
 
+  registrarLiquidacionSplit: async (liquidacion) => {
+    const { error } = await supabase.from('split_liquidaciones').insert([liquidacion])
+    if (!error) {
+      await get().cargarDatosNube()
+    }
+  },
+
+  eliminarLiquidacionSplit: async (id) => {
+    const { error } = await supabase.from('split_liquidaciones').delete().eq('id', id)
+    if (!error) {
+      await get().cargarDatosNube()
+    }
+  },
+  
   cargarGrupoPublico: async (token) => {
     const { data: grupo, error } = await supabase
       .from('split_grupos')

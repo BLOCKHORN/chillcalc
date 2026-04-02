@@ -16,12 +16,12 @@ const calcularBalances = (grupo) => {
 }
 
 export default function CompartirGastos() {
-  const { gruposSplit, crearGrupoSplit, eliminarGrupoSplit, agregarGastoSplit, eliminarGastoSplit, obtenerEnlaceCompartir } = useStore()
+  const { gruposSplit, crearGrupoSplit, eliminarGrupoSplit, agregarGastoSplit, eliminarGastoSplit, obtenerEnlaceCompartir, registrarLiquidacionSplit } = useStore()
   const [grupoActivoId, setGrupoActivoId] = useState(null)
   const [pasoCreacion, setPasoCreacion] = useState(false)
   
   const [nombreGrupo, setNombreGrupo] = useState('')
-  const [amigos, setAmigos] = useState(['Tú', ''])
+  const [amigos, setAmigos] = useState(['Tu', ''])
   const [formGasto, setFormGasto] = useState({ desc: '', monto: '', pagadoPor: '' })
   
   const [copiado, setCopiado] = useState(false)
@@ -34,6 +34,7 @@ export default function CompartirGastos() {
     if (!balances.length) return []
     const deudores = balances.filter(b => b.balance < -0.01).map(b => ({ ...b, balance: Math.abs(b.balance) })).sort((a, b) => b.balance - a.balance)
     const acreedores = balances.filter(b => b.balance > 0.01).map(b => ({ ...b })).sort((a, b) => b.balance - a.balance)
+    const liquidacionesDB = grupoSeleccionado?.split_liquidaciones || []
     
     const trans = []
     let i = 0
@@ -44,7 +45,15 @@ export default function CompartirGastos() {
       const a = acreedores[j]
       const monto = Math.min(d.balance, a.balance)
       
-      trans.push({ de: d.nombre, para: a.nombre, monto })
+      const estaPagado = liquidacionesDB.some(liq => 
+        liq.deudor_id === d.id && 
+        liq.acreedor_id === a.id && 
+        Math.abs(Number(liq.monto) - monto) < 0.05
+      )
+
+      if (!estaPagado) {
+        trans.push({ de: d.nombre, deId: d.id, para: a.nombre, paraId: a.id, monto })
+      }
       
       d.balance -= monto
       a.balance -= monto
@@ -53,7 +62,7 @@ export default function CompartirGastos() {
       if (a.balance < 0.01) j++
     }
     return trans
-  }, [balances])
+  }, [balances, grupoSeleccionado])
 
   const totalGrupo = useMemo(() => {
     return grupoSeleccionado?.split_gastos?.reduce((acc, g) => acc + Number(g.monto), 0) || 0
@@ -76,7 +85,7 @@ export default function CompartirGastos() {
     await crearGrupoSplit(nombreGrupo, amigosFiltrados)
     setPasoCreacion(false)
     setNombreGrupo('')
-    setAmigos(['Tú', ''])
+    setAmigos(['Tu', ''])
   }
 
   const handleNuevoGasto = async (e) => {
@@ -120,6 +129,18 @@ export default function CompartirGastos() {
       }
     } catch (err) {
       console.error(err)
+    }
+  }
+
+  const handleMarcarPagado = async (trans) => {
+    const confirmar = window.confirm(`Confirmas que ${trans.de} ya ha pagado ${formatoEuros(trans.monto)} a ${trans.para}?`)
+    if (confirmar) {
+      await registrarLiquidacionSplit({
+        grupo_id: grupoActivoId,
+        deudor_id: trans.deId,
+        acreedor_id: trans.paraId,
+        monto: trans.monto
+      })
     }
   }
 
@@ -309,14 +330,22 @@ export default function CompartirGastos() {
                       <Check size={12} className="text-emerald-500" /> Cuadrar Gastos
                     </h4>
                     <div className="bg-surface-solid/60 backdrop-blur-md p-5 rounded-3xl border border-border-subtle/50 shadow-sm space-y-3">
-                      {transferenciasSugeridas.map((t, i) => (
-                        <div key={i} className="flex items-center justify-between p-3 bg-surface rounded-xl border border-border-subtle">
+                      {transferenciasSugeridas.map((t) => (
+                        <div key={`${t.deId}-${t.paraId}`} className="flex items-center justify-between p-3 bg-surface rounded-xl border border-border-subtle">
                           <div className="flex items-center gap-3">
                             <span className="text-sm font-black text-text-main">{t.de}</span>
                             <ArrowRight size={14} className="text-text-muted" />
                             <span className="text-sm font-black text-text-main">{t.para}</span>
                           </div>
-                          <span className="text-sm font-black text-emerald-500">{formatoEuros(t.monto)}</span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm font-black text-emerald-500">{formatoEuros(t.monto)}</span>
+                            <button 
+                              onClick={() => handleMarcarPagado(t)}
+                              className="px-3 py-1.5 bg-surface-solid border border-border-subtle hover:bg-emerald-500/10 hover:border-emerald-500/30 hover:text-emerald-500 text-text-muted rounded-lg text-[10px] font-black uppercase tracking-widest transition-all active:scale-95"
+                            >
+                              Pagado
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -351,7 +380,7 @@ export default function CompartirGastos() {
                       <option value="">Quien pago?</option>
                       {grupoSeleccionado.split_participantes.map((p, index) => (
                         <option key={p.id} value={p.id}>
-                          {index === 0 ? `${p.nombre} (Tú)` : p.nombre}
+                          {index === 0 ? `${p.nombre} (Tu)` : p.nombre}
                         </option>
                       ))}
                     </select>
@@ -370,7 +399,7 @@ export default function CompartirGastos() {
                     {gastosOrdenados.map(g => {
                       const participante = grupoSeleccionado.split_participantes.find(p => p.id === g.pagado_por_id)
                       const indexParticipante = grupoSeleccionado.split_participantes.indexOf(participante)
-                      const nombreMostrar = indexParticipante === 0 ? `${participante?.nombre} (Tú)` : participante?.nombre
+                      const nombreMostrar = indexParticipante === 0 ? `${participante?.nombre} (Tu)` : participante?.nombre
 
                       return (
                         <div key={g.id} className="flex items-center justify-between p-4 bg-surface-solid/40 backdrop-blur-sm rounded-2xl border border-border-subtle/50 group transition-all hover:bg-surface hover:border-border-subtle">
@@ -381,7 +410,7 @@ export default function CompartirGastos() {
                             <div>
                               <p className="text-sm font-black text-text-main truncate leading-tight mb-0.5">{g.descripcion}</p>
                               <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest mt-1">
-                                <span>{g.fecha || 'N/A'}</span> • <span className="text-text-main">{nombreMostrar}</span> pago <span className="text-danger font-black">{formatoEuros(g.monto)}</span>
+                                <span>{g.fecha || 'N/A'}</span> - <span className="text-text-main">{nombreMostrar}</span> pago <span className="text-danger font-black">{formatoEuros(g.monto)}</span>
                               </p>
                             </div>
                           </div>
