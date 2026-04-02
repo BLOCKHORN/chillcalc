@@ -196,8 +196,6 @@ export const useStore = create((set, get) => ({
   agregarTransaccion: async (tx) => {
     const { data: { user } } = await supabase.auth.getUser()
     
-    // 1. Preparamos el insert de la transacción
-    // NOTA: Si no tienes la columna categoria_id en Supabase, coméntala o bórrala de aquí
     const txInsert = {
       user_id: user.id,
       cuenta_id: tx.cuentaId,
@@ -205,7 +203,6 @@ export const useStore = create((set, get) => ({
       monto: Number(tx.monto),
       descripcion: tx.desc || tx.descripcion,
       categoria: tx.tipo === 'transferencia' ? 'Traspaso' : tx.categoria,
-      categoria_id: tx.categoriaId, // <--- REVISA SI TIENES ESTO EN TU BBDD. Si no, quítalo.
       tipo: tx.tipo,
       fecha: tx.fecha,
       precio_compra: tx.precioCompra
@@ -214,11 +211,10 @@ export const useStore = create((set, get) => ({
     const { error: txError } = await supabase.from('transacciones').insert([txInsert])
     
     if (txError) {
-      console.error("Error al guardar transacción:", txError)
+      console.error(txError)
       return
     }
 
-    // 2. Actualizamos el saldo de la cuenta en Supabase
     const cuentaOrigen = get().cuentas.find(c => c.id === tx.cuentaId)
     
     if (cuentaOrigen) {
@@ -241,7 +237,6 @@ export const useStore = create((set, get) => ({
       }
     }
 
-    // Lógica para inversiones (simplificada)
     if (cuentaOrigen?.tipo === 'inversion' && tx.tipo === 'ingreso') {
          const monto = Number(tx.monto)
          const precioCompra = Number(tx.precioCompra || cuentaOrigen.precioActual || cuentaOrigen.precioPromedio || 1)
@@ -258,23 +253,16 @@ export const useStore = create((set, get) => ({
          }).eq('id', cuentaOrigen.id)
     }
 
-    // 3. Recargamos datos frescos
     await get().cargarDatosNube()
   },
 
   editarTransaccion: async (id, tx) => {
-    // Para simplificar y evitar descuadres al editar, una técnica muy común es:
-    // Borrar la transacción vieja (lo que revierte el saldo) y añadirla como nueva.
-    // O si prefieres mantener el ID, hay que calcular la diferencia.
-    // De momento, mantenemos solo el update básico (requeriría ajustar saldos si se cambia el monto)
-    
     const txUpdate = {
       cuenta_id: tx.cuentaId,
       cuenta_destino_id: tx.tipo === 'transferencia' ? tx.cuentaDestinoId : null,
       monto: Number(tx.monto),
       descripcion: tx.desc || tx.descripcion,
       categoria: tx.tipo === 'transferencia' ? 'Traspaso' : tx.categoria,
-      categoria_id: tx.categoriaId,
       tipo: tx.tipo,
       fecha: tx.fecha,
       precio_compra: tx.precioCompra
@@ -282,11 +270,10 @@ export const useStore = create((set, get) => ({
 
     const { error } = await supabase.from('transacciones').update(txUpdate).eq('id', id)
     if (error) {
-      console.error("Error al editar transacción:", error)
+      console.error(error)
       return
     }
 
-    // NOTA: Aquí faltaría ajustar el saldo si el monto cambió, pero recargamos
     await get().cargarDatosNube()
   },
 
