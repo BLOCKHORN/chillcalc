@@ -52,7 +52,8 @@ export const useStore = create((set, get) => ({
       precioActual: Number(c.precio_actual || 0),
       tae: Number(c.tae || 0),
       saldo: Number(c.saldo || 0),
-      moneda: c.moneda || 'EUR'
+      moneda: c.moneda || 'EUR',
+      favorita: Boolean(c.favorita)
     }))
 
     const transaccionesMapeadas = (resTransacciones.data || []).map(t => ({
@@ -192,6 +193,27 @@ export const useStore = create((set, get) => ({
       await get().cargarDatosNube()
     }
   },
+
+  marcarFavorita: async (id) => {
+    // 1. Quitamos la marca de favorita a todas las cuentas que NO sean la elegida
+    await supabase
+      .from('cuentas')
+      .update({ favorita: false })
+      .not('id', 'eq', id)
+
+    // 2. Ponemos la marca de favorita a la elegida
+    const { error } = await supabase
+      .from('cuentas')
+      .update({ favorita: true })
+      .eq('id', id)
+
+    if (!error) {
+      await get().cargarDatosNube()
+    } else {
+      console.error("Error al cambiar cuenta favorita:", error)
+    }
+  },
+
 
   agregarTransaccion: async (tx) => {
     const { data: { user } } = await supabase.auth.getUser()

@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useStore } from '../store/useStore'
-import { Building2, CreditCard, Banknote, LineChart, Wallet, Settings2, Trash2, Globe, Plus } from 'lucide-react'
+import { Building2, CreditCard, Banknote, LineChart, Wallet, Settings2, Trash2, Globe, Plus, Star } from 'lucide-react'
 import ModalCuenta from './ModalCuenta'
 import ModalEditarCuenta from './ModalEditarCuenta'
 import ModalEliminarCuenta from './ModalEliminarCuenta'
@@ -13,6 +13,7 @@ export default function Cuentas() {
   const [cuentaEliminando, setCuentaEliminando] = useState(null)
   
   const cuentas = useStore(state => state.cuentas)
+  const marcarFavorita = useStore(state => state.marcarFavorita)
 
   const getIcon = useCallback((icono) => {
     const props = { size: 20, className: "text-text-main group-hover:text-brand-400 transition-colors" }
@@ -70,7 +71,7 @@ export default function Cuentas() {
           const gananciaMensual = gananciaAnual / 12
 
           return (
-            <div key={c.id} className="bg-surface-solid/40 backdrop-blur-xl border border-border-subtle/50 rounded-3xl p-6 flex flex-col justify-between min-h-[200px] group relative transition-all duration-300 hover:-translate-y-1 hover:border-border-subtle/80 shadow-xl shadow-black/5 overflow-hidden">
+            <div key={c.id} className={`bg-surface-solid/40 backdrop-blur-xl border rounded-3xl p-6 flex flex-col justify-between min-h-[200px] group relative transition-all duration-300 hover:-translate-y-1 shadow-xl shadow-black/5 overflow-hidden ${c.favorita ? 'border-yellow-500/50 hover:border-yellow-400/80' : 'border-border-subtle/50 hover:border-border-subtle/80'}`}>
               
               <div className="flex justify-between items-start mb-6">
                 <div className="flex items-center gap-4">
@@ -78,8 +79,17 @@ export default function Cuentas() {
                     {getIcon(c.icono)}
                   </div>
                   <div>
-                    <h3 className="font-black text-lg text-text-main leading-none mb-1.5 truncate max-w-[140px]">{c.nombre}</h3>
-                    <span className="text-[9px] uppercase font-black tracking-widest text-text-muted">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-black text-lg text-text-main leading-none truncate max-w-[120px]">{c.nombre}</h3>
+                      <button 
+                        onClick={() => marcarFavorita(c.id)}
+                        className={`p-1 rounded transition-all active:scale-90 ${c.favorita ? 'text-yellow-400' : 'text-text-muted/30 hover:text-yellow-400/70'}`}
+                        title={c.favorita ? "Cuenta Favorita" : "Marcar como Favorita"}
+                      >
+                        <Star size={16} fill={c.favorita ? "currentColor" : "none"} strokeWidth={c.favorita ? 1 : 2.5} />
+                      </button>
+                    </div>
+                    <span className="text-[9px] uppercase font-black tracking-widest text-text-muted mt-1.5 block">
                       {esRemunerada ? 'Cuenta Ahorro' : c.tipo}
                     </span>
                   </div>
