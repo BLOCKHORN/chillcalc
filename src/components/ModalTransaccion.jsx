@@ -60,8 +60,16 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
       setTipo(tipoInicial || 'gasto')
       setMonto('')
       setDesc('')
-      setCuentaId(cuentas[0]?.id || '')
-      setCuentaDestinoId(cuentas.length > 1 ? cuentas[1].id : '')
+
+      // --- CAMBIO AQUÍ: Buscar la cuenta favorita ---
+      const cuentaFav = cuentas.find(c => c.favorita === true)
+      const idInicial = cuentaFav ? cuentaFav.id : (cuentas[0]?.id || '')
+      
+      setCuentaId(idInicial)
+      // Ajustamos la cuenta destino para que no sea la misma que la de origen por defecto
+      setCuentaDestinoId(cuentas.length > 1 ? (cuentas.find(c => String(c.id) !== String(idInicial))?.id || cuentas[1].id) : '')
+      // ----------------------------------------------
+
       setCategoria(categorias[0]?.nombre || '')
       setFecha(new Date().toISOString().split('T')[0])
       setPrecioCompra('')
