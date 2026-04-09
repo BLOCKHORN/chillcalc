@@ -32,6 +32,16 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
   const [precioCompra, setPrecioCompra] = useState('')
   const [cargando, setCargando] = useState(false)
 
+  // GESTIÓN DE VISIBILIDAD DEL MENÚ EN MÓVIL
+  useEffect(() => {
+    if (isOpen) {
+      document.body.classList.add('modal-open-hide-nav');
+    } else {
+      document.body.classList.remove('modal-open-hide-nav');
+    }
+    return () => document.body.classList.remove('modal-open-hide-nav');
+  }, [isOpen]);
+
   useEffect(() => {
     if (editarDatos && isOpen) {
       setTipo(editarDatos.tipo)

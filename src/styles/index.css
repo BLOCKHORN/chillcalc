@@ -71,3 +71,17 @@
     background-image: linear-gradient(to right, var(--gradient-from), var(--gradient-to));
   }
 }
+
+
+@media (max-width: 640px) {
+  /* Bloquea el scroll del fondo y oculta la navegación */
+  body.modal-open-hide-nav {
+    overflow: hidden;
+  }
+  
+  /* Ajusta '.bottom-nav' por la clase real de tu menú inferior */
+  body.modal-open-hide-nav .bottom-nav,
+  body.modal-open-hide-nav nav { 
+    display: none !important;
+  }
+}
