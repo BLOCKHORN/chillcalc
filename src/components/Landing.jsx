@@ -42,12 +42,18 @@ export default function Landing() {
           Control absoluto de tu patrimonio y gastos compartidos en un solo lugar.
         </p>
         
+        {/* BOTÓN MEJORADO */}
         <button
           onClick={() => navigate(sesion ? '/dashboard' : '/login')}
-          className="group relative flex items-center justify-center gap-3 bg-text-main text-bg-app px-8 py-5 rounded-2xl font-black uppercase tracking-widest text-sm hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-brand-500/20"
+          className="group relative flex items-center justify-center gap-3 bg-brand-500 text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-sm hover:bg-brand-400 hover:scale-105 active:scale-95 transition-all shadow-[0_20px_50px_rgba(var(--brand-500-rgb),0.3)] border border-white/10 overflow-hidden"
         >
-          {sesion ? 'Ir al panel' : 'Empezar ahora'}
-          <ArrowRight size={18} strokeWidth={3} className="group-hover:translate-x-1 transition-transform" />
+          {/* Efecto de brillo sutil al pasar el ratón */}
+          <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+          
+          <span className="relative z-10">
+            {sesion ? 'Ir al panel de control' : 'Empezar ahora gratis'}
+          </span>
+          <ArrowRight size={20} strokeWidth={3} className="relative z-10 group-hover:translate-x-1 transition-transform" />
         </button>
 
         {/* Stats Section */}
