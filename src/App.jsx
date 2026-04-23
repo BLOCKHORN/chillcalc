@@ -11,11 +11,13 @@ import CompartirGastos from './components/CompartirGastos'
 import Suscripciones from './components/Suscripciones'
 import BottomNav from './components/BottomNav'
 import VistaPublicaSplit from './components/VistaPublicaSplit'
+import Landing from './components/Landing'
 
 function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
   const [tokenPublico, setTokenPublico] = useState(null)
+  const [rutaActiva, setRutaActiva] = useState('landing')
   
   const vistaActual = useStore(state => state.vistaActual)
   const tema = useStore(state => state.tema)
@@ -23,30 +25,34 @@ function App() {
   useEffect(() => {
     document.documentElement.classList.toggle('light-mode', tema === 'light')
 
-    // 1. INTERCEPTOR DE ENLACES PÚBLICOS
     const path = window.location.pathname
     if (path.startsWith('/split/')) {
       const token = path.replace('/split/', '')
       if (token) {
         setTokenPublico(token)
         setLoading(false)
-        return // Cortamos aquí para que no siga pidiendo login
+        return
       }
     }
 
-    // 2. FLUJO NORMAL DE AUTENTICACIÓN
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setLoading(false)
       if (session) useStore.getState().cargarDatosNube()
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session)
-      if (session) useStore.getState().cargarDatosNube()
+      if (session) {
+        useStore.getState().cargarDatosNube()
+        if (event === 'SIGNED_IN') {
+          setRutaActiva('app')
+        }
+      } else {
+        setRutaActiva('landing')
+      }
     })
 
-    // Motor automático: Actualiza la bolsa cada 1 hora (3600000 ms)
     const intervalId = setInterval(() => {
       const { cuentas, actualizarPreciosMercado } = useStore.getState()
       if (cuentas.some(c => c.tipo === 'inversion')) {
@@ -68,12 +74,22 @@ function App() {
     )
   }
 
-  // 3. MODO INVITADO: Si hay un token en la URL, mostramos la vista pública directamente
   if (tokenPublico) {
     return <VistaPublicaSplit token={tokenPublico} />
   }
 
-  // 4. MODO PRIVADO: Si no hay sesión, pedimos login
+  if (rutaActiva === 'landing') {
+    return <Landing onAcceder={(destino) => setRutaActiva(destino === 'login' ? 'auth' : 'app')} />
+  }
+
+  if (rutaActiva === 'auth') {
+    if (session) {
+      setRutaActiva('app')
+      return null
+    }
+    return <Auth />
+  }
+
   if (!session) {
     return <Auth />
   }
