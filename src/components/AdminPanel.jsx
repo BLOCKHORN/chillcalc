@@ -9,9 +9,8 @@ export default function AdminPanel() {
   const [statsGlobales, setStatsGlobales] = useState({ total_usuarios: 0, total_cuentas: 0, total_transacciones: 0 })
   const [cargando, setCargando] = useState(true)
   
-  // Estados para el desglose
   const [usuarioExpandido, setUsuarioExpandido] = useState(null)
-  const [statsUsuarios, setStatsUsuarios] = useState({}) // Guardamos { userId: { num_cuentas, num_transacciones } }
+  const [statsUsuarios, setStatsUsuarios] = useState({})
   const [cargandoDetalle, setCargandoDetalle] = useState(false)
 
   useEffect(() => {
@@ -39,7 +38,6 @@ export default function AdminPanel() {
 
     setUsuarioExpandido(userId)
     
-    // Solo cargamos si no lo tenemos ya en caché
     if (!statsUsuarios[userId]) {
       setCargandoDetalle(true)
       const data = await cargarStatsUsuarioAdmin(userId)
@@ -49,7 +47,7 @@ export default function AdminPanel() {
   }
 
   const handleCambiarRol = async (e, id, email, rolActual) => {
-    e.stopPropagation() // Evita que se cierre el acordeón al pulsar el botón
+    e.stopPropagation()
     const nuevoRol = rolActual === 'admin' ? 'usuario' : 'admin'
     if (window.confirm(`¿Confirmas cambiar a ${email} a nivel ${nuevoRol.toUpperCase()}?`)) {
       const exito = await cambiarRolAdmin(id, nuevoRol)
@@ -68,12 +66,11 @@ export default function AdminPanel() {
           <ShieldAlert size={28} />
         </div>
         <div>
-          <h1 className="text-3xl font-black text-text-main tracking-tight text-white">Terminal de Control</h1>
+          <h1 className="text-3xl font-black text-text-main tracking-tight">Terminal de Control</h1>
           <p className="text-sm font-bold text-text-muted uppercase tracking-widest mt-1">Gestión de infraestructura</p>
         </div>
       </div>
 
-      {/* Stats Globales */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         {[
           { label: 'Usuarios', val: statsGlobales.total_usuarios, icon: Users, color: 'text-blue-400' },
@@ -83,15 +80,14 @@ export default function AdminPanel() {
           <div key={i} className="bg-surface-solid border border-border-subtle p-6 rounded-2xl relative overflow-hidden group">
             <item.icon className={`absolute -right-2 -bottom-2 size-24 opacity-5 ${item.color}`} />
             <p className="text-[10px] font-black uppercase tracking-widest text-text-muted mb-2">{item.label}</p>
-            <p className="text-4xl font-black text-text-main text-white">{item.val}</p>
+            <p className="text-4xl font-black text-text-main">{item.val}</p>
           </div>
         ))}
       </div>
 
-      {/* Tabla Interactiva */}
       <div className="bg-surface-solid border border-border-subtle rounded-2xl overflow-hidden shadow-2xl">
         <div className="p-6 border-b border-border-subtle bg-surface/30">
-          <h3 className="text-sm font-black text-text-main uppercase tracking-widest text-white">Base de datos de terminales</h3>
+          <h3 className="text-sm font-black text-text-main uppercase tracking-widest">Base de datos de terminales</h3>
         </div>
         
         {cargando ? (
@@ -113,7 +109,7 @@ export default function AdminPanel() {
                   const uStats = statsUsuarios[u.id]
 
                   return (
-                    <React.Fragment key={u.id}>
+                    <optgroup key={u.id} label={u.email} style={{all: 'unset'}}>
                       <tr 
                         onClick={() => toggleUsuario(u.id)}
                         className={`border-b border-border-subtle/30 cursor-pointer transition-colors ${expandido ? 'bg-brand-500/5' : 'hover:bg-surface/50'}`}
@@ -124,7 +120,7 @@ export default function AdminPanel() {
                               {expandido ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                             </div>
                             <div className="flex flex-col">
-                              <span className="font-bold text-text-main text-sm text-white">{u.email}</span>
+                              <span className="font-bold text-text-main text-sm">{u.email}</span>
                               <span className="text-[10px] text-text-muted font-mono uppercase opacity-50">{u.id.substring(0, 8)}</span>
                             </div>
                           </div>
@@ -141,18 +137,16 @@ export default function AdminPanel() {
                           <button
                             onClick={(e) => handleCambiarRol(e, u.id, u.email, u.rol)}
                             className="p-2 rounded-lg hover:bg-danger/10 text-text-muted hover:text-danger transition-colors"
-                            title="Cambiar Rango"
                           >
                             <Shield size={18} />
                           </button>
                         </td>
                       </tr>
                       
-                      {/* Sub-fila de detalles (Acordeón) */}
                       {expandido && (
                         <tr className="bg-brand-500/[0.02] border-b border-border-subtle/30">
                           <td colSpan="4" className="p-6 pt-2">
-                            <div className="flex gap-10 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="flex gap-10">
                               {cargandoDetalle && !uStats ? (
                                 <div className="flex items-center gap-2 text-xs font-bold text-brand-400">
                                   <Loader2 size={14} className="animate-spin" /> Consultando base de datos...
@@ -163,14 +157,14 @@ export default function AdminPanel() {
                                     <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Cuentas Activas</span>
                                     <div className="flex items-center gap-2">
                                       <Wallet size={16} className="text-emerald-400" />
-                                      <span className="text-xl font-black text-white">{uStats?.num_cuentas || 0}</span>
+                                      <span className="text-xl font-black text-text-main">{uStats?.num_cuentas || 0}</span>
                                     </div>
                                   </div>
                                   <div className="flex flex-col gap-1">
                                     <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Actividad Total</span>
                                     <div className="flex items-center gap-2">
                                       <ArrowRightLeft size={16} className="text-amber-400" />
-                                      <span className="text-xl font-black text-white">{uStats?.num_transacciones || 0}</span>
+                                      <span className="text-xl font-black text-text-main">{uStats?.num_transacciones || 0}</span>
                                     </div>
                                   </div>
                                   <div className="ml-auto self-end text-[9px] font-mono text-text-muted bg-surface px-2 py-1 rounded">
@@ -182,7 +176,7 @@ export default function AdminPanel() {
                           </td>
                         </tr>
                       )}
-                    </React.Fragment>
+                    </optgroup>
                   )
                 })}
               </tbody>
