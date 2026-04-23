@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react' // Importación vital añadida
 import { useStore } from '../store/useStore'
 import { Navigate } from 'react-router-dom'
 import { Shield, ShieldAlert, User, Loader2, Users, Wallet, ArrowRightLeft, ChevronDown, ChevronUp } from 'lucide-react'
@@ -80,7 +80,7 @@ export default function AdminPanel() {
           <div key={i} className="bg-surface-solid border border-border-subtle p-6 rounded-2xl relative overflow-hidden group">
             <item.icon className={`absolute -right-2 -bottom-2 size-24 opacity-5 ${item.color}`} />
             <p className="text-[10px] font-black uppercase tracking-widest text-text-muted mb-2">{item.label}</p>
-            <p className="text-4xl font-black text-text-main">{item.val}</p>
+            <p className="text-4xl font-black text-text-main leading-none">{item.val}</p>
           </div>
         ))}
       </div>
@@ -109,7 +109,7 @@ export default function AdminPanel() {
                   const uStats = statsUsuarios[u.id]
 
                   return (
-                    <optgroup key={u.id} label={u.email} style={{all: 'unset'}}>
+                    <React.Fragment key={u.id}>
                       <tr 
                         onClick={() => toggleUsuario(u.id)}
                         className={`border-b border-border-subtle/30 cursor-pointer transition-colors ${expandido ? 'bg-brand-500/5' : 'hover:bg-surface/50'}`}
@@ -144,24 +144,24 @@ export default function AdminPanel() {
                       </tr>
                       
                       {expandido && (
-                        <tr className="bg-brand-500/[0.02] border-b border-border-subtle/30">
+                        <tr className="bg-brand-500/[0.02] border-b border-border-subtle/30 animate-in fade-in slide-in-from-top-1 duration-200">
                           <td colSpan="4" className="p-6 pt-2">
                             <div className="flex gap-10">
                               {cargandoDetalle && !uStats ? (
                                 <div className="flex items-center gap-2 text-xs font-bold text-brand-400">
-                                  <Loader2 size={14} className="animate-spin" /> Consultando base de datos...
+                                  <Loader2 size={14} className="animate-spin" /> Sincronizando...
                                 </div>
                               ) : (
                                 <>
                                   <div className="flex flex-col gap-1">
-                                    <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Cuentas Activas</span>
+                                    <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Cuentas</span>
                                     <div className="flex items-center gap-2">
                                       <Wallet size={16} className="text-emerald-400" />
                                       <span className="text-xl font-black text-text-main">{uStats?.num_cuentas || 0}</span>
                                     </div>
                                   </div>
                                   <div className="flex flex-col gap-1">
-                                    <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Actividad Total</span>
+                                    <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Movimientos</span>
                                     <div className="flex items-center gap-2">
                                       <ArrowRightLeft size={16} className="text-amber-400" />
                                       <span className="text-xl font-black text-text-main">{uStats?.num_transacciones || 0}</span>
@@ -176,7 +176,7 @@ export default function AdminPanel() {
                           </td>
                         </tr>
                       )}
-                    </optgroup>
+                    </React.Fragment>
                   )
                 })}
               </tbody>
