@@ -246,7 +246,7 @@ export default function CompartirGastos() {
                 <h3 className="text-2xl font-black text-text-main mb-2 tracking-tight line-clamp-2">{grupo.nombre}</h3>
                 
                 <div className="mt-auto pt-4 flex items-center gap-2 text-brand-400 font-black text-[10px] uppercase tracking-widest">
-                  Ver cuentas <ArrowRight size={14} strokeWidth={3} className="group-hover:translate-x-1 transition-transform" />
+                  Ver cuentass <ArrowRight size={14} strokeWidth={3} className="group-hover:translate-x-1 transition-transform" />
                 </div>
               </button>
             ))}
