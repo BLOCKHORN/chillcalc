@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
@@ -39,6 +40,15 @@ export default function Landing({ onAcceder }) {
           {sesion ? 'Ir al panel' : 'Iniciar Sesión / Registrarte'}
           <ArrowRight size={18} strokeWidth={3} className="group-hover:translate-x-1 transition-transform" />
         </button>
+      </div>
+
+      <div className="absolute bottom-8 left-0 w-full text-center z-10">
+        <Link 
+          to="/privacidad" 
+          className="text-xs font-bold text-text-muted hover:text-text-main uppercase tracking-widest transition-colors"
+        >
+          Política de Privacidad
+        </Link>
       </div>
     </div>
   )

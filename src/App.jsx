@@ -13,6 +13,7 @@ import Suscripciones from './components/Suscripciones'
 import BottomNav from './components/BottomNav'
 import VistaPublicaSplit from './components/VistaPublicaSplit'
 import Landing from './components/Landing'
+import PoliticaPrivacidad from './components/PoliticaPrivacidad'
 
 function RutasPrivadas({ session, children }) {
   if (!session) return <Navigate to="/login" replace />
