@@ -67,7 +67,7 @@ export default function Landing() {
               <Activity size={18} className="text-brand-400" />
               {stats.total_movimientos.toLocaleString()}
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-text-muted opacity-60">Movimientos hoy</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-text-muted opacity-60">Transacciones registradas</span>
           </div>
         </div>
       </div>
