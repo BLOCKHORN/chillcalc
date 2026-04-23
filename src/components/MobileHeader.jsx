@@ -14,7 +14,7 @@ export default function MobileHeader() {
           <img src="/apple-touch-icon.png" alt="EasyPocket" className="w-full h-full object-cover" />
         </div>
         <span className="font-black text-lg tracking-tight text-text-main">
-          EasyPocket<span className="text-brand-500">.</span>
+          EasyPocket<span className="text-brand-500">+</span>
         </span>
       </div>
 
