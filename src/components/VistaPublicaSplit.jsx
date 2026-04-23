@@ -22,20 +22,21 @@ export default function VistaPublicaSplit({ token }) {
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(false)
 
-  const cargarDatos = async () => {
-    const data = await cargarGrupoPublico(token)
-    if (data) {
-      setGrupo(data)
-    } else {
-      setError(true)
-    }
-    setCargando(false)
-  }
-
   useEffect(() => {
     document.documentElement.classList.remove('light-mode') 
+    
+    const cargarDatos = async () => {
+      const data = await cargarGrupoPublico(token)
+      if (data) {
+        setGrupo(data)
+      } else {
+        setError(true)
+      }
+      setCargando(false)
+    }
+
     cargarDatos()
-  }, [token])
+  }, [token, cargarGrupoPublico])
 
   const balances = useMemo(() => grupo ? calcularBalances(grupo) : [], [grupo])
 

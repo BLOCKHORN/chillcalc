@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { LayoutDashboard, Wallet, ArrowRightLeft, Target, LogOut, Users, Sun, Moon, CalendarClock } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { supabase } from '../lib/supabase'
 import clsx from 'clsx'
 
 export default function Sidebar() {
-  const { vistaActual, setVistaActual, tema, toggleTema } = useStore()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { tema, toggleTema } = useStore()
   const [email, setEmail] = useState('')
 
   useEffect(() => {
@@ -45,28 +48,32 @@ export default function Sidebar() {
         <div className="px-3 mb-2 text-[10px] font-black text-text-muted uppercase tracking-widest opacity-80">
           Menú Principal
         </div>
-        {navItems.map(({ id, label, icon: Icon }) => (
-          <button
-            key={id}
-            onClick={() => setVistaActual(id)}
-            className={clsx(
-              "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all w-full text-left group relative overflow-hidden",
-              vistaActual === id 
-                ? "text-brand-400 bg-brand-500/10 shadow-inner border border-brand-500/20" 
-                : "text-text-muted hover:text-text-main hover:bg-surface-solid border border-transparent"
-            )}
-          >
-            <Icon 
-              size={18} 
-              strokeWidth={vistaActual === id ? 2.5 : 2} 
+        {navItems.map(({ id, label, }) => {
+          const isActive = location.pathname === `/${id}`
+          
+          return (
+            <button
+              key={id}
+              onClick={() => navigate(`/${id}`)}
               className={clsx(
-                "transition-all duration-300",
-                vistaActual === id ? "text-brand-400 drop-shadow-[0_0_8px_rgba(var(--brand-500),0.5)]" : "text-text-muted group-hover:text-text-main group-hover:scale-110"
+                "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all w-full text-left group relative overflow-hidden",
+                isActive 
+                  ? "text-brand-400 bg-brand-500/10 shadow-inner border border-brand-500/20" 
+                  : "text-text-muted hover:text-text-main hover:bg-surface-solid border border-transparent"
               )}
-            />
-            {label}
-          </button>
-        ))}
+            >
+              <Icon 
+                size={18} 
+                strokeWidth={isActive ? 2.5 : 2} 
+                className={clsx(
+                  "transition-all duration-300",
+                  isActive ? "text-brand-400 drop-shadow-[0_0_8px_rgba(var(--brand-500),0.5)]" : "text-text-muted group-hover:text-text-main group-hover:scale-110"
+                )}
+              />
+              {label}
+            </button>
+          )
+        })}
       </nav>
 
       <div className="mt-auto pt-6 border-t border-border-subtle/50 flex flex-col gap-3">

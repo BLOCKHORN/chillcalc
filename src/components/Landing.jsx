@@ -17,7 +17,7 @@ export default function Landing({ onAcceder }) {
 
   return (
     <div className="h-screen bg-bg-app overflow-hidden flex flex-col items-center justify-center relative px-6 text-center">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-brand-500/10 blur-[120px] rounded-full pointer-events-none z-0" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-200 h-200 bg-brand-500/10 blur-[120px] rounded-full pointer-events-none z-0" />
       
       <div className="relative z-10 flex flex-col items-center max-w-2xl">
         <div className="w-20 h-20 rounded-2xl border border-border-subtle/50 overflow-hidden shadow-2xl shadow-brand-500/20 mb-8 shrink-0">

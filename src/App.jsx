@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import { useStore } from './store/useStore'
 import MainLayout from './layouts/MainLayout'
@@ -13,44 +14,43 @@ import BottomNav from './components/BottomNav'
 import VistaPublicaSplit from './components/VistaPublicaSplit'
 import Landing from './components/Landing'
 
-function App() {
+function RutasPrivadas({ session, children }) {
+  if (!session) return <Navigate to="/login" replace />
+  return (
+    <>
+      <MainLayout>{children}</MainLayout>
+      <BottomNav />
+    </>
+  )
+}
+
+function SplitEnrutador() {
+  const { token } = useParams()
+  return <VistaPublicaSplit token={token} />
+}
+
+function LandingEnrutador() {
+  const navigate = useNavigate()
+  return <Landing onAcceder={(dest) => navigate(dest === 'login' ? '/login' : '/dashboard')} />
+}
+
+export default function App() {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [tokenPublico, setTokenPublico] = useState(null)
-  const [rutaActiva, setRutaActiva] = useState('landing')
-  
-  const vistaActual = useStore(state => state.vistaActual)
   const tema = useStore(state => state.tema)
 
   useEffect(() => {
     document.documentElement.classList.toggle('light-mode', tema === 'light')
 
-    const path = window.location.pathname
-    if (path.startsWith('/split/')) {
-      const token = path.replace('/split/', '')
-      if (token) {
-        setTokenPublico(token)
-        setLoading(false)
-        return
-      }
-    }
-
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
-      setLoading(false)
       if (session) useStore.getState().cargarDatosNube()
+      setLoading(false)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session)
-      if (session) {
-        useStore.getState().cargarDatosNube()
-        if (event === 'SIGNED_IN') {
-          setRutaActiva('app')
-        }
-      } else {
-        setRutaActiva('landing')
-      }
+      if (session) useStore.getState().cargarDatosNube()
     })
 
     const intervalId = setInterval(() => {
@@ -74,46 +74,22 @@ function App() {
     )
   }
 
-  if (tokenPublico) {
-    return <VistaPublicaSplit token={tokenPublico} />
-  }
-
-  if (rutaActiva === 'landing') {
-    return <Landing onAcceder={(destino) => setRutaActiva(destino === 'login' ? 'auth' : 'app')} />
-  }
-
-  if (rutaActiva === 'auth') {
-    if (session) {
-      setRutaActiva('app')
-      return null
-    }
-    return <Auth />
-  }
-
-  if (!session) {
-    return <Auth />
-  }
-
-  const renderVista = () => {
-    switch (vistaActual) {
-      case 'dashboard': return <Dashboard />
-      case 'cuentas': return <Cuentas />
-      case 'transacciones': return <Transacciones />
-      case 'suscripciones': return <Suscripciones />
-      case 'objetivos': return <Objetivos />
-      case 'compartir': return <CompartirGastos />
-      default: return <Dashboard />
-    }
-  }
-
   return (
-    <>
-      <MainLayout>
-        {renderVista()}
-      </MainLayout>
-      <BottomNav />
-    </>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={session ? <Navigate to="/dashboard" replace /> : <LandingEnrutador />} />
+        <Route path="/login" element={session ? <Navigate to="/dashboard" replace /> : <Auth />} />
+        <Route path="/split/:token" element={<SplitEnrutador />} />
+        
+        <Route path="/dashboard" element={<RutasPrivadas session={session}><Dashboard /></RutasPrivadas>} />
+        <Route path="/cuentas" element={<RutasPrivadas session={session}><Cuentas /></RutasPrivadas>} />
+        <Route path="/transacciones" element={<RutasPrivadas session={session}><Transacciones /></RutasPrivadas>} />
+        <Route path="/suscripciones" element={<RutasPrivadas session={session}><Suscripciones /></RutasPrivadas>} />
+        <Route path="/objetivos" element={<RutasPrivadas session={session}><Objetivos /></RutasPrivadas>} />
+        <Route path="/compartir" element={<RutasPrivadas session={session}><CompartirGastos /></RutasPrivadas>} />
+        
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
-
-export default App

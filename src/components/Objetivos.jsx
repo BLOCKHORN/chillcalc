@@ -108,7 +108,7 @@ export default function Objetivos() {
               
               <div className="flex items-start justify-between mb-6">
                 <div className="flex items-center gap-4">
-                  <div className={`p-3 rounded-2xl border flex-shrink-0 transition-colors ${proyeccion.alcanzado ? 'bg-brand-500/20 text-brand-400 border-brand-500/30 shadow-[0_0_15px_rgba(var(--brand-500),0.1)]' : 'bg-surface-solid/60 text-text-muted border-border-subtle/50 group-hover:bg-surface group-hover:text-brand-400'}`}>
+                  <div className={`p-3 rounded-2xl border shrink-0 transition-colors ${proyeccion.alcanzado ? 'bg-brand-500/20 text-brand-400 border-brand-500/30 shadow-[0_0_15px_rgba(var(--brand-500),0.1)]' : 'bg-surface-solid/60 text-text-muted border-border-subtle/50 group-hover:bg-surface group-hover:text-brand-400'}`}>
                     <Target size={24} strokeWidth={2.5} />
                   </div>
                   <div className="overflow-hidden">
