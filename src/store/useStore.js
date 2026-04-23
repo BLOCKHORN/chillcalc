@@ -530,6 +530,12 @@ export const useStore = create((set, get) => ({
     return data
   },
 
+  cargarEstadisticasAdmin: async () => {
+    const { data, error } = await supabase.rpc('obtener_estadisticas_globales')
+    if (error) return { total_usuarios: 0, total_cuentas: 0, total_transacciones: 0 }
+    return data[0]
+  },
+
   cambiarRolAdmin: async (targetId, nuevoRol) => {
     const { error } = await supabase.rpc('cambiar_rol_usuario', { 
       target_id: targetId, 
