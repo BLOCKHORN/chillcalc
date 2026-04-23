@@ -14,6 +14,7 @@ import BottomNav from './components/BottomNav'
 import VistaPublicaSplit from './components/VistaPublicaSplit'
 import Landing from './components/Landing'
 import PoliticaPrivacidad from './components/PoliticaPrivacidad'
+import AdminPanel from './components/AdminPanel'
 
 function RutasPrivadas({ session, children }) {
   if (!session) return <Navigate to="/login" replace />
@@ -91,6 +92,7 @@ export default function App() {
         <Route path="/suscripciones" element={<RutasPrivadas session={session}><Suscripciones /></RutasPrivadas>} />
         <Route path="/objetivos" element={<RutasPrivadas session={session}><Objetivos /></RutasPrivadas>} />
         <Route path="/compartir" element={<RutasPrivadas session={session}><CompartirGastos /></RutasPrivadas>} />
+        <Route path="/admin" element={<RutasPrivadas session={session}><AdminPanel /></RutasPrivadas>} />
         
         {/* 3. COMODÍN (Debe ir AL FINAL) */}
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Wallet, ArrowRightLeft, Target, LogOut, Users, Sun, Moon, CalendarClock } from 'lucide-react'
+import { LayoutDashboard, Wallet, ArrowRightLeft, Target, LogOut, Users, Sun, Moon, CalendarClock, ShieldAlert } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { supabase } from '../lib/supabase'
 import clsx from 'clsx'
@@ -8,7 +8,7 @@ import clsx from 'clsx'
 export default function Sidebar() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { tema, toggleTema } = useStore()
+  const { tema, toggleTema, rolUsuario } = useStore()
   const [email, setEmail] = useState('')
 
   useEffect(() => {
@@ -30,6 +30,11 @@ export default function Sidebar() {
     { id: 'objetivos', label: 'Objetivos', icon: Target },
     { id: 'compartir', label: 'Dividir Gastos', icon: Users },
   ]
+
+  // Inyección de seguridad: Solo los administradores ven este acceso
+  if (rolUsuario === 'admin') {
+    navItems.push({ id: 'admin', label: 'Panel Admin', icon: ShieldAlert })
+  }
 
   return (
     <aside className="w-64 bg-surface-solid/80 backdrop-blur-xl border-r border-border-subtle/50 p-6 flex flex-col h-screen sticky top-0 transition-colors duration-300 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">

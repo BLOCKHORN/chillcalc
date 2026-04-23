@@ -4,6 +4,7 @@ import { getMarketPrice } from '../services/marketService'
 
 export const useStore = create((set, get) => ({
   userId: null,
+  rolUsuario: 'usuario', // Añade esta línea
   cuentas: [],
   transacciones: [],
   objetivos: [],
@@ -31,6 +32,11 @@ export const useStore = create((set, get) => ({
     
     const currentUserId = session.user.id
     set({ userId: currentUserId })
+
+    // --- NUEVO: Consultar el rol en la tabla perfiles ---
+    const { data: perfil } = await supabase.from('perfiles').select('rol').eq('id', currentUserId).single()
+    if (perfil) set({ rolUsuario: perfil.rol })
+    // ---------------------------------------------------
 
     const [resCuentas, resTransacciones, resObjetivos, resCategorias, resSplit, resSuscripciones] = await Promise.all([
       supabase.from('cuentas').select('*').eq('user_id', currentUserId).order('created_at', { ascending: true }),
@@ -512,6 +518,28 @@ export const useStore = create((set, get) => ({
         suscripciones: state.suscripciones.map(s => s.id === id ? { ...s, proximo_cobro: nuevoProximoCobro } : s)
       }))
     }
+  },
+
+  
+  cargarUsuariosAdmin: async () => {
+    const { data, error } = await supabase.rpc('obtener_todos_perfiles')
+    if (error) {
+      console.error("Error en panel admin:", error)
+      return []
+    }
+    return data
+  },
+
+  cambiarRolAdmin: async (targetId, nuevoRol) => {
+    const { error } = await supabase.rpc('cambiar_rol_usuario', { 
+      target_id: targetId, 
+      nuevo_rol: nuevoRol 
+    })
+    if (error) {
+      console.error("Error al cambiar permisos:", error)
+      return false
+    }
+    return true
   },
 
   patrimonioTotal: () => get().cuentas.reduce((acc, c) => acc + (Number(c.saldo) || 0), 0),
