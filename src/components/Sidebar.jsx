@@ -31,13 +31,12 @@ export default function Sidebar() {
     { id: 'compartir', label: 'Dividir Gastos', icon: Users },
   ]
 
-  // Inyección de seguridad: Solo los administradores ven este acceso
   if (rolUsuario === 'admin') {
     navItems.push({ id: 'admin', label: 'Panel Admin', icon: ShieldAlert })
   }
 
   return (
-    <aside className="w-64 bg-surface-solid/80 backdrop-blur-xl border-r border-border-subtle/50 p-6 flex flex-col h-screen sticky top-0 transition-colors duration-300 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+    <aside className="fixed top-0 left-0 w-64 h-screen bg-surface-solid/80 backdrop-blur-xl border-r border-border-subtle/50 p-6 flex flex-col transition-colors duration-300 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
       
       <div className="flex items-center gap-3 px-3 mb-10 mt-2">
         <div className="w-9 h-9 rounded-xl shadow-lg shadow-brand-500/20 border border-border-subtle/50 relative group cursor-default overflow-hidden shrink-0">
