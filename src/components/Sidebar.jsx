@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { LayoutDashboard, Wallet, ArrowRightLeft, Target, Command, LogOut, Users, Sun, Moon, CalendarClock } from 'lucide-react'
+import { LayoutDashboard, Wallet, ArrowRightLeft, Target, LogOut, Users, Sun, Moon, CalendarClock } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { supabase } from '../lib/supabase'
 import clsx from 'clsx'
@@ -32,9 +32,9 @@ export default function Sidebar() {
     <aside className="w-64 bg-surface-solid/80 backdrop-blur-xl border-r border-border-subtle/50 p-6 flex flex-col h-screen sticky top-0 transition-colors duration-300 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
       
       <div className="flex items-center gap-3 px-3 mb-10 mt-2">
-        <div className="w-9 h-9 rounded-xl bg-linear-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white shadow-lg shadow-brand-500/20 border border-brand-400/30 relative group cursor-default">
-          <div className="absolute inset-0 bg-white/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-          <Command size={18} strokeWidth={2.5} className="relative z-10" />
+        <div className="w-9 h-9 rounded-xl shadow-lg shadow-brand-500/20 border border-border-subtle/50 relative group cursor-default overflow-hidden shrink-0">
+          <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none" />
+          <img src="/apple-touch-icon.png" alt="EasyPocket" className="w-full h-full object-cover relative z-0" />
         </div>
         <span className="font-black text-2xl tracking-tight text-text-main">
           EasyPocket<span className="text-brand-500"></span>
