@@ -548,6 +548,12 @@ export const useStore = create((set, get) => ({
     return true
   },
 
+  cargarStatsPublicas: async () => {
+    const { data, error } = await supabase.rpc('obtener_stats_publicas')
+    if (error) return { total_cuentas: 0, total_movimientos: 0 }
+    return data[0]
+  },
+
   patrimonioTotal: () => get().cuentas.reduce((acc, c) => acc + (Number(c.saldo) || 0), 0),
 
   metricasMesActual: () => {
