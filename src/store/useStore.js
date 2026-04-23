@@ -422,13 +422,29 @@ export const useStore = create((set, get) => ({
   },
   
   cargarGrupoPublico: async (token) => {
+    console.log("1. Buscando grupo con el token exacto:", token)
+    
+    if (!token) {
+      console.error("2. ERROR: El token llegó vacío al Store. Revisa tu App.js o el Router.")
+      return null
+    }
+
     const { data: grupo, error } = await supabase
       .from('split_grupos')
       .select('*, split_participantes(*), split_gastos(*)')
       .eq('share_token', token)
       .single()
 
-    if (error || !grupo) return null
+    if (error) {
+      console.error("3. ERROR DE SUPABASE (RLS o BD):", error)
+      return null
+    }
+    
+    if (!grupo) {
+      console.warn("4. No hay error de BD, pero no se encontró ningún grupo con ese token.")
+      return null
+    }
+    
     return grupo
   },
 
