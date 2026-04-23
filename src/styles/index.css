@@ -30,8 +30,9 @@
 
 @theme {
   --color-brand-400: #34d399;
-  --color-brand-500: #CDF937;
+  --color-brand-500: #10b981;
   --color-brand-600: #059669;
+  --color-brand-700: #CDF937;
   
   --color-surface: var(--surface);
   --color-surface-hover: var(--surface-hover);

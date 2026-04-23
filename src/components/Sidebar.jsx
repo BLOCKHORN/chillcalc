@@ -37,7 +37,7 @@ export default function Sidebar() {
           <img src="/apple-touch-icon.png" alt="EasyPocket" className="w-full h-full object-cover relative z-0" />
         </div>
         <span className="font-black text-2xl tracking-tight text-text-main">
-          EasyPocket<span className="text-brand-500">+</span>
+          EasyPocket<span className="text-brand-700">+</span>
         </span>
       </div>
       
