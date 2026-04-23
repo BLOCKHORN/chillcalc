@@ -554,6 +554,12 @@ export const useStore = create((set, get) => ({
     return data[0]
   },
 
+  cargarStatsUsuarioAdmin: async (targetId) => {
+    const { data, error } = await supabase.rpc('obtener_stats_usuario', { target_id: targetId })
+    if (error) return { num_cuentas: 0, num_transacciones: 0 }
+    return data[0]
+  },
+
   patrimonioTotal: () => get().cuentas.reduce((acc, c) => acc + (Number(c.saldo) || 0), 0),
 
   metricasMesActual: () => {
