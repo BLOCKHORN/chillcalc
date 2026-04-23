@@ -100,7 +100,7 @@ export default function VistaPublicaSplit({ token }) {
         <header className="mb-8 pt-4">
           <div className="flex items-center gap-2 mb-2 justify-center sm:justify-start opacity-70">
             <Users size={14} className="text-brand-400" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-brand-400">ChillCalc Shared</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-brand-400">EasyPocket Shared</span>
           </div>
           <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-center sm:text-left leading-tight">
             {grupo.nombre}

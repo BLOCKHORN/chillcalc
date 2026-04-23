@@ -123,7 +123,7 @@ export default function CompartirGastos() {
 
     const shareData = {
       title: `Gastos: ${grupoSeleccionado.nombre}`,
-      text: `Unete para ver los gastos de ${grupoSeleccionado.nombre} en ChillCalc \n`,
+      text: `Unete para ver los gastos de ${grupoSeleccionado.nombre} en EasyPocket \n`,
       url: enlace
     }
 

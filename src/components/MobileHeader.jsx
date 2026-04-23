@@ -14,7 +14,7 @@ export default function MobileHeader() {
           <Command size={14} strokeWidth={3} />
         </div>
         <span className="font-black text-lg tracking-tight text-text-main">
-          ChillCalc<span className="text-brand-500">.</span>
+          EasyPocket<span className="text-brand-500">.</span>
         </span>
       </div>
 

@@ -29,13 +29,13 @@ export const useStore = create((set, get) => ({
     if (!user) return
 
     const [resCuentas, resTransacciones, resObjetivos, resCategorias, resSplit, resSuscripciones] = await Promise.all([
-      supabase.from('cuentas').select('*').order('created_at', { ascending: true }),
-      supabase.from('transacciones').select('*').order('created_at', { ascending: false }),
-      supabase.from('objetivos').select('*').order('created_at', { ascending: true }),
-      supabase.from('categorias').select('*').order('nombre', { ascending: true }),
-      supabase.from('split_grupos').select('*, split_participantes(*), split_gastos(*), split_liquidaciones(*)').order('created_at', { ascending: false }),
-      supabase.from('suscripciones').select('*').order('proximo_cobro', { ascending: true })
-    ])
+  supabase.from('cuentas').select('*').eq('user_id', user.id).order('created_at', { ascending: true }),
+  supabase.from('transacciones').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+  supabase.from('objetivos').select('*').eq('user_id', user.id).order('created_at', { ascending: true }),
+  supabase.from('categorias').select('*').eq('user_id', user.id).order('nombre', { ascending: true }),
+  supabase.from('split_grupos').select('*, split_participantes(*), split_gastos(*), split_liquidaciones(*)').eq('user_id', user.id).order('created_at', { ascending: false }),
+  supabase.from('suscripciones').select('*').eq('user_id', user.id).order('proximo_cobro', { ascending: true })
+])
 
     // CORRECCIÓN: Guardar SIEMPRE el id real. Y NUNCA insertar por defecto si está vacío.
     const listaCategorias = resCategorias.data?.map(c => ({

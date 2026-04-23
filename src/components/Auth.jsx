@@ -35,7 +35,7 @@ export default function Auth() {
             <Command size={24} strokeWidth={2.5} />
           </div>
           <h2 className="text-3xl font-black text-text-main">
-            ChillCalc<span className="text-brand-500">.</span>
+            EasyPocket<span className="text-brand-500">.</span>
           </h2>
           <p className="text-text-muted text-sm mt-2 text-center">
             Accede a tu terminal de gestión de capital
@@ -90,7 +90,7 @@ export default function Auth() {
         >
           {esRegistro 
             ? '¿Ya tienes acceso? Inicia sesión' 
-            : '¿Nuevo en ChillCalc? Registra tu terminal aquí'}
+            : '¿Nuevo en EasyPocket? Registra tu terminal aquí'}
         </button>
       </div>
     </div>
