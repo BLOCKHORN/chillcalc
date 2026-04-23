@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'InterNumbers';
+  src: url('https://cdn.jsdelivr.net/npm/@fontsource/inter/files/inter-latin-variable-wghtOnly-normal.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0030-0039, U+002E, U+002C, U+20AC, U+0024, U+0025, U+002B, U+002D;
+}
+
 :root {
   --bg-app: #000000;
   --bg-gradient: radial-gradient(circle at 50% 0%, #18181b 0%, #000000 70%);
@@ -11,7 +20,7 @@
   --border-subtle: rgba(255, 255, 255, 0.05);
   --border-focus: rgba(255, 255, 255, 0.1);
   --gradient-from: #ffffff;
-  --gradient-to: #64748b; 
+  --gradient-to: #64748b;
 }
 
 .light-mode {
@@ -45,7 +54,7 @@
   --color-warning: #f59e0b;
   --color-info: #3b82f6;
 
-  --font-sans: "Outfit", system-ui, sans-serif;
+  --font-sans: "InterNumbers", "Outfit", system-ui, sans-serif;
 }
 
 @layer base {
@@ -55,6 +64,7 @@
     color: var(--text-main);
     background-image: var(--bg-gradient);
     background-attachment: fixed;
+    font-variant-numeric: tabular-nums;
   }
 }
 
@@ -73,14 +83,11 @@
   }
 }
 
-
 @media (max-width: 640px) {
-  /* Bloquea el scroll del fondo y oculta la navegación */
   body.modal-open-hide-nav {
     overflow: hidden;
   }
   
-  /* Ajusta '.bottom-nav' por la clase real de tu menú inferior */
   body.modal-open-hide-nav .bottom-nav,
   body.modal-open-hide-nav nav { 
     display: none !important;
