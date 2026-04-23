@@ -11,7 +11,7 @@
   --border-subtle: rgba(255, 255, 255, 0.05);
   --border-focus: rgba(255, 255, 255, 0.1);
   --gradient-from: #ffffff;
-  --gradient-to: #64748b;
+  --gradient-to: #64748b; 
 }
 
 .light-mode {
@@ -45,7 +45,7 @@
   --color-warning: #f59e0b;
   --color-info: #3b82f6;
 
-  --font-sans: "Inter", system-ui, sans-serif;
+  --font-sans: "Outfit", system-ui, sans-serif;
 }
 
 @layer base {
