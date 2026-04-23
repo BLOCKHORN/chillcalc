@@ -37,7 +37,7 @@ export default function Sidebar() {
           <Command size={18} strokeWidth={2.5} className="relative z-10" />
         </div>
         <span className="font-black text-2xl tracking-tight text-text-main">
-          ChillCalc<span className="text-brand-500">.</span>
+          EasyPocket<span className="text-brand-500">.</span>
         </span>
       </div>
       
