@@ -78,10 +78,13 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* 1. RUTAS PÚBLICAS (Accesibles siempre) */}
         <Route path="/" element={session ? <Navigate to="/dashboard" replace /> : <LandingEnrutador />} />
         <Route path="/login" element={session ? <Navigate to="/dashboard" replace /> : <Auth />} />
         <Route path="/split/:token" element={<SplitEnrutador />} />
+        <Route path="/privacidad" element={<PoliticaPrivacidad />} />
         
+        {/* 2. RUTAS PRIVADAS (Solo con sesión) */}
         <Route path="/dashboard" element={<RutasPrivadas session={session}><Dashboard /></RutasPrivadas>} />
         <Route path="/cuentas" element={<RutasPrivadas session={session}><Cuentas /></RutasPrivadas>} />
         <Route path="/transacciones" element={<RutasPrivadas session={session}><Transacciones /></RutasPrivadas>} />
@@ -89,6 +92,7 @@ export default function App() {
         <Route path="/objetivos" element={<RutasPrivadas session={session}><Objetivos /></RutasPrivadas>} />
         <Route path="/compartir" element={<RutasPrivadas session={session}><CompartirGastos /></RutasPrivadas>} />
         
+        {/* 3. COMODÍN (Debe ir AL FINAL) */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
