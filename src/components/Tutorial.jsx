@@ -8,38 +8,37 @@ export default function Tutorial() {
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false)
 
   useEffect(() => {
+    console.log("🚀 1. Tutorial montado en el DOM")
     setMounted(true)
-    const handleResize = () => setIsMobile(window.innerWidth < 768)
-    window.addEventListener('resize', handleResize)
-
+    
     import('react-joyride')
       .then((mod) => {
-        const comp = mod.default || mod
+        // Intentamos todas las rutas posibles del export
+        const comp = mod.default?.default || mod.default || mod
+        console.log("🚀 2. Intento de carga Joyride:", typeof comp)
+        
         if (typeof comp === 'function' || (typeof comp === 'object' && comp.$$typeof)) {
           setJoyrideComponent(() => comp)
-          console.log("Checkpoint: Libreria Joyride cargada correctamente.")
+          console.log("✅ 3. Joyride cargado y validado")
+        } else {
+          console.error("❌ Error: Lo que devolvió la librería no es un componente", comp)
         }
       })
-      .catch((err) => console.error("Checkpoint Error: Fallo carga libreria", err))
-
-    return () => window.removeEventListener('resize', handleResize)
+      .catch((err) => console.error("❌ Error crítico cargando librería:", err))
   }, [])
 
   useEffect(() => {
     if (!mounted || !JoyrideComponent) return
     
     const init = async () => {
-      if (localStorage.getItem('tutorial_visto') === 'true') {
-        console.log("Checkpoint: Tutorial omitido por LocalStorage.")
+      console.log("🚀 4. Iniciando comprobación de Supabase...")
+      
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        console.warn("⚠️ No hay usuario autenticado")
         return
       }
 
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        console.log("Checkpoint: No hay usuario autenticado.")
-        return
-      }
-      
       const { data, error } = await supabase
         .from('perfiles')
         .select('tutorial_completado')
@@ -47,17 +46,20 @@ export default function Tutorial() {
         .maybeSingle()
 
       if (error) {
-        console.error("Checkpoint Error: Fallo en Supabase", error)
+        console.error("❌ Error de Supabase:", error)
         return
       }
 
-      console.log("Checkpoint: Datos de perfil recibidos:", data)
+      console.log("🚀 5. Resultado de DB:", data)
 
+      // Si data es null, es que el usuario no tiene perfil creado aún
       if (data && data.tutorial_completado === false) {
-        console.log("Checkpoint: Activando tutorial (setRun true)")
+        console.log("🎯 ACTIVANDO TUTORIAL")
         setRun(true)
+      } else if (!data) {
+        console.warn("⚠️ El usuario no tiene fila en la tabla 'perfiles'")
       } else {
-        console.log("Checkpoint: El tutorial ya figura como completado en BD.")
+        console.log("ℹ️ El tutorial ya está completado en la BD")
       }
     }
     init()
