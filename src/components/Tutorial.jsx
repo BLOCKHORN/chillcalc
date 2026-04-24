@@ -14,12 +14,13 @@ export default function Tutorial() {
 
   useEffect(() => {
     const init = async () => {
-      if (localStorage.getItem('tutorial_visto')) return
+      // Prioridad 1: LocalStorage (para que no moleste mientras arreglamos la DB)
+      if (localStorage.getItem('tutorial_visto') === 'true') return
       
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('perfiles')
         .select('tutorial_completado')
         .eq('id', user.id)
@@ -33,75 +34,56 @@ export default function Tutorial() {
   }, [])
 
   const saveStatus = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
 
-    localStorage.setItem('tutorial_visto', 'true')
-    setRun(false)
+      console.log("💾 Guardando estado en base de datos...")
 
-    const { error } = await supabase
-      .from('perfiles')
-      .upsert({ 
-        id: user.id,
-        email: user.email,
-        tutorial_completado: true
-      }, { onConflict: 'id' })
+      // 1. Intentamos el guardado en Supabase primero
+      const { data, error } = await supabase
+        .from('perfiles')
+        .update({ tutorial_completado: true })
+        .eq('id', user.id)
+        .select()
 
-    if (error) {
-      console.error(error.message)
-      localStorage.removeItem('tutorial_visto')
+      if (error) throw error
+
+      if (data && data.length > 0) {
+        console.log("✅ DB actualizada correctamente")
+        // 2. Solo si la DB responde bien, guardamos en LocalStorage y cerramos
+        localStorage.setItem('tutorial_visto', 'true')
+        setRun(false)
+      } else {
+        console.warn("⚠️ La DB no devolvió datos. ¿Existe la fila para este ID?")
+        // Forzamos el cierre local de todos modos para no bloquear al usuario
+        localStorage.setItem('tutorial_visto', 'true')
+        setRun(false)
+      }
+    } catch (err) {
+      console.error("❌ Fallo crítico al guardar tutorial:", err.message)
+      // Si falla la red, al menos lo cerramos en local para esta sesión
+      setRun(false)
     }
   }
 
   const handleCallback = (data) => {
     const { status } = data
-    if (['finished', 'skipped'].includes(status)) {
+    // Capturamos 'finished' (fin) o 'skipped' (clic en la X o fuera)
+    if (status === 'finished' || status === 'skipped') {
       saveStatus()
     }
   }
 
   const steps = [
-    {
-      target: 'body',
-      content: '¡Bienvenido! Vamos a configurar tu cuenta en 30 segundos.',
-      placement: 'center',
-    },
-    {
-      target: isMobile ? '.tour-mobile-header' : '.tour-desktop-logo',
-      title: 'Dashboard',
-      content: 'Resumen de tu patrimonio total.',
-    },
-    {
-      target: isMobile ? '.tour-mobile-cuentas' : '.tour-desktop-cuentas',
-      title: 'Cartera',
-      content: 'Registra tus bancos y efectivo.',
-    },
-    {
-      target: isMobile ? '.tour-mobile-transacciones' : '.tour-desktop-transacciones',
-      title: 'Movimientos',
-      content: 'Anota tus ingresos y gastos.',
-    },
-    {
-      target: isMobile ? '.tour-mobile-suscripciones' : '.tour-desktop-suscripciones',
-      title: 'Suscripciones',
-      content: 'Controla tus pagos recurrentes.',
-    },
-    {
-      target: isMobile ? '.tour-mobile-objetivos' : '.tour-desktop-objetivos',
-      title: 'Objetivos',
-      content: 'Tus metas de ahorro.',
-    },
-    {
-      target: isMobile ? '.tour-mobile-compartir' : '.tour-desktop-compartir',
-      title: 'Dividir Gastos',
-      content: 'Cuentas con amigos o pareja.',
-    },
-    {
-      target: 'body',
-      title: '¡Listo!',
-      content: 'Crea tu primera cuenta para empezar.',
-      placement: 'center',
-    }
+    { target: 'body', content: '¡Bienvenido! Vamos a configurar tu cuenta en 30 segundos.', placement: 'center' },
+    { target: isMobile ? '.tour-mobile-header' : '.tour-desktop-logo', title: 'Dashboard', content: 'Resumen de tu patrimonio total.' },
+    { target: isMobile ? '.tour-mobile-cuentas' : '.tour-desktop-cuentas', title: 'Cartera', content: 'Registra tus bancos y efectivo.' },
+    { target: isMobile ? '.tour-mobile-transacciones' : '.tour-desktop-transacciones', title: 'Movimientos', content: 'Anota tus ingresos y gastos.' },
+    { target: isMobile ? '.tour-mobile-suscripciones' : '.tour-desktop-suscripciones', title: 'Suscripciones', content: 'Controla tus pagos recurrentes.' },
+    { target: isMobile ? '.tour-mobile-objetivos' : '.tour-desktop-objetivos', title: 'Objetivos', content: 'Tus metas de ahorro.' },
+    { target: isMobile ? '.tour-mobile-compartir' : '.tour-desktop-compartir', title: 'Dividir Gastos', content: 'Cuentas con amigos o pareja.' },
+    { target: 'body', title: '¡Listo!', content: 'Crea tu primera cuenta para empezar.', placement: 'center' }
   ]
 
   return (
