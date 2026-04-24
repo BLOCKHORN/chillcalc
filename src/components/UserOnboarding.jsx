@@ -3,11 +3,68 @@ import Joyride, { STATUS } from 'react-joyride'
 import { supabase } from '../lib/supabase'
 
 const steps = [
-  { target: 'body', content: 'Bienvenido a EasyPocket. Te hacemos un tour rápido.', placement: 'center', disableBeacon: true },
-  { target: 'body', title: 'Dashboard', content: 'Aquí ves el resumen de tu patrimonio neto.', placement: 'center', disableBeacon: true },
-  { target: 'body', title: 'Cartera', content: 'Gestiona tus cuentas bancarias.', placement: 'center', disableBeacon: true },
-  { target: 'body', title: 'Movimientos', content: 'Consulta todos tus ingresos y gastos.', placement: 'center', disableBeacon: true },
-  { target: 'body', title: '¡Listo!', content: 'Ya puedes empezar a usar EasyPocket.', placement: 'center', disableBeacon: true },
+  {
+    target: 'body',
+    content: '¡Bienvenido a EasyPocket! En 30 segundos te enseñamos todo lo que necesitas saber.',
+    placement: 'center',
+    disableBeacon: true,
+  },
+  {
+    target: '.tour-desktop-logo',
+    title: '🏠 Tu panel financiero',
+    content: 'Este es EasyPocket. Desde aquí controlas toda tu vida financiera en un solo lugar.',
+    placement: 'right',
+    disableBeacon: true,
+  },
+  {
+    target: '.tour-desktop-dashboard',
+    title: '📊 Dashboard',
+    content: 'Consulta tu patrimonio neto, tendencias y resumen financiero en tiempo real.',
+    placement: 'right',
+    disableBeacon: true,
+  },
+  {
+    target: '.tour-desktop-cuentas',
+    title: '💳 Cuentas',
+    content: 'Añade tus cuentas bancarias, efectivo o inversiones para tener todo centralizado.',
+    placement: 'right',
+    disableBeacon: true,
+  },
+  {
+    target: '.tour-desktop-transacciones',
+    title: '↔️ Transacciones',
+    content: 'Registra y consulta todos tus ingresos y gastos con filtros avanzados.',
+    placement: 'right',
+    disableBeacon: true,
+  },
+  {
+    target: '.tour-desktop-suscripciones',
+    title: '📅 Suscripciones',
+    content: 'Controla tus pagos recurrentes y evita sorpresas a fin de mes.',
+    placement: 'right',
+    disableBeacon: true,
+  },
+  {
+    target: '.tour-desktop-objetivos',
+    title: '🎯 Objetivos',
+    content: 'Define metas de ahorro y haz seguimiento de tu progreso mes a mes.',
+    placement: 'right',
+    disableBeacon: true,
+  },
+  {
+    target: '.tour-desktop-compartir',
+    title: '👥 Dividir Gastos',
+    content: 'Divide gastos con amigos o pareja de forma sencilla y sin líos.',
+    placement: 'right',
+    disableBeacon: true,
+  },
+  {
+    target: 'body',
+    title: '🚀 ¡Todo listo!',
+    content: 'Ya conoces EasyPocket. Empieza añadiendo tu primera cuenta.',
+    placement: 'center',
+    disableBeacon: true,
+  },
 ]
 
 export default function UserOnboarding() {
@@ -37,12 +94,9 @@ export default function UserOnboarding() {
   }, [])
 
   const handleCallback = async (data) => {
-    const { status, type, action } = data
-    console.log('🎯 Joyride:', type, status, action)
-
+    const { status } = data
     if ((status === STATUS.FINISHED || status === STATUS.SKIPPED) && !saved.current) {
       saved.current = true
-      console.log('💾 Guardando...')
 
       const { data: authData } = await supabase.auth.getUser()
       const user = authData?.user
@@ -54,18 +108,12 @@ export default function UserOnboarding() {
         .eq('id', user.id)
         .select()
 
-      if (error) {
-        console.error('❌ Error:', error.message)
-        saved.current = false
-        return
-      }
+      if (error) { saved.current = false; return }
 
       if (updateData && updateData.length > 0) {
-        console.log('✅ Guardado:', updateData)
         localStorage.setItem('onboarding_visto', 'true')
         setRun(false)
       } else {
-        console.warn('⚠️ RLS bloqueó el update')
         saved.current = false
       }
     }
@@ -80,10 +128,11 @@ export default function UserOnboarding() {
       showSkipButton
       disableScrolling
       spotlightClicks
+      spotlightPadding={8}
       callback={handleCallback}
       floaterProps={{
         styles: {
-          floater: { filter: 'drop-shadow(0 8px 32px rgba(0,0,0,0.4))' }
+          floater: { filter: 'drop-shadow(0 8px 32px rgba(0,0,0,0.5))' }
         }
       }}
       styles={{
@@ -91,57 +140,53 @@ export default function UserOnboarding() {
           primaryColor: '#10b981',
           backgroundColor: '#18181b',
           textColor: '#f4f4f5',
-          overlayColor: 'rgba(0, 0, 0, 0.75)',
-          spotlightShadow: '0 0 0 9999px rgba(0,0,0,0.75)',
+          overlayColor: 'rgba(0,0,0,0.72)',
           arrowColor: '#18181b',
           zIndex: 10000,
         },
         tooltip: {
-          borderRadius: '20px',
-          padding: '28px',
-          maxWidth: '380px',
-          background: 'linear-gradient(135deg, #1c1c1f 0%, #18181b 100%)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          boxShadow: '0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(16,185,129,0.1)',
+          borderRadius: '18px',
+          padding: '24px',
+          maxWidth: '340px',
+          background: '#18181b',
+          border: '1px solid rgba(255,255,255,0.07)',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05)',
         },
         tooltipTitle: {
-          fontSize: '17px',
+          fontSize: '15px',
           fontWeight: '800',
           color: '#10b981',
-          marginBottom: '8px',
-          letterSpacing: '-0.3px',
+          marginBottom: '6px',
+          letterSpacing: '-0.2px',
         },
         tooltipContent: {
-          fontSize: '14px',
-          lineHeight: '1.7',
+          fontSize: '13.5px',
+          lineHeight: '1.65',
           color: '#a1a1aa',
           padding: '0',
         },
         tooltipFooter: {
-          marginTop: '20px',
-          padding: '0',
+          marginTop: '18px',
+          paddingTop: '14px',
           borderTop: '1px solid rgba(255,255,255,0.06)',
-          paddingTop: '16px',
         },
-        tooltipFooterSpacer: {
-          flex: 1,
-        },
+        tooltipFooterSpacer: { flex: 1 },
         buttonNext: {
           backgroundColor: '#10b981',
-          borderRadius: '10px',
-          padding: '9px 20px',
+          borderRadius: '9px',
+          padding: '8px 18px',
           fontSize: '13px',
           fontWeight: '700',
           color: '#fff',
           border: 'none',
-          boxShadow: '0 4px 14px rgba(16,185,129,0.35)',
+          boxShadow: '0 4px 12px rgba(16,185,129,0.3)',
           cursor: 'pointer',
         },
         buttonBack: {
           color: '#71717a',
           fontSize: '13px',
           fontWeight: '600',
-          marginRight: '8px',
+          marginRight: '6px',
           background: 'none',
           border: 'none',
           cursor: 'pointer',
@@ -156,13 +201,19 @@ export default function UserOnboarding() {
         },
         buttonClose: {
           color: '#52525b',
-          width: '16px',
-          height: '16px',
-          top: '16px',
-          right: '16px',
+          top: '14px',
+          right: '14px',
+          width: '14px',
+          height: '14px',
         },
       }}
-      locale={{ back: 'Atrás', last: '¡Empezar! 🚀', next: 'Siguiente →', skip: 'Saltar' }}
+      locale={{
+        back: '← Atrás',
+        last: '¡Empezar! 🚀',
+        next: 'Siguiente →',
+        skip: 'Saltar tour',
+        close: 'Cerrar',
+      }}
     />
   )
 }
