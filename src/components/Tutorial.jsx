@@ -14,21 +14,16 @@ export default function Tutorial() {
 
   useEffect(() => {
     const init = async () => {
-      if (localStorage.getItem('tutorial_visto')) {
-        console.log("Bloqueado por LocalStorage")
-        return
-      }
+      if (localStorage.getItem('tutorial_visto')) return
       
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('perfiles')
         .select('tutorial_completado')
         .eq('id', user.id)
         .maybeSingle()
-
-      if (error) console.error("Error leyendo DB al inicio:", error)
 
       if (!data || data.tutorial_completado === false) {
         setRun(true)
@@ -44,29 +39,22 @@ export default function Tutorial() {
     localStorage.setItem('tutorial_visto', 'true')
     setRun(false)
 
-    console.log("Ejecutando Upsert en Supabase...")
-
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('perfiles')
       .upsert({ 
         id: user.id,
         email: user.email,
         tutorial_completado: true
       }, { onConflict: 'id' })
-      .select()
 
     if (error) {
-      console.error("Fallo en Supabase:", error.message, error.details)
+      console.error(error.message)
       localStorage.removeItem('tutorial_visto')
-    } else {
-      console.log("Respuesta exitosa de Supabase:", data)
     }
   }
 
   const handleCallback = (data) => {
     const { status } = data
-    console.log("Status de Joyride:", status)
-    
     if (['finished', 'skipped'].includes(status)) {
       saveStatus()
     }
