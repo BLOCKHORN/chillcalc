@@ -8,58 +8,42 @@ export default function Tutorial() {
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false)
 
   useEffect(() => {
-    console.log("🚀 1. Tutorial montado en el DOM")
     setMounted(true)
-    
+    const handleResize = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', handleResize)
+
+    // IMPORTANTE: Según tu consola, el componente está en mod.Joyride
     import('react-joyride')
       .then((mod) => {
-        // Intentamos todas las rutas posibles del export
-        const comp = mod.default?.default || mod.default || mod
-        console.log("🚀 2. Intento de carga Joyride:", typeof comp)
-        
-        if (typeof comp === 'function' || (typeof comp === 'object' && comp.$$typeof)) {
+        const comp = mod.Joyride || mod.default || mod
+        if (comp) {
           setJoyrideComponent(() => comp)
-          console.log("✅ 3. Joyride cargado y validado")
-        } else {
-          console.error("❌ Error: Lo que devolvió la librería no es un componente", comp)
         }
       })
-      .catch((err) => console.error("❌ Error crítico cargando librería:", err))
+      .catch((err) => console.error("Error cargando joyride:", err))
+
+    return () => window.removeEventListener('resize', handleResize)
   }, [])
 
   useEffect(() => {
     if (!mounted || !JoyrideComponent) return
     
     const init = async () => {
-      console.log("🚀 4. Iniciando comprobación de Supabase...")
-      
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        console.warn("⚠️ No hay usuario autenticado")
-        return
-      }
+      // Si ya lo vio en esta sesión de navegador, no molestamos
+      if (localStorage.getItem('tutorial_visto') === 'true') return
 
-      const { data, error } = await supabase
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      
+      const { data } = await supabase
         .from('perfiles')
         .select('tutorial_completado')
         .eq('id', user.id)
         .maybeSingle()
 
-      if (error) {
-        console.error("❌ Error de Supabase:", error)
-        return
-      }
-
-      console.log("🚀 5. Resultado de DB:", data)
-
-      // Si data es null, es que el usuario no tiene perfil creado aún
+      // Solo arrancamos si la BD dice explícitamente FALSE
       if (data && data.tutorial_completado === false) {
-        console.log("🎯 ACTIVANDO TUTORIAL")
         setRun(true)
-      } else if (!data) {
-        console.warn("⚠️ El usuario no tiene fila en la tabla 'perfiles'")
-      } else {
-        console.log("ℹ️ El tutorial ya está completado en la BD")
       }
     }
     init()
@@ -69,13 +53,14 @@ export default function Tutorial() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     
-    const { data, error } = await supabase
+    // 1. Actualizamos Supabase
+    const { error } = await supabase
       .from('perfiles')
       .update({ tutorial_completado: true })
       .eq('id', user.id)
-      .select()
 
-    if (!error && data?.length > 0) {
+    if (!error) {
+      // 2. Guardamos en local para evitar parpadeos
       localStorage.setItem('tutorial_visto', 'true')
       setRun(false)
     }
@@ -98,7 +83,7 @@ export default function Tutorial() {
     { target: isMobile ? '.tour-mobile-suscripciones' : '.tour-desktop-suscripciones', title: 'Suscripciones', content: 'Controla tus pagos recurrentes.' },
     { target: isMobile ? '.tour-mobile-objetivos' : '.tour-desktop-objetivos', title: 'Objetivos', content: 'Tus metas de ahorro.' },
     { target: isMobile ? '.tour-mobile-compartir' : '.tour-desktop-compartir', title: 'Dividir Gastos', content: 'Cuentas con amigos o pareja.' },
-    { target: 'body', title: '¡Listo!', content: 'Crea tu primera cuenta para empezar.', placement: 'center' }
+    { target: 'body', title: '🏁 ¡Listo!', content: 'Crea tu primera cuenta para empezar.', placement: 'center' }
   ]
 
   const Joyride = JoyrideComponent
