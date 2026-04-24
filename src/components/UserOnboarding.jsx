@@ -54,7 +54,12 @@ export default function UserOnboarding() {
       .eq('id', user.id)
       .select()
 
-    if (!error && data?.length > 0) {
+    if (error) {
+      console.error(error.message)
+      return
+    }
+
+    if (data && data.length > 0) {
       localStorage.setItem('onboarding_visto', 'true')
       setRun(false)
     }
@@ -70,14 +75,11 @@ export default function UserOnboarding() {
   if (!mounted || !JoyrideComponent) return null
 
   const steps = [
-    { target: 'body', content: 'Bienvenido a EasyPocket. Vamos a configurar tu cuenta.', placement: 'center' },
-    { target: isMobile ? '.tour-mobile-header' : '.tour-desktop-logo', title: 'Dashboard', content: 'Resumen de tu patrimonio total.' },
-    { target: isMobile ? '.tour-mobile-cuentas' : '.tour-desktop-cuentas', title: 'Cartera', content: 'Registra tus bancos y efectivo.' },
-    { target: isMobile ? '.tour-mobile-transacciones' : '.tour-desktop-transacciones', title: 'Movimientos', content: 'Anota tus ingresos y gastos.' },
-    { target: isMobile ? '.tour-mobile-suscripciones' : '.tour-desktop-suscripciones', title: 'Suscripciones', content: 'Controla tus pagos recurrentes.' },
-    { target: isMobile ? '.tour-mobile-objetivos' : '.tour-desktop-objetivos', title: 'Objetivos', content: 'Tus metas de ahorro.' },
-    { target: isMobile ? '.tour-mobile-compartir' : '.tour-desktop-compartir', title: 'Dividir Gastos', content: 'Cuentas con amigos o pareja.' },
-    { target: 'body', title: 'Listo', content: 'Ya puedes empezar a usar la plataforma.', placement: 'center' }
+    { target: 'body', content: 'Bienvenido. Vamos a configurar tu cuenta.', placement: 'center' },
+    { target: isMobile ? '.tour-mobile-header' : '.tour-desktop-logo', title: 'Dashboard', content: 'Resumen de tu patrimonio.' },
+    { target: isMobile ? '.tour-mobile-cuentas' : '.tour-desktop-cuentas', title: 'Cartera', content: 'Tus cuentas bancarias.' },
+    { target: isMobile ? '.tour-mobile-transacciones' : '.tour-desktop-transacciones', title: 'Movimientos', content: 'Tus ingresos y gastos.' },
+    { target: 'body', title: 'Listo', content: 'Tutorial finalizado.', placement: 'center' }
   ]
 
   const Joyride = JoyrideComponent
