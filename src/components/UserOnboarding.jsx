@@ -1,77 +1,22 @@
 import { useEffect, useState, useRef } from 'react'
-import Joyride, { STATUS } from 'react-joyride'
 import { supabase } from '../lib/supabase'
 
-const steps = [
-  {
-    target: 'body',
-    content: '¡Bienvenido a EasyPocket! Te enseñamos todo en 30 segundos.',
-    placement: 'center',
-    disableBeacon: true,
-  },
-  {
-    target: '.tour-desktop-logo',
-    title: '🏠 EasyPocket+',
-    content: 'Este es tu panel de control. Desde aquí gestionas toda tu vida financiera.',
-    placement: 'right',
-    disableBeacon: true,
-  },
-  {
-    target: '.tour-desktop-dashboard',
-    title: '📊 Dashboard',
-    content: 'Consulta tu patrimonio neto y tus estadísticas financieras en tiempo real.',
-    placement: 'right',
-    disableBeacon: true,
-  },
-  {
-    target: '.tour-desktop-cuentas',
-    title: '💳 Cuentas',
-    content: 'Añade y gestiona tus cuentas bancarias, efectivo o inversiones.',
-    placement: 'right',
-    disableBeacon: true,
-  },
-  {
-    target: '.tour-desktop-transacciones',
-    title: '↔️ Transacciones',
-    content: 'Registra tus ingresos y gastos. Filtra y analiza todos tus movimientos.',
-    placement: 'right',
-    disableBeacon: true,
-  },
-  {
-    target: '.tour-desktop-suscripciones',
-    title: '📅 Suscripciones',
-    content: 'Controla todos tus pagos recurrentes y evita sorpresas a fin de mes.',
-    placement: 'right',
-    disableBeacon: true,
-  },
-  {
-    target: '.tour-desktop-objetivos',
-    title: '🎯 Objetivos',
-    content: 'Crea metas de ahorro y haz seguimiento de tu progreso.',
-    placement: 'right',
-    disableBeacon: true,
-  },
-  {
-    target: '.tour-desktop-compartir',
-    title: '👥 Dividir Gastos',
-    content: 'Divide gastos con amigos o pareja de forma fácil y sin líos.',
-    placement: 'right',
-    disableBeacon: true,
-  },
-  {
-    target: 'body',
-    title: '🚀 ¡Todo listo!',
-    content: 'Ya conoces EasyPocket. Empieza añadiendo tu primera cuenta.',
-    placement: 'center',
-    disableBeacon: true,
-  },
-]
-
 export default function UserOnboarding() {
+  const [Joyride, setJoyride] = useState(null)
+  const [STATUS, setSTATUS] = useState(null)
   const [run, setRun] = useState(false)
   const saved = useRef(false)
 
   useEffect(() => {
+    import('react-joyride').then((mod) => {
+      setJoyride(() => mod.default ?? mod.Joyride ?? mod)
+      setSTATUS(mod.STATUS)
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!Joyride) return
+
     const checkTutorial = async () => {
       if (localStorage.getItem('onboarding_visto') === 'true') return
 
@@ -91,13 +36,17 @@ export default function UserOnboarding() {
     }
 
     checkTutorial()
-  }, [])
+  }, [Joyride])
 
   const handleCallback = async (data) => {
     const { status, type, action } = data
     console.log('🎯 Joyride:', type, status, action)
 
-    if ((status === STATUS.FINISHED || status === STATUS.SKIPPED) && !saved.current) {
+    const isFinished = STATUS
+      ? status === STATUS.FINISHED || status === STATUS.SKIPPED
+      : status === 'finished' || status === 'skipped'
+
+    if (isFinished && !saved.current) {
       saved.current = true
       console.log('💾 Guardando...')
 
@@ -127,6 +76,20 @@ export default function UserOnboarding() {
       }
     }
   }
+
+  if (!Joyride) return null
+
+  const steps = [
+    { target: 'body', content: '¡Bienvenido a EasyPocket! Te enseñamos todo en 30 segundos.', placement: 'center', disableBeacon: true },
+    { target: '.tour-desktop-logo', title: '🏠 EasyPocket+', content: 'Este es tu panel de control. Desde aquí gestionas toda tu vida financiera.', placement: 'right', disableBeacon: true },
+    { target: '.tour-desktop-dashboard', title: '📊 Dashboard', content: 'Consulta tu patrimonio neto y tus estadísticas financieras en tiempo real.', placement: 'right', disableBeacon: true },
+    { target: '.tour-desktop-cuentas', title: '💳 Cuentas', content: 'Añade y gestiona tus cuentas bancarias, efectivo o inversiones.', placement: 'right', disableBeacon: true },
+    { target: '.tour-desktop-transacciones', title: '↔️ Transacciones', content: 'Registra tus ingresos y gastos. Filtra y analiza todos tus movimientos.', placement: 'right', disableBeacon: true },
+    { target: '.tour-desktop-suscripciones', title: '📅 Suscripciones', content: 'Controla todos tus pagos recurrentes y evita sorpresas a fin de mes.', placement: 'right', disableBeacon: true },
+    { target: '.tour-desktop-objetivos', title: '🎯 Objetivos', content: 'Crea metas de ahorro y haz seguimiento de tu progreso.', placement: 'right', disableBeacon: true },
+    { target: '.tour-desktop-compartir', title: '👥 Dividir Gastos', content: 'Divide gastos con amigos o pareja de forma fácil y sin líos.', placement: 'right', disableBeacon: true },
+    { target: 'body', title: '🚀 ¡Todo listo!', content: 'Ya conoces EasyPocket. Empieza añadiendo tu primera cuenta.', placement: 'center', disableBeacon: true },
+  ]
 
   return (
     <Joyride
