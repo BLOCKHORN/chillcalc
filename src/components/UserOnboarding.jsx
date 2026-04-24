@@ -45,25 +45,38 @@ export default function UserOnboarding() {
   }, [mounted, JoyrideComponent])
 
   const saveStatus = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    
-    const { data, error } = await supabase
-      .from('perfiles')
-      .update({ tutorial_completado: true })
-      .eq('id', user.id)
-      .select()
-
-    if (error) {
-      console.error(error.message)
-      return
-    }
-
-    if (data && data.length > 0) {
-      localStorage.setItem('onboarding_visto', 'true')
-      setRun(false)
-    }
+  console.log("🛠 Iniciando guardado...");
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    alert("❌ Error: No se detecta usuario logueado");
+    return;
   }
+
+  console.log("🆔 Intentando actualizar ID:", user.id);
+
+  const { data, error } = await supabase
+    .from('perfiles')
+    .update({ tutorial_completado: true })
+    .eq('id', user.id)
+    .select(); // El select es vital para confirmar que hubo cambios
+
+  if (error) {
+    console.error("❌ Error de Supabase:", error.message);
+    alert("Error DB: " + error.message);
+    return;
+  }
+
+  if (data && data.length > 0) {
+    console.log("✅ Guardado con éxito en BD:", data);
+    localStorage.setItem('onboarding_visto', 'true');
+    setRun(false);
+  } else {
+    // Si entramos aquí, la política RLS ha bloqueado el update
+    console.warn("⚠️ Supabase devolvió éxito pero NO actualizó ninguna fila.");
+    alert("Bloqueo RLS: Supabase dice que el update fue 'exitoso' pero no cambió nada. Revisa las políticas SQL.");
+  }
+};
 
   const handleCallback = (data) => {
     const { status, action } = data
