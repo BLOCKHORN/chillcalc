@@ -1,8 +1,9 @@
+import { useNavigate, useLocation } from 'react-router-dom'
 import { LayoutDashboard, Wallet, ArrowLeftRight, Target, Users, CalendarClock } from 'lucide-react'
-import { useStore } from '../store/useStore'
 
 export default function BottomNav() {
-  const { vistaActual, setVistaActual } = useStore()
+  const navigate = useNavigate()
+  const location = useLocation()
 
   const tabs = [
     { id: 'dashboard', icon: LayoutDashboard, label: 'Inicio' },
@@ -17,8 +18,8 @@ export default function BottomNav() {
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-surface-solid border-t border-border-subtle px-2 sm:px-4 pb-6 pt-3 flex justify-between items-center backdrop-blur-md bg-opacity-95">
       {tabs.map((tab) => {
         const Icon = tab.icon
-        const activo = vistaActual === tab.id
-        
+        const activo = location.pathname === `/${tab.id}`
+
         let claseTutorial = ''
         if (tab.id === 'cuentas') claseTutorial = 'tour-mobile-cuentas'
         if (tab.id === 'transacciones') claseTutorial = 'tour-mobile-transacciones'
@@ -29,7 +30,7 @@ export default function BottomNav() {
         return (
           <button
             key={tab.id}
-            onClick={() => setVistaActual(tab.id)}
+            onClick={() => navigate(`/${tab.id}`)}
             className={`flex flex-col items-center gap-1 transition-all flex-1 ${activo ? 'text-brand-500 scale-110' : 'text-text-muted hover:text-text-main'} ${claseTutorial}`}
           >
             <Icon size={22} strokeWidth={activo ? 2.5 : 2} />
