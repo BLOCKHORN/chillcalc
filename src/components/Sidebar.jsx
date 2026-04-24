@@ -64,12 +64,11 @@ export default function Sidebar() {
                 isActive 
                   ? "text-brand-400 bg-brand-500/10 shadow-inner border border-brand-500/20" 
                   : "text-text-muted hover:text-text-main hover:bg-surface-solid border border-transparent",
-                id === 'dashboard'     && 'tour-desktop-dashboard',
-                id === 'cuentas'       && 'tour-desktop-cuentas',
+                id === 'cuentas' && 'tour-desktop-cuentas',
                 id === 'transacciones' && 'tour-desktop-transacciones',
                 id === 'suscripciones' && 'tour-desktop-suscripciones',
-                id === 'objetivos'     && 'tour-desktop-objetivos',
-                id === 'compartir'     && 'tour-desktop-compartir'
+                id === 'objetivos' && 'tour-desktop-objetivos',
+                id === 'compartir' && 'tour-desktop-compartir'
               )}
             >
               <Icon 
