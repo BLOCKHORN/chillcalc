@@ -1,10 +1,11 @@
-import { useEffect, useState, useCallback } from 'react'
-import { Joyride, STATUS } from 'react-joyride'
+import { useEffect, useState } from 'react'
+// IMPORTANTE: react-joyride normalmente se importa así (Joyride como default, STATUS como nombrado)
+import Joyride, { STATUS } from 'react-joyride' 
 import { supabase } from '../lib/supabase'
 
 export default function Tutorial() {
   const [run, setRun] = useState(false)
-  const [userId, setUserId] = useState(null)
+  // Eliminamos el estado userId, ya no lo necesitamos
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
 
   useEffect(() => {
@@ -19,7 +20,6 @@ export default function Tutorial() {
 
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-      setUserId(user.id)
 
       const { data, error } = await supabase
         .from('perfiles')
@@ -34,10 +34,13 @@ export default function Tutorial() {
     init()
   }, [])
 
-  const saveStatus = useCallback(async () => {
-    if (!userId) return
+  // Quitamos useCallback. Ahora es una función asíncrona normal.
+  const saveStatus = async () => {
+    // 1. Pedimos el usuario fresco directamente a Supabase
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
 
-    // Bloqueo local instantáneo
+    // 2. Bloqueo local instantáneo
     localStorage.setItem('tutorial_visto', 'true')
     setRun(false)
 
@@ -45,19 +48,20 @@ export default function Tutorial() {
     const { data, error } = await supabase
       .from('perfiles')
       .update({ tutorial_completado: true })
-      .eq('id', userId)
+      .eq('id', user.id)
       .select()
 
     if (error) {
       console.error("ERROR DE SUPABASE:", error.message)
     } else {
+      // OJO: Si aquí imprime 'Guardado exitoso: []', tienes que ir a 
+      // Supabase -> Authentication -> Policies y permitir UPDATE en 'perfiles'
       console.log("Guardado exitoso:", data)
     }
-  }, [userId])
+  }
 
   const handleCallback = (data) => {
     const { status } = data
-    // Capturamos tanto si termina como si se salta
     if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
       saveStatus()
     }
