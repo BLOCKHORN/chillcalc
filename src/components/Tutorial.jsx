@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-// Importamos directamente desde el archivo distribuido para ESM
-import Joyride from 'react-joyride/dist/react-joyride.esm.js'
 
 export default function Tutorial() {
+  const [Joyride, setJoyride] = useState(null)
   const [run, setRun] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false)
@@ -12,40 +11,31 @@ export default function Tutorial() {
     setMounted(true)
     const handleResize = () => setIsMobile(window.innerWidth < 768)
     window.addEventListener('resize', handleResize)
+    
+    import('react-joyride').then((module) => {
+      const component = module.default || module
+      setJoyride(() => component)
+    }).catch(err => console.error("Error cargando Joyride:", err))
+
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
   useEffect(() => {
-    if (!mounted) return
+    if (!mounted || !Joyride) return
     const init = async () => {
       if (localStorage.getItem('tutorial_visto') === 'true') return
-      
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-      
-      const { data } = await supabase
-        .from('perfiles')
-        .select('tutorial_completado')
-        .eq('id', user.id)
-        .maybeSingle()
-
-      if (data && data.tutorial_completado === false) {
-        setRun(true)
-      }
+      const { data } = await supabase.from('perfiles').select('tutorial_completado').eq('id', user.id).maybeSingle()
+      if (data && data.tutorial_completado === false) setRun(true)
     }
     init()
-  }, [mounted])
+  }, [mounted, Joyride])
 
   const saveStatus = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-
-    const { data, error } = await supabase
-      .from('perfiles')
-      .update({ tutorial_completado: true })
-      .eq('id', user.id)
-      .select()
-
+    const { data, error } = await supabase.from('perfiles').update({ tutorial_completado: true }).eq('id', user.id).select()
     if (!error && data?.length > 0) {
       localStorage.setItem('tutorial_visto', 'true')
       setRun(false)
@@ -54,12 +44,10 @@ export default function Tutorial() {
 
   const handleCallback = (data) => {
     const { status, action } = data
-    if (['finished', 'skipped'].includes(status) || action === 'close') {
-      saveStatus()
-    }
+    if (['finished', 'skipped'].includes(status) || action === 'close') saveStatus()
   }
 
-  if (!mounted) return null
+  if (!mounted || !Joyride) return null
 
   const steps = [
     { target: 'body', content: '¡Bienvenido! Vamos a configurar tu cuenta en 30 segundos.', placement: 'center' },
