@@ -120,14 +120,8 @@ const stepsDesktop = [
 
 export default function UserOnboarding() {
   const [run, setRun] = useState(false)
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+  const isMobile = window.innerWidth < 768
   const saved = useRef(false)
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768)
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
 
   useEffect(() => {
     const checkTutorial = async () => {
