@@ -21,8 +21,11 @@ export default function Tutorial() {
         .from('perfiles')
         .select('tutorial_completado')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
 
+      if (error) console.error("Error leyendo perfil:", error)
+
+      // Solo arrancamos si existe el dato y es estrictamente false
       if (data && data.tutorial_completado === false) {
         setTimeout(() => setRun(true), 1500)
       }
@@ -38,10 +41,19 @@ export default function Tutorial() {
       
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
-        await supabase
+        console.log("Intentando marcar tutorial como completado para:", user.id)
+        
+        const { error } = await supabase
           .from('perfiles')
           .update({ tutorial_completado: true })
           .eq('id', user.id)
+
+        if (error) {
+          console.error("ERROR CRÍTICO AL GUARDAR EN SUPABASE:", error.message)
+          alert("Error al guardar: " + error.message) // Esto te avisará directo en pantalla
+        } else {
+          console.log("Tutorial guardado correctamente en la DB.")
+        }
       }
     }
   }
