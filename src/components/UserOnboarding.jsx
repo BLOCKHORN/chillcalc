@@ -11,13 +11,6 @@ const stepsMobile = [
   },
   {
     target: 'body',
-    title: '📊 Dashboard',
-    content: 'Consulta tu patrimonio neto, tendencias y resumen financiero en tiempo real.',
-    placement: 'center',
-    disableBeacon: true,
-  },
-  {
-    target: 'body',
     title: '💳 Cuentas',
     content: 'Añade tus cuentas bancarias, efectivo o inversiones para tenerlo todo centralizado.',
     placement: 'center',
