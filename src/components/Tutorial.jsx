@@ -14,7 +14,7 @@ export default function Tutorial() {
 
   useEffect(() => {
     const init = async () => {
-      // Bloqueo temporal para que no moleste en la misma sesión
+      // Si el navegador ya sabe que lo viste, no hacemos ni la petición a BD
       if (localStorage.getItem('tutorial_visto') === 'true') return
       
       const { data: { user } } = await supabase.auth.getUser()
@@ -34,33 +34,38 @@ export default function Tutorial() {
   }, [])
 
   const saveStatus = async () => {
+    console.log("⏳ 1. Iniciando guardado en Supabase...");
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    
+    if (!user) {
+      console.error("❌ No hay usuario logueado.");
+      return;
+    }
 
-    // Ocultamos el tutorial al instante
-    setRun(false)
-    localStorage.setItem('tutorial_visto', 'true')
-
-    // Atacamos directamente al campo con un UPDATE clásico
+    // HACEMOS LA PETICIÓN A SUPABASE ANTES DE CERRAR NADA
     const { data, error } = await supabase
       .from('perfiles')
       .update({ tutorial_completado: true })
       .eq('id', user.id)
-      .select() // Crítico para obligar a Supabase a devolver la fila modificada
+      .select()
 
     if (error) {
       console.error("❌ Error de Supabase:", error.message)
     } else if (!data || data.length === 0) {
-      console.error("⚠️ Fallo silencioso: La regla RLS de Supabase está bloqueando el UPDATE.")
+      console.error("⚠️ Supabase respondió, pero no actualizó nada. Revisa las reglas RLS.")
     } else {
-      console.log("✅ Dato guardado en Supabase correctamente:", data)
+      console.log("✅ 2. Dato guardado en BD:", data)
+      // SOLO CERRAMOS EL TUTORIAL CUANDO LA BD HA CONFIRMADO EL GUARDADO
+      localStorage.setItem('tutorial_visto', 'true')
+      setRun(false)
     }
   }
 
   const handleCallback = (data) => {
     const { status, action } = data
-    // Detectamos si el usuario termina el tour o le da a la X de cerrar
-    if (status === 'finished' || status === 'skipped' || action === 'close') {
+    
+    // Si el usuario termina los pasos o le da a la 'X' de cerrar
+    if (['finished', 'skipped'].includes(status) || action === 'close') {
       saveStatus()
     }
   }
