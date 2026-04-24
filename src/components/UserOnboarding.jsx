@@ -99,12 +99,12 @@ export default function UserOnboarding() {
   }
 
   const handleCallback = (data) => {
-    const { status } = data
-    console.log('🎯 Joyride callback — status:', status)
-    if (status === 'finished' || status === 'skipped') {
-      saveStatus()
-    }
+  console.log('🎯 Joyride callback:', data.status, '| action:', data.action, '| type:', data.type)
+  
+  if (data.status === 'finished' || data.status === 'skipped') {
+    saveStatus()
   }
+}
 
   if (!mounted || !JoyrideComponent) return null
 
