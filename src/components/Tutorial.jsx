@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react'
-import JoyrideComponent from 'react-joyride'
 import { supabase } from '../lib/supabase'
+// Importamos directamente desde el archivo distribuido para ESM
+import Joyride from 'react-joyride/dist/react-joyride.esm.js'
 
 export default function Tutorial() {
   const [run, setRun] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false)
-
-  const Joyride = JoyrideComponent.default || JoyrideComponent
 
   useEffect(() => {
     setMounted(true)
@@ -20,10 +19,19 @@ export default function Tutorial() {
     if (!mounted) return
     const init = async () => {
       if (localStorage.getItem('tutorial_visto') === 'true') return
+      
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-      const { data } = await supabase.from('perfiles').select('tutorial_completado').eq('id', user.id).maybeSingle()
-      if (data && data.tutorial_completado === false) setRun(true)
+      
+      const { data } = await supabase
+        .from('perfiles')
+        .select('tutorial_completado')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (data && data.tutorial_completado === false) {
+        setRun(true)
+      }
     }
     init()
   }, [mounted])
@@ -31,7 +39,13 @@ export default function Tutorial() {
   const saveStatus = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    const { data, error } = await supabase.from('perfiles').update({ tutorial_completado: true }).eq('id', user.id).select()
+
+    const { data, error } = await supabase
+      .from('perfiles')
+      .update({ tutorial_completado: true })
+      .eq('id', user.id)
+      .select()
+
     if (!error && data?.length > 0) {
       localStorage.setItem('tutorial_visto', 'true')
       setRun(false)
@@ -40,10 +54,12 @@ export default function Tutorial() {
 
   const handleCallback = (data) => {
     const { status, action } = data
-    if (['finished', 'skipped'].includes(status) || action === 'close') saveStatus()
+    if (['finished', 'skipped'].includes(status) || action === 'close') {
+      saveStatus()
+    }
   }
 
-  if (!mounted || typeof Joyride !== 'function') return null
+  if (!mounted) return null
 
   const steps = [
     { target: 'body', content: '¡Bienvenido! Vamos a configurar tu cuenta en 30 segundos.', placement: 'center' },
