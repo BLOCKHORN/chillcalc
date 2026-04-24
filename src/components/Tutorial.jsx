@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Joyride } from 'react-joyride'
+import Joyride from 'react-joyride'
 import { supabase } from '../lib/supabase'
 
 export default function Tutorial() {
@@ -14,7 +14,6 @@ export default function Tutorial() {
 
   useEffect(() => {
     const init = async () => {
-      // Si el navegador ya sabe que lo viste, no hacemos ni la petición a BD
       if (localStorage.getItem('tutorial_visto') === 'true') return
       
       const { data: { user } } = await supabase.auth.getUser()
@@ -34,15 +33,14 @@ export default function Tutorial() {
   }, [])
 
   const saveStatus = async () => {
-    console.log("⏳ 1. Iniciando guardado en Supabase...");
+    console.log("1. Iniciando guardado en Supabase...")
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
-      console.error("❌ No hay usuario logueado.");
-      return;
+      console.error("No hay usuario logueado.")
+      return
     }
 
-    // HACEMOS LA PETICIÓN A SUPABASE ANTES DE CERRAR NADA
     const { data, error } = await supabase
       .from('perfiles')
       .update({ tutorial_completado: true })
@@ -50,12 +48,11 @@ export default function Tutorial() {
       .select()
 
     if (error) {
-      console.error("❌ Error de Supabase:", error.message)
+      console.error("Error de Supabase:", error.message)
     } else if (!data || data.length === 0) {
-      console.error("⚠️ Supabase respondió, pero no actualizó nada. Revisa las reglas RLS.")
+      console.error("Supabase respondio sin error, pero no actualizo nada.")
     } else {
-      console.log("✅ 2. Dato guardado en BD:", data)
-      // SOLO CERRAMOS EL TUTORIAL CUANDO LA BD HA CONFIRMADO EL GUARDADO
+      console.log("2. Dato guardado en BD:", data)
       localStorage.setItem('tutorial_visto', 'true')
       setRun(false)
     }
@@ -64,7 +61,6 @@ export default function Tutorial() {
   const handleCallback = (data) => {
     const { status, action } = data
     
-    // Si el usuario termina los pasos o le da a la 'X' de cerrar
     if (['finished', 'skipped'].includes(status) || action === 'close') {
       saveStatus()
     }
@@ -78,7 +74,7 @@ export default function Tutorial() {
     { target: isMobile ? '.tour-mobile-suscripciones' : '.tour-desktop-suscripciones', title: 'Suscripciones', content: 'Controla tus pagos recurrentes.' },
     { target: isMobile ? '.tour-mobile-objetivos' : '.tour-desktop-objetivos', title: 'Objetivos', content: 'Tus metas de ahorro.' },
     { target: isMobile ? '.tour-mobile-compartir' : '.tour-desktop-compartir', title: 'Dividir Gastos', content: 'Cuentas con amigos o pareja.' },
-    { target: 'body', title: '🏁 ¡Listo!', content: 'Crea tu primera cuenta para empezar.', placement: 'center' }
+    { target: 'body', title: '¡Listo!', content: 'Crea tu primera cuenta para empezar.', placement: 'center' }
   ]
 
   return (
