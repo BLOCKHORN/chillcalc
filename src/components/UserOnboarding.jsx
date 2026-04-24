@@ -67,6 +67,9 @@ export default function UserOnboarding() {
   }, [mounted, JoyrideComponent])
 
   const saveStatus = async () => {
+    // Evitar llamadas duplicadas
+    if (localStorage.getItem('onboarding_visto') === 'true') return
+
     console.log('🛠 Iniciando guardado...')
     const { data: authData } = await supabase.auth.getUser()
     const user = authData?.user
@@ -99,8 +102,16 @@ export default function UserOnboarding() {
   }
 
   const handleCallback = (data) => {
-    console.log('🎯 Joyride callback:', data.status, '| action:', data.action, '| type:', data.type)
-    if (data.status === 'finished' || data.status === 'skipped') {
+    const { status, action, type } = data
+    console.log('🎯 Joyride:', type, '| status:', status, '| action:', action)
+
+    if (
+      status === 'finished' ||
+      status === 'skipped' ||
+      action === 'close' ||
+      action === 'skip' ||
+      type === 'tour:end'
+    ) {
       saveStatus()
     }
   }
@@ -125,6 +136,7 @@ export default function UserOnboarding() {
       showProgress
       showSkipButton
       disableScrolling={true}
+      spotlightClicks={true}
       callback={handleCallback}
       styles={{
         options: {
