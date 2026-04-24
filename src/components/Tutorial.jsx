@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { Joyride, STATUS } from 'react-joyride'
-import { supabase } from '../lib/supabase'
 
 export default function Tutorial() {
   const [run, setRun] = useState(false)
@@ -13,11 +12,10 @@ export default function Tutorial() {
   }, [])
 
   useEffect(() => {
-    // Retraso de 1 segundo para asegurar que la app cargó bien
     setTimeout(() => setRun(true), 1000)
   }, [])
 
-  const handleJoyrideCallback = async (data) => {
+  const handleJoyrideCallback = (data) => {
     const { status } = data
     if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
       setRun(false)
@@ -30,33 +28,49 @@ export default function Tutorial() {
       content: (
         <div className="text-left">
           <p className="font-bold text-lg mb-2 text-brand-400">¡Bienvenido a EasyPocket! 🚀</p>
-          <p>Hemos diseñado esta herramienta para que tomes el control total de tu dinero. ¿Te enseñamos cómo funciona en 30 segundos?</p>
+          <p>Te enseñamos a usar tu nuevo centro de mando financiero en 1 minuto.</p>
         </div>
       ),
       placement: 'center',
-      locale: { next: '¡Empezar tutorial!' },
+      locale: { next: '¡Empezar!' },
       disableBeacon: true,
     },
     {
       target: isMobile ? '.tour-mobile-header' : '.tour-desktop-logo',
-      content: 'Este es tu centro de control. Desde aquí siempre puedes volver al inicio para ver tu patrimonio neto total actualizado.',
-      title: '🏠 Inicio',
+      title: '🏠 Dashboard',
+      content: 'Tu visión general. Aquí verás el resumen de tu patrimonio y gráficos de salud financiera.',
     },
     {
       target: isMobile ? '.tour-mobile-cuentas' : '.tour-desktop-cuentas',
-      content: 'Aquí es donde ocurre la magia. Registra tus bancos, tarjetas o efectivo. Sin cuentas creadas, no hay datos que rastrear.',
-      title: '💳 Cartera / Cuentas',
+      title: '💳 Cartera',
+      content: 'Crea aquí tus bancos, tarjetas o efectivo. Es la base de todo: sin cuentas no hay rastreo.',
     },
     {
       target: isMobile ? '.tour-mobile-transacciones' : '.tour-desktop-transacciones',
-      content: 'Anota cada gasto o ingreso al momento. Clasifícalos con etiquetas para saber exactamente en qué se te va el dinero a fin de mes.',
       title: '💸 Movimientos',
+      content: 'Anota tus gastos e ingresos. Categorízalos para saber exactamente dónde se va tu dinero.',
+    },
+    {
+      target: isMobile ? '.tour-mobile-suscripciones' : '.tour-desktop-suscripciones',
+      title: '📅 Suscripciones',
+      content: 'Controla Netflix, Spotify o el gimnasio. Te avisaremos antes de que te cobren el siguiente mes.',
+    },
+    {
+      target: isMobile ? '.tour-mobile-objetivos' : '.tour-desktop-objetivos',
+      title: '🎯 Objetivos',
+      content: '¿Ahorrando para un viaje o un coche? Crea una meta y mira cómo te acercas a ella cada mes.',
+    },
+    {
+      target: isMobile ? '.tour-mobile-compartir' : '.tour-desktop-compartir',
+      title: '👥 Dividir Gastos',
+      content: 'Ideal para cenas con amigos o gastos de piso compartido. Cuentas claras, amistades largas.',
     },
     {
       target: 'body',
-      content: '¡Todo listo! Ya puedes empezar a gestionar tus finanzas como un profesional. El primer paso lógico es crear tu primera cuenta.',
-      title: '🏁 ¡A por ello!',
-      locale: { last: 'Finalizar' }
+      title: '🏁 ¡Todo listo!',
+      content: 'Ya conoces las herramientas. El primer paso ahora es ir a "Cuentas" y crear tu primera cartera.',
+      placement: 'center',
+      locale: { last: '¡A por ello!' }
     }
   ]
 
@@ -78,29 +92,10 @@ export default function Tutorial() {
           overlayColor: 'rgba(0, 0, 0, 0.85)',
           zIndex: 10000,
         },
-        tooltip: {
-          borderRadius: '16px',
-          padding: '24px',
-        },
-        buttonNext: {
-          fontWeight: '800',
-          borderRadius: '10px',
-          padding: '10px 20px',
-          textTransform: 'uppercase',
-          fontSize: '12px'
-        },
-        buttonBack: {
-          color: '#9ca3af',
-          marginRight: '10px'
-        }
+        tooltip: { borderRadius: '16px', padding: '24px' },
+        buttonNext: { fontWeight: '800', borderRadius: '10px', textTransform: 'uppercase', fontSize: '11px' }
       }}
-      locale={{
-        back: 'Atrás',
-        close: 'Cerrar',
-        last: 'Empezar',
-        next: 'Siguiente',
-        skip: 'Saltar'
-      }}
+      locale={{ back: 'Atrás', close: 'Cerrar', last: 'Finalizar', next: 'Siguiente', skip: 'Saltar' }}
     />
   )
 }

@@ -52,6 +52,7 @@ export default function Sidebar() {
         <div className="px-3 mb-2 text-[10px] font-black text-text-muted uppercase tracking-widest opacity-80">
           Menú Principal
         </div>
+        // ... (resto del código igual arriba)
         {navItems.map(({ id, label, icon: Icon }) => {
           const isActive = location.pathname === `/${id}`
           
@@ -65,9 +66,13 @@ export default function Sidebar() {
                   ? "text-brand-400 bg-brand-500/10 shadow-inner border border-brand-500/20" 
                   : "text-text-muted hover:text-text-main hover:bg-surface-solid border border-transparent",
                 id === 'cuentas' && 'tour-desktop-cuentas',
-                id === 'transacciones' && 'tour-desktop-transacciones'
+                id === 'transacciones' && 'tour-desktop-transacciones',
+                id === 'suscripciones' && 'tour-desktop-suscripciones',
+                id === 'objetivos' && 'tour-desktop-objetivos',
+                id === 'compartir' && 'tour-desktop-compartir'
               )}
             >
+// ... (resto del código igual abajo)
               <Icon 
                 size={18} 
                 strokeWidth={isActive ? 2.5 : 2} 
