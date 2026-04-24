@@ -1,24 +1,20 @@
 import { useEffect, useState, useRef } from 'react'
+import Joyride, { STATUS } from 'react-joyride'
 import { supabase } from '../lib/supabase'
 
+const steps = [
+  { target: 'body', content: 'Bienvenido a EasyPocket. Te hacemos un tour rápido.', placement: 'center', disableBeacon: true },
+  { target: 'body', title: 'Dashboard', content: 'Aquí ves el resumen de tu patrimonio neto.', placement: 'center', disableBeacon: true },
+  { target: 'body', title: 'Cartera', content: 'Gestiona tus cuentas bancarias.', placement: 'center', disableBeacon: true },
+  { target: 'body', title: 'Movimientos', content: 'Consulta todos tus ingresos y gastos.', placement: 'center', disableBeacon: true },
+  { target: 'body', title: '¡Listo!', content: 'Ya puedes empezar a usar EasyPocket.', placement: 'center', disableBeacon: true },
+]
+
 export default function UserOnboarding() {
-  const [Joyride, setJoyride] = useState(null)
-  const [STATUS, setSTATUS] = useState(null)
   const [run, setRun] = useState(false)
   const saved = useRef(false)
 
   useEffect(() => {
-    import('react-joyride').then((mod) => {
-      const JoyrideComp = mod.default ?? mod.Joyride ?? mod
-      const StatusObj = mod.STATUS
-      setJoyride(() => JoyrideComp)
-      setSTATUS(StatusObj)
-    })
-  }, [])
-
-  useEffect(() => {
-    if (!Joyride) return
-
     const checkTutorial = async () => {
       if (localStorage.getItem('onboarding_visto') === 'true') return
 
@@ -38,17 +34,13 @@ export default function UserOnboarding() {
     }
 
     checkTutorial()
-  }, [Joyride])
+  }, [])
 
-  const handleJoyrideCallback = async (data) => {
+  const handleCallback = async (data) => {
     const { status, type, action } = data
     console.log('🎯 Joyride:', type, status, action)
 
-    const finished = STATUS
-      ? status === STATUS.FINISHED || status === STATUS.SKIPPED
-      : status === 'finished' || status === 'skipped'
-
-    if (finished && !saved.current) {
+    if ((status === STATUS.FINISHED || status === STATUS.SKIPPED) && !saved.current) {
       saved.current = true
       console.log('💾 Guardando...')
 
@@ -79,16 +71,6 @@ export default function UserOnboarding() {
     }
   }
 
-  if (!Joyride) return null
-
-  const steps = [
-    { target: 'body', content: 'Bienvenido a EasyPocket. Te hacemos un tour rápido.', placement: 'center', disableBeacon: true },
-    { target: 'body', title: 'Dashboard', content: 'Aquí ves el resumen de tu patrimonio neto.', placement: 'center', disableBeacon: true },
-    { target: 'body', title: 'Cartera', content: 'Gestiona tus cuentas bancarias.', placement: 'center', disableBeacon: true },
-    { target: 'body', title: 'Movimientos', content: 'Consulta todos tus ingresos y gastos.', placement: 'center', disableBeacon: true },
-    { target: 'body', title: '¡Listo!', content: 'Ya puedes empezar a usar EasyPocket.', placement: 'center', disableBeacon: true },
-  ]
-
   return (
     <Joyride
       steps={steps}
@@ -98,7 +80,7 @@ export default function UserOnboarding() {
       showSkipButton
       disableScrolling
       spotlightClicks
-      callback={handleJoyrideCallback}
+      callback={handleCallback}
       styles={{
         options: {
           primaryColor: '#10b981',
