@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Joyride, STATUS } from 'react-joyride'
+import { supabase } from '../lib/supabase'
 
 export default function Tutorial() {
   const [run, setRun] = useState(false)
@@ -12,13 +13,36 @@ export default function Tutorial() {
   }, [])
 
   useEffect(() => {
-    setTimeout(() => setRun(true), 1000)
+    const verificarEstadoTutorial = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data, error } = await supabase
+        .from('perfiles')
+        .select('tutorial_completado')
+        .eq('id', user.id)
+        .single()
+
+      if (data && data.tutorial_completado === false) {
+        setTimeout(() => setRun(true), 1500)
+      }
+    }
+
+    verificarEstadoTutorial()
   }, [])
 
-  const handleJoyrideCallback = (data) => {
+  const handleJoyrideCallback = async (data) => {
     const { status } = data
     if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
       setRun(false)
+      
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        await supabase
+          .from('perfiles')
+          .update({ tutorial_completado: true })
+          .eq('id', user.id)
+      }
     }
   }
 
