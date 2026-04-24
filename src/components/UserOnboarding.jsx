@@ -137,26 +137,29 @@ export default function UserOnboarding() {
   }, [])
 
   useEffect(() => {
-    const checkTutorial = async () => {
-      if (localStorage.getItem('onboarding_visto') === 'true') return
+  const checkTutorial = async () => {
+    const mobile = window.innerWidth < 768
 
-      const { data: authData } = await supabase.auth.getUser()
-      const user = authData?.user
-      if (!user) return
+    // En móvil ignoramos localStorage porque puede estar "sucio"
+    if (!mobile && localStorage.getItem('onboarding_visto') === 'true') return
 
-      const { data } = await supabase
-        .from('perfiles')
-        .select('tutorial_completado')
-        .eq('id', user.id)
-        .maybeSingle()
+    const { data: authData } = await supabase.auth.getUser()
+    const user = authData?.user
+    if (!user) return
 
-      if (data?.tutorial_completado === false) {
-        setRun(true)
-      }
+    const { data } = await supabase
+      .from('perfiles')
+      .select('tutorial_completado')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (data?.tutorial_completado === false) {
+      setRun(true)
     }
+  }
 
-    checkTutorial()
-  }, [])
+  checkTutorial()
+}, [])
 
   const handleCallback = async (data) => {
     const { status } = data
