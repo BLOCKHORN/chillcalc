@@ -1,104 +1,74 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { Joyride, STATUS } from 'react-joyride'
 import { supabase } from '../lib/supabase'
 
 export default function Tutorial() {
   const [run, setRun] = useState(false)
-  const [userId, setUserId] = useState(null)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
-  const hasSaved = useRef(false)
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768)
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
 
   useEffect(() => {
     const inicializar = async () => {
-      // 1. Verificamos si el usuario ya lo saltó en este navegador (Fuerza bruta local)
-      if (localStorage.getItem('easypocket_tutorial_done') === 'true') {
-        console.log("✅ Tutorial saltado por LocalStorage.")
-        return
-      }
+      // 1. Bloqueo inmediato si ya se marcó como hecho en este navegador
+      if (localStorage.getItem('tutorial_visto')) return
 
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-      setUserId(user.id)
 
-      // 2. Verificamos en la base de datos
-      const { data, error } = await supabase
+      // 2. Comprobación rápida en base de datos
+      const { data } = await supabase
         .from('perfiles')
         .select('tutorial_completado')
         .eq('id', user.id)
-        .maybeSingle()
+        .single()
 
-      if (error) {
-        console.warn("⚠️ No se pudo leer de la DB (posible error de CORS), confiando en LocalStorage.")
-        return
-      }
-
-      if (data && data.tutorial_completado === false) {
-        setTimeout(() => setRun(true), 1500)
+      if (data?.tutorial_completado === false) {
+        setRun(true)
       }
     }
     inicializar()
   }, [])
 
-  const finalizarTutorial = async () => {
-    if (hasSaved.current) return
-    hasSaved.current = true
-
-    // Guardado local inmediato (para que no vuelva a salir aunque falle la red)
-    localStorage.setItem('easypocket_tutorial_done', 'true')
+  const terminarTutorial = async () => {
+    // Marcamos en local al instante para que no vuelva a salir aunque la red falle
+    localStorage.setItem('tutorial_visto', 'true')
     setRun(false)
 
-    if (userId) {
-      console.log("📡 Intentando sincronizar con base de datos...")
-      const { error } = await supabase
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      await supabase
         .from('perfiles')
         .update({ tutorial_completado: true })
-        .eq('id', userId)
-
-      if (error) console.error("❌ Error de sincronización DB:", error.message)
-      else console.log("🚀 Sincronizado con éxito.")
+        .eq('id', user.id)
     }
   }
 
-  const handleJoyrideCallback = (data) => {
+  const handleCallback = (data) => {
     const { status } = data
     if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
-      finalizarTutorial()
+      terminarTutorial()
     }
   }
 
   const steps = [
     {
       target: 'body',
-      content: (
-        <div className="text-left">
-          <p className="font-bold text-lg mb-2 text-brand-400">¡Bienvenido a EasyPocket! 🚀</p>
-          <p>Te enseñamos a usar tu centro financiero en 30 segundos.</p>
-        </div>
-      ),
+      content: '¡Bienvenido a EasyPocket! 🚀 Vamos a configurar tu centro financiero en 30 segundos.',
       placement: 'center',
-      locale: { next: '¡Empezar!' },
-      disableBeacon: true,
     },
     {
       target: isMobile ? '.tour-mobile-header' : '.tour-desktop-logo',
       title: '🏠 Dashboard',
-      content: 'Resumen de tu patrimonio neto total.',
+      content: 'Tu resumen total de patrimonio.',
     },
     {
       target: isMobile ? '.tour-mobile-cuentas' : '.tour-desktop-cuentas',
       title: '💳 Cartera',
-      content: 'Registra tus bancos, tarjetas o efectivo.',
+      content: 'Registra tus cuentas bancarias y efectivo.',
     },
     {
       target: isMobile ? '.tour-mobile-transacciones' : '.tour-desktop-transacciones',
       title: '💸 Movimientos',
-      content: 'Anota tus gastos e ingresos diarios.',
+      content: 'Anota tus ingresos y gastos diarios.',
     },
     {
       target: isMobile ? '.tour-mobile-suscripciones' : '.tour-desktop-suscripciones',
@@ -108,19 +78,18 @@ export default function Tutorial() {
     {
       target: isMobile ? '.tour-mobile-objetivos' : '.tour-desktop-objetivos',
       title: '🎯 Objetivos',
-      content: 'Tus metas de ahorro a la vista.',
+      content: 'Tus metas de ahorro.',
     },
     {
       target: isMobile ? '.tour-mobile-compartir' : '.tour-desktop-compartir',
       title: '👥 Dividir Gastos',
-      content: 'Gastos compartidos con amigos o pareja.',
+      content: 'Cuentas compartidas con amigos.',
     },
     {
       target: 'body',
       title: '🏁 ¡Listo!',
-      content: 'Crea tu primera cuenta para empezar.',
+      content: 'Ya puedes empezar. Crea tu primera cuenta.',
       placement: 'center',
-      locale: { last: 'Finalizar' }
     }
   ]
 
@@ -131,20 +100,17 @@ export default function Tutorial() {
       continuous
       showProgress
       showSkipButton
-      callback={handleJoyrideCallback}
+      callback={handleCallback}
       styles={{
         options: {
           primaryColor: '#10b981',
           backgroundColor: '#1c1c1f',
           textColor: '#ffffff',
-          arrowColor: '#1c1c1f',
-          overlayColor: 'rgba(0, 0, 0, 0.85)',
           zIndex: 10000,
         },
-        tooltip: { borderRadius: '16px', padding: '24px' },
-        buttonNext: { fontWeight: '800', borderRadius: '10px', textTransform: 'uppercase', fontSize: '11px' }
+        tooltip: { borderRadius: '16px', padding: '20px' }
       }}
-      locale={{ back: 'Atrás', close: 'Cerrar', last: 'Finalizar', next: 'Siguiente', skip: 'Saltar' }}
+      locale={{ back: 'Atrás', last: 'Finalizar', next: 'Siguiente', skip: 'Saltar' }}
     />
   )
 }
