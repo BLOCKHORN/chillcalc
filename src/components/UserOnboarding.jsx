@@ -129,25 +129,37 @@ export default function UserOnboarding() {
   const Joyride = JoyrideComponent
 
   return (
-    <Joyride
-      steps={steps}
-      run={run}
-      continuous
-      showProgress
-      showSkipButton
-      disableScrolling={true}
-      spotlightClicks={true}
-      callback={handleCallback}
-      styles={{
-        options: {
-          primaryColor: '#10b981',
-          backgroundColor: '#1c1c1f',
-          textColor: '#ffffff',
-          zIndex: 10000,
-        },
-        tooltip: { borderRadius: '16px', padding: '20px' }
-      }}
-      locale={{ back: 'Atrás', last: 'Finalizar', next: 'Siguiente', skip: 'Saltar' }}
-    />
-  )
+  <Joyride
+    steps={steps}
+    run={run}
+    continuous
+    showProgress
+    showSkipButton
+    disableScrolling={true}
+    spotlightClicks={true}
+    callback={(data) => {
+      const { status, action, type } = data
+      console.log('🎯 Joyride:', type, '| status:', status, '| action:', action)
+      if (
+        status === 'finished' ||
+        status === 'skipped' ||
+        action === 'close' ||
+        action === 'skip' ||
+        type === 'tour:end'
+      ) {
+        saveStatus()
+      }
+    }}
+    styles={{
+      options: {
+        primaryColor: '#10b981',
+        backgroundColor: '#1c1c1f',
+        textColor: '#ffffff',
+        zIndex: 10000,
+      },
+      tooltip: { borderRadius: '16px', padding: '20px' }
+    }}
+    locale={{ back: 'Atrás', last: 'Finalizar', next: 'Siguiente', skip: 'Saltar' }}
+  />
+)
 }
