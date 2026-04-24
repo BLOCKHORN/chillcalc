@@ -13,7 +13,7 @@ export default function Tutorial() {
   }, [])
 
   useEffect(() => {
-    const verificarEstadoTutorial = async () => {
+    const verificarTutorial = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
@@ -23,36 +23,38 @@ export default function Tutorial() {
         .eq('id', user.id)
         .maybeSingle()
 
-      if (error) console.error("Error leyendo perfil:", error)
+      if (error) console.error("❌ Error leyendo perfil:", error.message)
 
-      // Solo arrancamos si existe el dato y es estrictamente false
       if (data && data.tutorial_completado === false) {
+        console.log("🎯 Usuario nuevo detectado. Arrancando tutorial...")
         setTimeout(() => setRun(true), 1500)
+      } else {
+        console.log("✅ El usuario ya completó el tutorial anteriormente.")
       }
     }
-
-    verificarEstadoTutorial()
+    verificarTutorial()
   }, [])
 
   const handleJoyrideCallback = async (data) => {
     const { status } = data
+    
     if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
+      console.log("🏁 Tutorial finalizado o saltado. Guardando en DB...")
       setRun(false)
       
       const { data: { user } } = await supabase.auth.getUser()
+      
       if (user) {
-        console.log("Intentando marcar tutorial como completado para:", user.id)
-        
         const { error } = await supabase
           .from('perfiles')
           .update({ tutorial_completado: true })
           .eq('id', user.id)
 
         if (error) {
-          console.error("ERROR CRÍTICO AL GUARDAR EN SUPABASE:", error.message)
-          alert("Error al guardar: " + error.message) // Esto te avisará directo en pantalla
+          console.error("❌ ERROR AL GUARDAR:", error.message)
+          console.error("Detalles:", error)
         } else {
-          console.log("Tutorial guardado correctamente en la DB.")
+          console.log("🚀 GUARDADO EXITOSO. Ya no volverá a salir.")
         }
       }
     }
@@ -106,7 +108,7 @@ export default function Tutorial() {
       title: '🏁 ¡Todo listo!',
       content: 'Ya conoces las herramientas. El primer paso ahora es ir a "Cuentas" y crear tu primera cartera.',
       placement: 'center',
-      locale: { last: '¡A por ello!' }
+      locale: { last: '¡Finalizar!' }
     }
   ]
 
