@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Joyride, STATUS } from 'react-joyride'
 import { supabase } from '../lib/supabase'
 
 export default function Tutorial() {
   const [run, setRun] = useState(false)
+  const [userId, setUserId] = useState(null)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+  const hasSaved = useRef(false) // Evita que se guarde dos veces
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768)
@@ -13,46 +15,54 @@ export default function Tutorial() {
   }, [])
 
   useEffect(() => {
-    const verificarTutorial = async () => {
+    const inicializarTutorial = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+      
+      setUserId(user.id)
+      console.log("🛠️ Usuario detectado:", user.id)
 
       const { data } = await supabase
         .from('perfiles')
         .select('tutorial_completado')
         .eq('id', user.id)
-        .maybeSingle()
+        .single()
 
-      // Solo si es estrictamente false arrancamos
       if (data && data.tutorial_completado === false) {
-        setTimeout(() => setRun(true), 1500)
+        console.log("🚀 Estado FALSE en DB. Lanzando tutorial...")
+        setTimeout(() => setRun(true), 1000)
+      } else {
+        console.log("✅ El usuario ya tiene tutorial_completado = true")
       }
     }
-    verificarTutorial()
+    inicializarTutorial()
   }, [])
 
-  const handleJoyrideCallback = async (data) => {
-    const { status } = data
+  const marcarComoCompletado = async () => {
+    if (!userId || hasSaved.current) return
+    hasSaved.current = true
     
-    // Si termina o salta, mandamos la orden de guardar
-    if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
+    console.log("📡 Enviando UPDATE a Supabase para el usuario:", userId)
+    
+    const { error } = await supabase
+      .from('perfiles')
+      .update({ tutorial_completado: true })
+      .eq('id', userId)
+
+    if (error) {
+      console.error("❌ ERROR AL GUARDAR:", error.message)
+      hasSaved.current = false // Reintentar si falla
+    } else {
+      console.log("🏆 GUARDADO CON ÉXITO. El tutorial no volverá a salir.")
       setRun(false)
-      
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+    }
+  }
 
-      console.log("Intentando guardar progreso para el usuario:", user.id)
-
-      const { error } = await supabase
-        .from('perfiles')
-        .update({ tutorial_completado: true })
-        .eq('id', user.id)
-
-      if (error) {
-        console.error("Error al guardar tutorial:", error.message)
-      } else {
-        console.log("Tutorial marcado como completado en la base de datos.")
-      }
+  const handleJoyrideCallback = (data) => {
+    const { status } = data
+    // Si el usuario llega al final o le da a saltar
+    if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
+      marcarComoCompletado()
     }
   }
 
@@ -72,37 +82,37 @@ export default function Tutorial() {
     {
       target: isMobile ? '.tour-mobile-header' : '.tour-desktop-logo',
       title: '🏠 Dashboard',
-      content: 'Tu visión general. Aquí verás el resumen de tu patrimonio y gráficos de salud financiera.',
+      content: 'Tu visión general con el resumen de tu patrimonio neto.',
     },
     {
       target: isMobile ? '.tour-mobile-cuentas' : '.tour-desktop-cuentas',
       title: '💳 Cartera',
-      content: 'Crea aquí tus bancos, tarjetas o efectivo. Es la base de todo.',
+      content: 'Crea aquí tus bancos, tarjetas o efectivo.',
     },
     {
       target: isMobile ? '.tour-mobile-transacciones' : '.tour-desktop-transacciones',
       title: '💸 Movimientos',
-      content: 'Anota tus gastos e ingresos. Categorízalos para controlar tu dinero.',
+      content: 'Anota tus gastos e ingresos para controlarlo todo.',
     },
     {
       target: isMobile ? '.tour-mobile-suscripciones' : '.tour-desktop-suscripciones',
       title: '📅 Suscripciones',
-      content: 'Controla tus pagos recurrentes como Netflix o el gimnasio.',
+      content: 'Gestiona tus pagos recurrentes (Netflix, Gym...).',
     },
     {
       target: isMobile ? '.tour-mobile-objetivos' : '.tour-desktop-objetivos',
       title: '🎯 Objetivos',
-      content: 'Crea metas de ahorro y mira cómo te acercas a ellas cada mes.',
+      content: 'Crea metas de ahorro y mira tu progreso.',
     },
     {
       target: isMobile ? '.tour-mobile-compartir' : '.tour-desktop-compartir',
       title: '👥 Dividir Gastos',
-      content: 'Ideal para cenas con amigos o gastos compartidos.',
+      content: 'Ideal para cuentas con amigos o pareja.',
     },
     {
       target: 'body',
       title: '🏁 ¡Todo listo!',
-      content: 'Ya puedes empezar. El primer paso es crear tu primera cartera en "Cuentas".',
+      content: 'Ya puedes empezar. Haz clic en Finalizar para guardar tu progreso.',
       placement: 'center',
       locale: { last: 'Finalizar' }
     }
@@ -115,7 +125,6 @@ export default function Tutorial() {
       continuous
       showProgress
       showSkipButton
-      disableScrolling={false}
       callback={handleJoyrideCallback}
       styles={{
         options: {
