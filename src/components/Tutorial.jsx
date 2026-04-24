@@ -14,6 +14,7 @@ export default function Tutorial() {
 
   useEffect(() => {
     const init = async () => {
+      // Bloqueo temporal para que no moleste en la misma sesión
       if (localStorage.getItem('tutorial_visto') === 'true') return
       
       const { data: { user } } = await supabase.auth.getUser()
@@ -25,7 +26,7 @@ export default function Tutorial() {
         .eq('id', user.id)
         .maybeSingle()
 
-      if (!data || data.tutorial_completado === false) {
+      if (data && data.tutorial_completado === false) {
         setRun(true)
       }
     }
@@ -33,27 +34,34 @@ export default function Tutorial() {
   }, [])
 
   const saveStatus = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
 
-      // Cerramos la interfaz visual de inmediato para que el usuario no espere
-      setRun(false)
-      localStorage.setItem('tutorial_visto', 'true')
+    // Ocultamos el tutorial al instante
+    setRun(false)
+    localStorage.setItem('tutorial_visto', 'true')
 
-      // Ejecutamos la petición de red en segundo plano
-      await supabase
-        .from('perfiles')
-        .upsert({ 
-          id: user.id,
-          email: user.email,
-          tutorial_completado: true
-        }, { onConflict: 'id' })
+    // Atacamos directamente al campo con un UPDATE clásico
+    const { data, error } = await supabase
+      .from('perfiles')
+      .update({ tutorial_completado: true })
+      .eq('id', user.id)
+      .select() // Crítico para obligar a Supabase a devolver la fila modificada
 
-      console.log("✅ Tutorial marcado como completado en DB.")
+    if (error) {
+      console.error("❌ Error de Supabase:", error.message)
+    } else if (!data || data.length === 0) {
+      console.error("⚠️ Fallo silencioso: La regla RLS de Supabase está bloqueando el UPDATE.")
+    } else {
+      console.log("✅ Dato guardado en Supabase correctamente:", data)
+    }
+  }
 
-    } catch (err) {
-      console.error("❌ Fallo en Supabase:", err.message)
+  const handleCallback = (data) => {
+    const { status, action } = data
+    // Detectamos si el usuario termina el tour o le da a la X de cerrar
+    if (status === 'finished' || status === 'skipped' || action === 'close') {
+      saveStatus()
     }
   }
 
@@ -65,34 +73,7 @@ export default function Tutorial() {
     { target: isMobile ? '.tour-mobile-suscripciones' : '.tour-desktop-suscripciones', title: 'Suscripciones', content: 'Controla tus pagos recurrentes.' },
     { target: isMobile ? '.tour-mobile-objetivos' : '.tour-desktop-objetivos', title: 'Objetivos', content: 'Tus metas de ahorro.' },
     { target: isMobile ? '.tour-mobile-compartir' : '.tour-desktop-compartir', title: 'Dividir Gastos', content: 'Cuentas con amigos o pareja.' },
-    { 
-      target: 'body', 
-      title: '🏁 ¡Listo!', 
-      placement: 'center',
-      hideFooter: true, // Magia: Ocultamos el botón "Finalizar" defectuoso de Joyride
-      content: (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center' }}>
-          <p>Crea tu primera cuenta para empezar.</p>
-          {/* Inyectamos nuestro propio botón con control absoluto sobre el evento */}
-          <button 
-            onClick={saveStatus}
-            style={{
-              backgroundColor: '#10b981',
-              color: '#ffffff',
-              border: 'none',
-              padding: '10px 24px',
-              borderRadius: '8px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              width: '100%',
-              fontSize: '16px'
-            }}
-          >
-            Comenzar y Guardar
-          </button>
-        </div>
-      )
-    }
+    { target: 'body', title: '🏁 ¡Listo!', content: 'Crea tu primera cuenta para empezar.', placement: 'center' }
   ]
 
   return (
@@ -102,6 +83,7 @@ export default function Tutorial() {
       continuous
       showProgress
       showSkipButton
+      callback={handleCallback}
       styles={{
         options: {
           primaryColor: '#10b981',
