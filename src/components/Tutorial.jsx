@@ -14,16 +14,21 @@ export default function Tutorial() {
 
   useEffect(() => {
     const init = async () => {
-      if (localStorage.getItem('tutorial_visto')) return
+      if (localStorage.getItem('tutorial_visto')) {
+        console.log("Bloqueado por LocalStorage")
+        return
+      }
       
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('perfiles')
         .select('tutorial_completado')
         .eq('id', user.id)
         .maybeSingle()
+
+      if (error) console.error("Error leyendo DB al inicio:", error)
 
       if (!data || data.tutorial_completado === false) {
         setRun(true)
@@ -39,21 +44,29 @@ export default function Tutorial() {
     localStorage.setItem('tutorial_visto', 'true')
     setRun(false)
 
-    const { error } = await supabase
+    console.log("Ejecutando Upsert en Supabase...")
+
+    const { data, error } = await supabase
       .from('perfiles')
       .upsert({ 
         id: user.id,
         email: user.email,
         tutorial_completado: true
       }, { onConflict: 'id' })
+      .select()
 
     if (error) {
+      console.error("Fallo en Supabase:", error.message, error.details)
       localStorage.removeItem('tutorial_visto')
+    } else {
+      console.log("Respuesta exitosa de Supabase:", data)
     }
   }
 
   const handleCallback = (data) => {
     const { status } = data
+    console.log("Status de Joyride:", status)
+    
     if (['finished', 'skipped'].includes(status)) {
       saveStatus()
     }
@@ -67,37 +80,37 @@ export default function Tutorial() {
     },
     {
       target: isMobile ? '.tour-mobile-header' : '.tour-desktop-logo',
-      title: '🏠 Dashboard',
+      title: 'Dashboard',
       content: 'Resumen de tu patrimonio total.',
     },
     {
       target: isMobile ? '.tour-mobile-cuentas' : '.tour-desktop-cuentas',
-      title: '💳 Cartera',
+      title: 'Cartera',
       content: 'Registra tus bancos y efectivo.',
     },
     {
       target: isMobile ? '.tour-mobile-transacciones' : '.tour-desktop-transacciones',
-      title: '💸 Movimientos',
+      title: 'Movimientos',
       content: 'Anota tus ingresos y gastos.',
     },
     {
       target: isMobile ? '.tour-mobile-suscripciones' : '.tour-desktop-suscripciones',
-      title: '📅 Suscripciones',
+      title: 'Suscripciones',
       content: 'Controla tus pagos recurrentes.',
     },
     {
       target: isMobile ? '.tour-mobile-objetivos' : '.tour-desktop-objetivos',
-      title: '🎯 Objetivos',
+      title: 'Objetivos',
       content: 'Tus metas de ahorro.',
     },
     {
       target: isMobile ? '.tour-mobile-compartir' : '.tour-desktop-compartir',
-      title: '👥 Dividir Gastos',
+      title: 'Dividir Gastos',
       content: 'Cuentas con amigos o pareja.',
     },
     {
       target: 'body',
-      title: '🏁 ¡Listo!',
+      title: '¡Listo!',
       content: 'Crea tu primera cuenta para empezar.',
       placement: 'center',
     }
