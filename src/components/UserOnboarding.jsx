@@ -1,96 +1,64 @@
-import { useEffect, useState, useRef } from 'react'
-import Joyride, { STATUS } from 'react-joyride'
-import { supabase } from '../lib/supabase'
-
 const steps = [
-  { target: 'body', content: 'Bienvenido a EasyPocket. Te hacemos un tour rápido.', placement: 'center', disableBeacon: true },
-  { target: 'body', title: 'Dashboard', content: 'Aquí ves el resumen de tu patrimonio neto.', placement: 'center', disableBeacon: true },
-  { target: 'body', title: 'Cartera', content: 'Gestiona tus cuentas bancarias.', placement: 'center', disableBeacon: true },
-  { target: 'body', title: 'Movimientos', content: 'Consulta todos tus ingresos y gastos.', placement: 'center', disableBeacon: true },
-  { target: 'body', title: '¡Listo!', content: 'Ya puedes empezar a usar EasyPocket.', placement: 'center', disableBeacon: true },
+  {
+    target: 'body',
+    content: '¡Bienvenido a EasyPocket! Te enseñamos todo en 30 segundos.',
+    placement: 'center',
+    disableBeacon: true,
+  },
+  {
+    target: '.tour-desktop-logo',
+    title: '🏠 EasyPocket+',
+    content: 'Este es tu panel de control. Desde aquí gestionas toda tu vida financiera.',
+    placement: 'right',
+    disableBeacon: true,
+  },
+  {
+    target: '.tour-desktop-dashboard',
+    title: '📊 Dashboard',
+    content: 'Consulta tu patrimonio neto y tus estadísticas financieras en tiempo real.',
+    placement: 'right',
+    disableBeacon: true,
+  },
+  {
+    target: '.tour-desktop-cuentas',
+    title: '💳 Cuentas',
+    content: 'Añade y gestiona tus cuentas bancarias, efectivo o inversiones.',
+    placement: 'right',
+    disableBeacon: true,
+  },
+  {
+    target: '.tour-desktop-transacciones',
+    title: '↔️ Transacciones',
+    content: 'Registra tus ingresos y gastos. Filtra y analiza todos tus movimientos.',
+    placement: 'right',
+    disableBeacon: true,
+  },
+  {
+    target: '.tour-desktop-suscripciones',
+    title: '📅 Suscripciones',
+    content: 'Controla todos tus pagos recurrentes y evita sorpresas a fin de mes.',
+    placement: 'right',
+    disableBeacon: true,
+  },
+  {
+    target: '.tour-desktop-objetivos',
+    title: '🎯 Objetivos',
+    content: 'Crea metas de ahorro y haz seguimiento de tu progreso.',
+    placement: 'right',
+    disableBeacon: true,
+  },
+  {
+    target: '.tour-desktop-compartir',
+    title: '👥 Dividir Gastos',
+    content: 'Divide gastos con amigos o pareja de forma fácil y sin líos.',
+    placement: 'right',
+    disableBeacon: true,
+  },
+  {
+    target: 'body',
+    title: '🚀 ¡Todo listo!',
+    content: 'Ya conoces EasyPocket. Empieza añadiendo tu primera cuenta.',
+    placement: 'center',
+    disableBeacon: true,
+  },
 ]
-
-export default function UserOnboarding() {
-  const [run, setRun] = useState(false)
-  const saved = useRef(false)
-
-  useEffect(() => {
-    const checkTutorial = async () => {
-      if (localStorage.getItem('onboarding_visto') === 'true') return
-
-      const { data: authData } = await supabase.auth.getUser()
-      const user = authData?.user
-      if (!user) return
-
-      const { data } = await supabase
-        .from('perfiles')
-        .select('tutorial_completado')
-        .eq('id', user.id)
-        .maybeSingle()
-
-      if (data?.tutorial_completado === false) {
-        setRun(true)
-      }
-    }
-
-    checkTutorial()
-  }, [])
-
-  const handleCallback = async (data) => {
-    const { status, type, action } = data
-    console.log('🎯 Joyride:', type, status, action)
-
-    if ((status === STATUS.FINISHED || status === STATUS.SKIPPED) && !saved.current) {
-      saved.current = true
-      console.log('💾 Guardando...')
-
-      const { data: authData } = await supabase.auth.getUser()
-      const user = authData?.user
-      if (!user) return
-
-      const { data: updateData, error } = await supabase
-        .from('perfiles')
-        .update({ tutorial_completado: true })
-        .eq('id', user.id)
-        .select()
-
-      if (error) {
-        console.error('❌ Error:', error.message)
-        saved.current = false
-        return
-      }
-
-      if (updateData && updateData.length > 0) {
-        console.log('✅ Guardado:', updateData)
-        localStorage.setItem('onboarding_visto', 'true')
-        setRun(false)
-      } else {
-        console.warn('⚠️ RLS bloqueó el update')
-        saved.current = false
-      }
-    }
-  }
-
-  return (
-    <Joyride
-      steps={steps}
-      run={run}
-      continuous
-      showProgress
-      showSkipButton
-      disableScrolling
-      spotlightClicks
-      callback={handleCallback}
-      styles={{
-        options: {
-          primaryColor: '#10b981',
-          backgroundColor: '#1c1c1f',
-          textColor: '#ffffff',
-          zIndex: 10000,
-        },
-        tooltip: { borderRadius: '16px', padding: '20px' },
-      }}
-      locale={{ back: 'Atrás', last: 'Finalizar', next: 'Siguiente', skip: 'Saltar' }}
-    />
-  )
-}
