@@ -81,16 +81,88 @@ export default function UserOnboarding() {
       disableScrolling
       spotlightClicks
       callback={handleCallback}
+      floaterProps={{
+        styles: {
+          floater: { filter: 'drop-shadow(0 8px 32px rgba(0,0,0,0.4))' }
+        }
+      }}
       styles={{
         options: {
           primaryColor: '#10b981',
-          backgroundColor: '#1c1c1f',
-          textColor: '#ffffff',
+          backgroundColor: '#18181b',
+          textColor: '#f4f4f5',
+          overlayColor: 'rgba(0, 0, 0, 0.75)',
+          spotlightShadow: '0 0 0 9999px rgba(0,0,0,0.75)',
+          arrowColor: '#18181b',
           zIndex: 10000,
         },
-        tooltip: { borderRadius: '16px', padding: '20px' },
+        tooltip: {
+          borderRadius: '20px',
+          padding: '28px',
+          maxWidth: '380px',
+          background: 'linear-gradient(135deg, #1c1c1f 0%, #18181b 100%)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          boxShadow: '0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(16,185,129,0.1)',
+        },
+        tooltipTitle: {
+          fontSize: '17px',
+          fontWeight: '800',
+          color: '#10b981',
+          marginBottom: '8px',
+          letterSpacing: '-0.3px',
+        },
+        tooltipContent: {
+          fontSize: '14px',
+          lineHeight: '1.7',
+          color: '#a1a1aa',
+          padding: '0',
+        },
+        tooltipFooter: {
+          marginTop: '20px',
+          padding: '0',
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+          paddingTop: '16px',
+        },
+        tooltipFooterSpacer: {
+          flex: 1,
+        },
+        buttonNext: {
+          backgroundColor: '#10b981',
+          borderRadius: '10px',
+          padding: '9px 20px',
+          fontSize: '13px',
+          fontWeight: '700',
+          color: '#fff',
+          border: 'none',
+          boxShadow: '0 4px 14px rgba(16,185,129,0.35)',
+          cursor: 'pointer',
+        },
+        buttonBack: {
+          color: '#71717a',
+          fontSize: '13px',
+          fontWeight: '600',
+          marginRight: '8px',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+        },
+        buttonSkip: {
+          color: '#52525b',
+          fontSize: '12px',
+          fontWeight: '500',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+        },
+        buttonClose: {
+          color: '#52525b',
+          width: '16px',
+          height: '16px',
+          top: '16px',
+          right: '16px',
+        },
       }}
-      locale={{ back: 'Atrás', last: 'Finalizar', next: 'Siguiente', skip: 'Saltar' }}
+      locale={{ back: 'Atrás', last: '¡Empezar! 🚀', next: 'Siguiente →', skip: 'Saltar' }}
     />
   )
 }
