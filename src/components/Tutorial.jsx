@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
-import Joyride from 'react-joyride'
+import * as ReactJoyride from 'react-joyride'
 import { supabase } from '../lib/supabase'
+
+const Joyride = ReactJoyride.default || ReactJoyride
 
 export default function Tutorial() {
   const [run, setRun] = useState(false)
