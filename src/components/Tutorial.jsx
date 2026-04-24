@@ -12,15 +12,12 @@ export default function Tutorial() {
     const handleResize = () => setIsMobile(window.innerWidth < 768)
     window.addEventListener('resize', handleResize)
 
-    // IMPORTANTE: Según tu consola, el componente está en mod.Joyride
     import('react-joyride')
       .then((mod) => {
         const comp = mod.Joyride || mod.default || mod
-        if (comp) {
-          setJoyrideComponent(() => comp)
-        }
+        if (comp) setJoyrideComponent(() => comp)
       })
-      .catch((err) => console.error("Error cargando joyride:", err))
+      .catch((err) => console.error("Error Joyride:", err))
 
     return () => window.removeEventListener('resize', handleResize)
   }, [])
@@ -29,20 +26,18 @@ export default function Tutorial() {
     if (!mounted || !JoyrideComponent) return
     
     const init = async () => {
-      // Si ya lo vio en esta sesión de navegador, no molestamos
       if (localStorage.getItem('tutorial_visto') === 'true') return
 
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('perfiles')
         .select('tutorial_completado')
         .eq('id', user.id)
         .maybeSingle()
 
-      // Solo arrancamos si la BD dice explícitamente FALSE
-      if (data && data.tutorial_completado === false) {
+      if (!error && data && data.tutorial_completado === false) {
         setRun(true)
       }
     }
@@ -53,17 +48,24 @@ export default function Tutorial() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     
-    // 1. Actualizamos Supabase
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('perfiles')
       .update({ tutorial_completado: true })
       .eq('id', user.id)
+      .select()
 
-    if (!error) {
-      // 2. Guardamos en local para evitar parpadeos
-      localStorage.setItem('tutorial_visto', 'true')
-      setRun(false)
+    if (error) {
+      console.error("Error updating Supabase:", error.message)
+      return
     }
+
+    if (!data || data.length === 0) {
+      console.error("RLS BLOCK: Supabase no actualizo nada. Revisa las politicas RLS.")
+      return
+    }
+
+    localStorage.setItem('tutorial_visto', 'true')
+    setRun(false)
   }
 
   const handleCallback = (data) => {
@@ -83,7 +85,7 @@ export default function Tutorial() {
     { target: isMobile ? '.tour-mobile-suscripciones' : '.tour-desktop-suscripciones', title: 'Suscripciones', content: 'Controla tus pagos recurrentes.' },
     { target: isMobile ? '.tour-mobile-objetivos' : '.tour-desktop-objetivos', title: 'Objetivos', content: 'Tus metas de ahorro.' },
     { target: isMobile ? '.tour-mobile-compartir' : '.tour-desktop-compartir', title: 'Dividir Gastos', content: 'Cuentas con amigos o pareja.' },
-    { target: 'body', title: '🏁 ¡Listo!', content: 'Crea tu primera cuenta para empezar.', placement: 'center' }
+    { target: 'body', title: 'Listo', content: 'Crea tu primera cuenta para empezar.', placement: 'center' }
   ]
 
   const Joyride = JoyrideComponent
@@ -105,7 +107,7 @@ export default function Tutorial() {
         },
         tooltip: { borderRadius: '16px', padding: '20px' }
       }}
-      locale={{ back: 'Atrás', last: 'Finalizar', next: 'Siguiente', skip: 'Saltar' }}
+      locale={{ back: 'Atras', last: 'Finalizar', next: 'Siguiente', skip: 'Saltar' }}
     />
   )
 }
