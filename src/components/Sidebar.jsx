@@ -38,7 +38,7 @@ export default function Sidebar() {
   return (
     <aside className="fixed top-0 left-0 w-64 h-screen bg-surface-solid/80 backdrop-blur-xl border-r border-border-subtle/50 p-6 flex flex-col transition-colors duration-300 z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
       
-      <div className="flex items-center gap-3 px-3 mb-10 mt-2">
+      <div className="tour-desktop-logo flex items-center gap-3 px-3 mb-10 mt-2">
         <div className="w-9 h-9 rounded-xl shadow-lg shadow-brand-500/20 border border-border-subtle/50 relative group cursor-default overflow-hidden shrink-0">
           <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity z-10 pointer-events-none" />
           <img src="/apple-touch-icon.png" alt="EasyPocket" className="w-full h-full object-cover relative z-0" />
@@ -63,7 +63,9 @@ export default function Sidebar() {
                 "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all w-full text-left group relative overflow-hidden",
                 isActive 
                   ? "text-brand-400 bg-brand-500/10 shadow-inner border border-brand-500/20" 
-                  : "text-text-muted hover:text-text-main hover:bg-surface-solid border border-transparent"
+                  : "text-text-muted hover:text-text-main hover:bg-surface-solid border border-transparent",
+                id === 'cuentas' && 'tour-desktop-cuentas',
+                id === 'transacciones' && 'tour-desktop-transacciones'
               )}
             >
               <Icon 

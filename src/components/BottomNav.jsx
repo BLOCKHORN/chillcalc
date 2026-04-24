@@ -18,11 +18,16 @@ export default function BottomNav() {
       {tabs.map((tab) => {
         const Icon = tab.icon
         const activo = vistaActual === tab.id
+        
+        let claseTutorial = ''
+        if (tab.id === 'cuentas') claseTutorial = 'tour-mobile-cuentas'
+        if (tab.id === 'transacciones') claseTutorial = 'tour-mobile-transacciones'
+
         return (
           <button
             key={tab.id}
             onClick={() => setVistaActual(tab.id)}
-            className={`flex flex-col items-center gap-1 transition-all flex-1 ${activo ? 'text-brand-500 scale-110' : 'text-text-muted hover:text-text-main'}`}
+            className={`flex flex-col items-center gap-1 transition-all flex-1 ${activo ? 'text-brand-500 scale-110' : 'text-text-muted hover:text-text-main'} ${claseTutorial}`}
           >
             <Icon size={22} strokeWidth={activo ? 2.5 : 2} />
             <span className="text-[9px] font-bold uppercase tracking-tighter">{tab.label}</span>

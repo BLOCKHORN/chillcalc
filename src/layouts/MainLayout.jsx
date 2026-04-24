@@ -1,10 +1,14 @@
 import Sidebar from '../components/Sidebar'
 import MobileHeader from '../components/MobileHeader'
+import Tutorial from '../components/Tutorial'
 
 export default function MainLayout({ children }) {
   return (
     <div className="flex min-h-screen bg-bg-app w-full overflow-x-hidden">
       
+      {/* El cerebro del tutorial, invisible hasta que se active */}
+      <Tutorial />
+
       {/* Sidebar: 
         Ya es 'fixed' por dentro. 
         El 'hidden md:block' asegura que no renderice nada en móvil.
