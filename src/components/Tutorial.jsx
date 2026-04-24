@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { default as Joyride } from 'react-joyride'
+import Joyride from 'react-joyride'
 import { supabase } from '../lib/supabase'
 
 export default function Tutorial() {
@@ -34,7 +34,6 @@ export default function Tutorial() {
 
   const saveStatus = async () => {
     const { data: { user } } = await supabase.auth.getUser()
-    
     if (!user) return
 
     const { data, error } = await supabase
