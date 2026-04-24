@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import Joyride, { STATUS } from 'react-joyride'
+import { Joyride, STATUS } from 'react-joyride'
 import { supabase } from '../lib/supabase'
 
 export default function Tutorial() {
