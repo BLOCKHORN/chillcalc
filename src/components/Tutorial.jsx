@@ -31,13 +31,35 @@ export default function Tutorial() {
 
   const saveStatus = async () => {
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!user) {
+      console.error("No se encontró sesión de usuario activa.");
+      return;
+    }
+
+    // Bloqueo local inmediato para evitar que el tutorial parpadee
     localStorage.setItem('tutorial_visto', 'true')
     setRun(false)
-    await supabase
+
+    console.log("Intentando actualizar Supabase para el ID:", user.id);
+
+    const { data, error } = await supabase
       .from('perfiles')
       .update({ tutorial_completado: true })
       .eq('id', user.id)
+      .select() // Esto es clave para verificar si se hizo el cambio
+
+    if (error) {
+      console.error("ERROR DE SUPABASE:", error.message, error.details, error.hint);
+      // Si falla, borramos el localstorage para que el usuario pueda reintentar
+      localStorage.removeItem('tutorial_visto');
+      setRun(true);
+    } else {
+      if (data && data.length > 0) {
+        console.log("✅ Guardado exitoso en DB:", data);
+      } else {
+        console.warn("⚠️ No se encontró la fila del usuario o el RLS bloqueó el acceso.");
+      }
+    }
   }
 
   const handleCallback = (data) => {
