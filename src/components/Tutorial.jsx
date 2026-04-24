@@ -1,21 +1,27 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Joyride, STATUS } from 'react-joyride'
 import { supabase } from '../lib/supabase'
 
 export default function Tutorial() {
   const [run, setRun] = useState(false)
+  const [userId, setUserId] = useState(null)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
 
   useEffect(() => {
-    const inicializar = async () => {
-      // 1. Bloqueo inmediato si ya se marcó como hecho en este navegador
+    const handleResize = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  useEffect(() => {
+    const init = async () => {
       if (localStorage.getItem('tutorial_visto')) return
 
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+      setUserId(user.id)
 
-      // 2. Comprobación rápida en base de datos
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('perfiles')
         .select('tutorial_completado')
         .eq('id', user.id)
@@ -25,50 +31,58 @@ export default function Tutorial() {
         setRun(true)
       }
     }
-    inicializar()
+    init()
   }, [])
 
-  const terminarTutorial = async () => {
-    // Marcamos en local al instante para que no vuelva a salir aunque la red falle
+  const saveStatus = useCallback(async () => {
+    if (!userId) return
+
+    // Bloqueo local instantáneo
     localStorage.setItem('tutorial_visto', 'true')
     setRun(false)
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      await supabase
-        .from('perfiles')
-        .update({ tutorial_completado: true })
-        .eq('id', user.id)
+    console.log("Enviando actualización a Supabase...")
+    const { data, error } = await supabase
+      .from('perfiles')
+      .update({ tutorial_completado: true })
+      .eq('id', userId)
+      .select()
+
+    if (error) {
+      console.error("ERROR DE SUPABASE:", error.message)
+    } else {
+      console.log("Guardado exitoso:", data)
     }
-  }
+  }, [userId])
 
   const handleCallback = (data) => {
     const { status } = data
+    // Capturamos tanto si termina como si se salta
     if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
-      terminarTutorial()
+      saveStatus()
     }
   }
 
   const steps = [
     {
       target: 'body',
-      content: '¡Bienvenido a EasyPocket! 🚀 Vamos a configurar tu centro financiero en 30 segundos.',
+      content: '¡Bienvenido! Vamos a configurar tu cuenta en 30 segundos.',
       placement: 'center',
     },
     {
       target: isMobile ? '.tour-mobile-header' : '.tour-desktop-logo',
       title: '🏠 Dashboard',
-      content: 'Tu resumen total de patrimonio.',
+      content: 'Resumen de tu patrimonio total.',
     },
     {
       target: isMobile ? '.tour-mobile-cuentas' : '.tour-desktop-cuentas',
       title: '💳 Cartera',
-      content: 'Registra tus cuentas bancarias y efectivo.',
+      content: 'Registra tus bancos y efectivo.',
     },
     {
       target: isMobile ? '.tour-mobile-transacciones' : '.tour-desktop-transacciones',
       title: '💸 Movimientos',
-      content: 'Anota tus ingresos y gastos diarios.',
+      content: 'Anota tus ingresos y gastos.',
     },
     {
       target: isMobile ? '.tour-mobile-suscripciones' : '.tour-desktop-suscripciones',
@@ -83,12 +97,12 @@ export default function Tutorial() {
     {
       target: isMobile ? '.tour-mobile-compartir' : '.tour-desktop-compartir',
       title: '👥 Dividir Gastos',
-      content: 'Cuentas compartidas con amigos.',
+      content: 'Cuentas con amigos o pareja.',
     },
     {
       target: 'body',
       title: '🏁 ¡Listo!',
-      content: 'Ya puedes empezar. Crea tu primera cuenta.',
+      content: 'Crea tu primera cuenta para empezar.',
       placement: 'center',
     }
   ]
