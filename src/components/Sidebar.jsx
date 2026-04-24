@@ -52,7 +52,6 @@ export default function Sidebar() {
         <div className="px-3 mb-2 text-[10px] font-black text-text-muted uppercase tracking-widest opacity-80">
           Menú Principal
         </div>
-        // ... (resto del código igual arriba)
         {navItems.map(({ id, label, icon: Icon }) => {
           const isActive = location.pathname === `/${id}`
           
@@ -72,7 +71,6 @@ export default function Sidebar() {
                 id === 'compartir' && 'tour-desktop-compartir'
               )}
             >
-// ... (resto del código igual abajo)
               <Icon 
                 size={18} 
                 strokeWidth={isActive ? 2.5 : 2} 
