@@ -17,7 +17,7 @@ export default function Tutorial() {
         const comp = mod.Joyride || mod.default || mod
         if (comp) setJoyrideComponent(() => comp)
       })
-      .catch((err) => console.error("Error Joyride:", err))
+      .catch((err) => console.error(err))
 
     return () => window.removeEventListener('resize', handleResize)
   }, [])
@@ -26,18 +26,16 @@ export default function Tutorial() {
     if (!mounted || !JoyrideComponent) return
     
     const init = async () => {
-      if (localStorage.getItem('tutorial_visto') === 'true') return
-
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('perfiles')
         .select('tutorial_completado')
         .eq('id', user.id)
         .maybeSingle()
 
-      if (!error && data && data.tutorial_completado === false) {
+      if (data && data.tutorial_completado === false) {
         setRun(true)
       }
     }
@@ -45,6 +43,7 @@ export default function Tutorial() {
   }, [mounted, JoyrideComponent])
 
   const saveStatus = async () => {
+    console.log("Intentando guardar en Supabase...")
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
     
@@ -55,22 +54,19 @@ export default function Tutorial() {
       .select()
 
     if (error) {
-      console.error("Error updating Supabase:", error.message)
-      return
+      console.error("Error BD:", error.message)
+    } else {
+      console.log("Guardado con exito:", data)
+      localStorage.setItem('tutorial_visto', 'true')
+      setRun(false)
     }
-
-    if (!data || data.length === 0) {
-      console.error("RLS BLOCK: Supabase no actualizo nada. Revisa las politicas RLS.")
-      return
-    }
-
-    localStorage.setItem('tutorial_visto', 'true')
-    setRun(false)
   }
 
   const handleCallback = (data) => {
     const { status, action } = data
-    if (['finished', 'skipped'].includes(status) || action === 'close') {
+    console.log("Evento Joyride:", status, action)
+
+    if (status === 'finished' || status === 'skipped' || action === 'close') {
       saveStatus()
     }
   }
@@ -78,14 +74,9 @@ export default function Tutorial() {
   if (!mounted || !JoyrideComponent) return null
 
   const steps = [
-    { target: 'body', content: '¡Bienvenido! Vamos a configurar tu cuenta en 30 segundos.', placement: 'center' },
-    { target: isMobile ? '.tour-mobile-header' : '.tour-desktop-logo', title: 'Dashboard', content: 'Resumen de tu patrimonio total.' },
-    { target: isMobile ? '.tour-mobile-cuentas' : '.tour-desktop-cuentas', title: 'Cartera', content: 'Registra tus bancos y efectivo.' },
-    { target: isMobile ? '.tour-mobile-transacciones' : '.tour-desktop-transacciones', title: 'Movimientos', content: 'Anota tus ingresos y gastos.' },
-    { target: isMobile ? '.tour-mobile-suscripciones' : '.tour-desktop-suscripciones', title: 'Suscripciones', content: 'Controla tus pagos recurrentes.' },
-    { target: isMobile ? '.tour-mobile-objetivos' : '.tour-desktop-objetivos', title: 'Objetivos', content: 'Tus metas de ahorro.' },
-    { target: isMobile ? '.tour-mobile-compartir' : '.tour-desktop-compartir', title: 'Dividir Gastos', content: 'Cuentas con amigos o pareja.' },
-    { target: 'body', title: 'Listo', content: 'Crea tu primera cuenta para empezar.', placement: 'center' }
+    { target: 'body', content: 'Bienvenido.', placement: 'center' },
+    { target: isMobile ? '.tour-mobile-header' : '.tour-desktop-logo', title: 'Dashboard', content: 'Resumen total.' },
+    { target: 'body', title: 'Listo', content: 'Finaliza para guardar.', placement: 'center' }
   ]
 
   const Joyride = JoyrideComponent
@@ -97,6 +88,7 @@ export default function Tutorial() {
       continuous
       showProgress
       showSkipButton
+      disableOverlayClose={false}
       callback={handleCallback}
       styles={{
         options: {
@@ -104,8 +96,7 @@ export default function Tutorial() {
           backgroundColor: '#1c1c1f',
           textColor: '#ffffff',
           zIndex: 10000,
-        },
-        tooltip: { borderRadius: '16px', padding: '20px' }
+        }
       }}
       locale={{ back: 'Atras', last: 'Finalizar', next: 'Siguiente', skip: 'Saltar' }}
     />
