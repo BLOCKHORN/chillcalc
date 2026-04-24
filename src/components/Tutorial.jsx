@@ -62,7 +62,8 @@ export default function Tutorial() {
 
   const handleCallback = (data) => {
     const { status } = data
-    if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
+    // Usamos los strings directamente para evitar el error de "Missing export"
+    if (['finished', 'skipped'].includes(status)) {
       saveStatus()
     }
   }
