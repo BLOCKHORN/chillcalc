@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react'
-// IMPORTANTE: react-joyride normalmente se importa así (Joyride como default, STATUS como nombrado)
-import Joyride from 'react-joyride' 
+import { Joyride } from 'react-joyride'
 import { supabase } from '../lib/supabase'
 
 export default function Tutorial() {
   const [run, setRun] = useState(false)
-  // Eliminamos el estado userId, ya no lo necesitamos
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
 
   useEffect(() => {
@@ -17,16 +15,13 @@ export default function Tutorial() {
   useEffect(() => {
     const init = async () => {
       if (localStorage.getItem('tutorial_visto')) return
-
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('perfiles')
         .select('tutorial_completado')
         .eq('id', user.id)
         .single()
-
       if (data?.tutorial_completado === false) {
         setRun(true)
       }
@@ -34,35 +29,19 @@ export default function Tutorial() {
     init()
   }, [])
 
-  // Quitamos useCallback. Ahora es una función asíncrona normal.
   const saveStatus = async () => {
-    // 1. Pedimos el usuario fresco directamente a Supabase
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-
-    // 2. Bloqueo local instantáneo
     localStorage.setItem('tutorial_visto', 'true')
     setRun(false)
-
-    console.log("Enviando actualización a Supabase...")
-    const { data, error } = await supabase
+    await supabase
       .from('perfiles')
       .update({ tutorial_completado: true })
       .eq('id', user.id)
-      .select()
-
-    if (error) {
-      console.error("ERROR DE SUPABASE:", error.message)
-    } else {
-      // OJO: Si aquí imprime 'Guardado exitoso: []', tienes que ir a 
-      // Supabase -> Authentication -> Policies y permitir UPDATE en 'perfiles'
-      console.log("Guardado exitoso:", data)
-    }
   }
 
   const handleCallback = (data) => {
     const { status } = data
-    // Usamos los strings directamente para evitar el error de "Missing export"
     if (['finished', 'skipped'].includes(status)) {
       saveStatus()
     }
