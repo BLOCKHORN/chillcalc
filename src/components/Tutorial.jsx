@@ -15,14 +15,17 @@ export default function Tutorial() {
   useEffect(() => {
     const init = async () => {
       if (localStorage.getItem('tutorial_visto')) return
+      
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+      
       const { data } = await supabase
         .from('perfiles')
         .select('tutorial_completado')
         .eq('id', user.id)
-        .single()
-      if (data?.tutorial_completado === false) {
+        .maybeSingle()
+
+      if (!data || data.tutorial_completado === false) {
         setRun(true)
       }
     }
@@ -31,34 +34,21 @@ export default function Tutorial() {
 
   const saveStatus = async () => {
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      console.error("No se encontró sesión de usuario activa.");
-      return;
-    }
+    if (!user) return
 
-    // Bloqueo local inmediato para evitar que el tutorial parpadee
     localStorage.setItem('tutorial_visto', 'true')
     setRun(false)
 
-    console.log("Intentando actualizar Supabase para el ID:", user.id);
-
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('perfiles')
-      .update({ tutorial_completado: true })
-      .eq('id', user.id)
-      .select() // Esto es clave para verificar si se hizo el cambio
+      .upsert({ 
+        id: user.id,
+        email: user.email,
+        tutorial_completado: true
+      }, { onConflict: 'id' })
 
     if (error) {
-      console.error("ERROR DE SUPABASE:", error.message, error.details, error.hint);
-      // Si falla, borramos el localstorage para que el usuario pueda reintentar
-      localStorage.removeItem('tutorial_visto');
-      setRun(true);
-    } else {
-      if (data && data.length > 0) {
-        console.log("✅ Guardado exitoso en DB:", data);
-      } else {
-        console.warn("⚠️ No se encontró la fila del usuario o el RLS bloqueó el acceso.");
-      }
+      localStorage.removeItem('tutorial_visto')
     }
   }
 
