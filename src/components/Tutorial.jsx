@@ -14,17 +14,13 @@ export default function Tutorial() {
 
     import('react-joyride')
       .then((mod) => {
-        // Extraccion ultra-segura para evitar el Error #130
-        const comp = mod.default?.default || mod.default || mod
-        
-        // Solo lo guardamos si React lo reconoce como componente (funcion o clase)
+        const comp = mod.default || mod
         if (typeof comp === 'function' || (typeof comp === 'object' && comp.$$typeof)) {
           setJoyrideComponent(() => comp)
-        } else {
-          console.warn("Joyride cargado pero no es un componente valido.")
+          console.log("Checkpoint: Libreria Joyride cargada correctamente.")
         }
       })
-      .catch((err) => console.error("Fallo al cargar la libreria:", err))
+      .catch((err) => console.error("Checkpoint Error: Fallo carga libreria", err))
 
     return () => window.removeEventListener('resize', handleResize)
   }, [])
@@ -33,18 +29,35 @@ export default function Tutorial() {
     if (!mounted || !JoyrideComponent) return
     
     const init = async () => {
-      if (localStorage.getItem('tutorial_visto') === 'true') return
+      if (localStorage.getItem('tutorial_visto') === 'true') {
+        console.log("Checkpoint: Tutorial omitido por LocalStorage.")
+        return
+      }
+
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+      if (!user) {
+        console.log("Checkpoint: No hay usuario autenticado.")
+        return
+      }
       
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('perfiles')
         .select('tutorial_completado')
         .eq('id', user.id)
         .maybeSingle()
 
+      if (error) {
+        console.error("Checkpoint Error: Fallo en Supabase", error)
+        return
+      }
+
+      console.log("Checkpoint: Datos de perfil recibidos:", data)
+
       if (data && data.tutorial_completado === false) {
+        console.log("Checkpoint: Activando tutorial (setRun true)")
         setRun(true)
+      } else {
+        console.log("Checkpoint: El tutorial ya figura como completado en BD.")
       }
     }
     init()
@@ -53,6 +66,7 @@ export default function Tutorial() {
   const saveStatus = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
+    
     const { data, error } = await supabase
       .from('perfiles')
       .update({ tutorial_completado: true })
@@ -72,7 +86,6 @@ export default function Tutorial() {
     }
   }
 
-  // Si no hay componente valido, devolvemos null para que la web NO se rompa
   if (!mounted || !JoyrideComponent) return null
 
   const steps = [
@@ -86,7 +99,6 @@ export default function Tutorial() {
     { target: 'body', title: '¡Listo!', content: 'Crea tu primera cuenta para empezar.', placement: 'center' }
   ]
 
-  // Usamos el estado que contiene el componente validado
   const Joyride = JoyrideComponent
 
   return (
