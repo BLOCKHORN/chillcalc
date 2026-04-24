@@ -99,12 +99,11 @@ export default function UserOnboarding() {
   }
 
   const handleCallback = (data) => {
-  console.log('🎯 Joyride callback:', data.status, '| action:', data.action, '| type:', data.type)
-  
-  if (data.status === 'finished' || data.status === 'skipped') {
-    saveStatus()
+    console.log('🎯 Joyride callback:', data.status, '| action:', data.action, '| type:', data.type)
+    if (data.status === 'finished' || data.status === 'skipped') {
+      saveStatus()
+    }
   }
-}
 
   if (!mounted || !JoyrideComponent) return null
 
@@ -125,6 +124,7 @@ export default function UserOnboarding() {
       continuous
       showProgress
       showSkipButton
+      disableScrolling={true}
       callback={handleCallback}
       styles={{
         options: {
