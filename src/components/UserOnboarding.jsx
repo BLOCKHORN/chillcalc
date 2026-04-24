@@ -10,38 +10,45 @@ const stepsMobile = [
     disableBeacon: true,
   },
   {
-    target: '.tour-mobile-cuentas',
+    target: 'body',
+    title: '📊 Dashboard',
+    content: 'Consulta tu patrimonio neto, tendencias y resumen financiero en tiempo real.',
+    placement: 'center',
+    disableBeacon: true,
+  },
+  {
+    target: 'body',
     title: '💳 Cuentas',
     content: 'Añade tus cuentas bancarias, efectivo o inversiones para tenerlo todo centralizado.',
-    placement: 'top',
+    placement: 'center',
     disableBeacon: true,
   },
   {
-    target: '.tour-mobile-transacciones',
+    target: 'body',
     title: '↔️ Transacciones',
     content: 'Registra y consulta todos tus ingresos y gastos con filtros avanzados.',
-    placement: 'top',
+    placement: 'center',
     disableBeacon: true,
   },
   {
-    target: '.tour-mobile-suscripciones',
+    target: 'body',
     title: '📅 Suscripciones',
     content: 'Controla tus pagos recurrentes y evita sorpresas a fin de mes.',
-    placement: 'top',
+    placement: 'center',
     disableBeacon: true,
   },
   {
-    target: '.tour-mobile-objetivos',
+    target: 'body',
     title: '🎯 Objetivos',
     content: 'Define metas de ahorro y haz seguimiento de tu progreso mes a mes.',
-    placement: 'top',
+    placement: 'center',
     disableBeacon: true,
   },
   {
-    target: '.tour-mobile-compartir',
+    target: 'body',
     title: '👥 Dividir Gastos',
     content: 'Divide gastos con amigos o pareja de forma sencilla y sin líos.',
-    placement: 'top',
+    placement: 'center',
     disableBeacon: true,
   },
   {
@@ -130,29 +137,26 @@ export default function UserOnboarding() {
   }, [])
 
   useEffect(() => {
-  const checkTutorial = async () => {
-    const mobile = window.innerWidth < 768
+    const checkTutorial = async () => {
+      if (localStorage.getItem('onboarding_visto') === 'true') return
 
-    // En móvil ignoramos localStorage porque puede estar "sucio"
-    if (!mobile && localStorage.getItem('onboarding_visto') === 'true') return
+      const { data: authData } = await supabase.auth.getUser()
+      const user = authData?.user
+      if (!user) return
 
-    const { data: authData } = await supabase.auth.getUser()
-    const user = authData?.user
-    if (!user) return
+      const { data } = await supabase
+        .from('perfiles')
+        .select('tutorial_completado')
+        .eq('id', user.id)
+        .maybeSingle()
 
-    const { data } = await supabase
-      .from('perfiles')
-      .select('tutorial_completado')
-      .eq('id', user.id)
-      .maybeSingle()
-
-    if (data?.tutorial_completado === false) {
-      setRun(true)
+      if (data?.tutorial_completado === false) {
+        setRun(true)
+      }
     }
-  }
 
-  checkTutorial()
-}, [])
+    checkTutorial()
+  }, [])
 
   const handleCallback = async (data) => {
     const { status } = data
