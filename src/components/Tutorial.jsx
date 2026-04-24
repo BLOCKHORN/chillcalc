@@ -33,13 +33,9 @@ export default function Tutorial() {
   }, [])
 
   const saveStatus = async () => {
-    console.log("1. Iniciando guardado en Supabase...")
     const { data: { user } } = await supabase.auth.getUser()
     
-    if (!user) {
-      console.error("No hay usuario logueado.")
-      return
-    }
+    if (!user) return
 
     const { data, error } = await supabase
       .from('perfiles')
@@ -47,12 +43,7 @@ export default function Tutorial() {
       .eq('id', user.id)
       .select()
 
-    if (error) {
-      console.error("Error de Supabase:", error.message)
-    } else if (!data || data.length === 0) {
-      console.error("Supabase respondio sin error, pero no actualizo nada.")
-    } else {
-      console.log("2. Dato guardado en BD:", data)
+    if (!error && data?.length > 0) {
       localStorage.setItem('tutorial_visto', 'true')
       setRun(false)
     }
@@ -60,7 +51,6 @@ export default function Tutorial() {
 
   const handleCallback = (data) => {
     const { status, action } = data
-    
     if (['finished', 'skipped'].includes(status) || action === 'close') {
       saveStatus()
     }
