@@ -5,7 +5,9 @@ export default function UserOnboarding() {
   const [JoyrideComponent, setJoyrideComponent] = useState(null)
   const [run, setRun] = useState(false)
   const [mounted, setMounted] = useState(false)
-  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false)
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  )
 
   useEffect(() => {
     setMounted(true)
@@ -17,70 +19,89 @@ export default function UserOnboarding() {
         const comp = mod.Joyride || mod.default || mod
         if (comp) setJoyrideComponent(() => comp)
       })
-      .catch((err) => console.error(err))
+      .catch((err) => console.error('❌ Error cargando Joyride:', err))
 
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
   useEffect(() => {
+    console.log('🔄 useEffect fired — mounted:', mounted, '| JoyrideComponent:', !!JoyrideComponent)
     if (!mounted || !JoyrideComponent) return
-    
-    const init = async () => {
-      if (localStorage.getItem('onboarding_visto') === 'true') return
 
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-      
-      const { data } = await supabase
+    const init = async () => {
+      console.log('🔍 Init ejecutado')
+
+      if (localStorage.getItem('onboarding_visto') === 'true') {
+        console.log('🛑 Bloqueado por localStorage')
+        return
+      }
+
+      const { data: authData, error: authError } = await supabase.auth.getUser()
+      console.log('👤 Usuario:', authData?.user?.id)
+      console.log('🔐 Auth error:', authError)
+
+      const user = authData?.user
+      if (!user) {
+        console.log('🛑 No hay usuario logueado')
+        return
+      }
+
+      const { data, error } = await supabase
         .from('perfiles')
         .select('tutorial_completado')
         .eq('id', user.id)
         .maybeSingle()
 
+      console.log('📦 Data de perfiles:', data)
+      console.log('❌ Error en select:', error)
+
       if (data && data.tutorial_completado === false) {
+        console.log('✅ Poniendo run = true')
         setRun(true)
+      } else {
+        console.log('⚠️ No se puso run=true. data:', data)
       }
     }
+
     init()
   }, [mounted, JoyrideComponent])
 
   const saveStatus = async () => {
-  console.log("🛠 Iniciando guardado...");
-  const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) {
-    alert("❌ Error: No se detecta usuario logueado");
-    return;
+    console.log('🛠 Iniciando guardado...')
+    const { data: authData } = await supabase.auth.getUser()
+    const user = authData?.user
+
+    if (!user) {
+      console.error('❌ No se detecta usuario logueado')
+      return
+    }
+
+    console.log('🆔 Intentando actualizar ID:', user.id)
+
+    const { data, error } = await supabase
+      .from('perfiles')
+      .update({ tutorial_completado: true })
+      .eq('id', user.id)
+      .select()
+
+    if (error) {
+      console.error('❌ Error de Supabase:', error.message)
+      return
+    }
+
+    if (data && data.length > 0) {
+      console.log('✅ Guardado con éxito en BD:', data)
+      localStorage.setItem('onboarding_visto', 'true')
+      setRun(false)
+    } else {
+      console.warn('⚠️ Supabase no actualizó ninguna fila. Posible bloqueo RLS.')
+    }
   }
-
-  console.log("🆔 Intentando actualizar ID:", user.id);
-
-  const { data, error } = await supabase
-    .from('perfiles')
-    .update({ tutorial_completado: true })
-    .eq('id', user.id)
-    .select(); // El select es vital para confirmar que hubo cambios
-
-  if (error) {
-    console.error("❌ Error de Supabase:", error.message);
-    alert("Error DB: " + error.message);
-    return;
-  }
-
-  if (data && data.length > 0) {
-    console.log("✅ Guardado con éxito en BD:", data);
-    localStorage.setItem('onboarding_visto', 'true');
-    setRun(false);
-  } else {
-    // Si entramos aquí, la política RLS ha bloqueado el update
-    console.warn("⚠️ Supabase devolvió éxito pero NO actualizó ninguna fila.");
-    alert("Bloqueo RLS: Supabase dice que el update fue 'exitoso' pero no cambió nada. Revisa las políticas SQL.");
-  }
-};
 
   const handleCallback = (data) => {
-    const { status, action } = data
-    if (['finished', 'skipped'].includes(status) || action === 'close') {
+    const { status } = data
+    console.log('🎯 Joyride callback — status:', status)
+    if (status === 'finished' || status === 'skipped') {
       saveStatus()
     }
   }
