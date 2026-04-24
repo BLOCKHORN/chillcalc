@@ -2,7 +2,58 @@ import { useEffect, useState, useRef } from 'react'
 import Joyride, { STATUS } from 'react-joyride'
 import { supabase } from '../lib/supabase'
 
-const steps = [
+const stepsMobile = [
+  {
+    target: 'body',
+    content: '¡Bienvenido a EasyPocket! En 30 segundos te enseñamos todo lo que necesitas saber.',
+    placement: 'center',
+    disableBeacon: true,
+  },
+  {
+    target: '.tour-mobile-cuentas',
+    title: '💳 Cuentas',
+    content: 'Añade tus cuentas bancarias, efectivo o inversiones para tenerlo todo centralizado.',
+    placement: 'top',
+    disableBeacon: true,
+  },
+  {
+    target: '.tour-mobile-transacciones',
+    title: '↔️ Transacciones',
+    content: 'Registra y consulta todos tus ingresos y gastos con filtros avanzados.',
+    placement: 'top',
+    disableBeacon: true,
+  },
+  {
+    target: '.tour-mobile-suscripciones',
+    title: '📅 Suscripciones',
+    content: 'Controla tus pagos recurrentes y evita sorpresas a fin de mes.',
+    placement: 'top',
+    disableBeacon: true,
+  },
+  {
+    target: '.tour-mobile-objetivos',
+    title: '🎯 Objetivos',
+    content: 'Define metas de ahorro y haz seguimiento de tu progreso mes a mes.',
+    placement: 'top',
+    disableBeacon: true,
+  },
+  {
+    target: '.tour-mobile-compartir',
+    title: '👥 Dividir Gastos',
+    content: 'Divide gastos con amigos o pareja de forma sencilla y sin líos.',
+    placement: 'top',
+    disableBeacon: true,
+  },
+  {
+    target: 'body',
+    title: '🚀 ¡Todo listo!',
+    content: 'Ya conoces EasyPocket. Empieza añadiendo tu primera cuenta.',
+    placement: 'center',
+    disableBeacon: true,
+  },
+]
+
+const stepsDesktop = [
   {
     target: 'body',
     content: '¡Bienvenido a EasyPocket! En 30 segundos te enseñamos todo lo que necesitas saber.',
@@ -26,7 +77,7 @@ const steps = [
   {
     target: '.tour-desktop-cuentas',
     title: '💳 Cuentas',
-    content: 'Añade tus cuentas bancarias, efectivo o inversiones para tener todo centralizado.',
+    content: 'Añade tus cuentas bancarias, efectivo o inversiones para tenerlo todo centralizado.',
     placement: 'right',
     disableBeacon: true,
   },
@@ -69,7 +120,14 @@ const steps = [
 
 export default function UserOnboarding() {
   const [run, setRun] = useState(false)
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
   const saved = useRef(false)
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   useEffect(() => {
     const checkTutorial = async () => {
@@ -121,7 +179,7 @@ export default function UserOnboarding() {
 
   return (
     <Joyride
-      steps={steps}
+      steps={isMobile ? stepsMobile : stepsDesktop}
       run={run}
       continuous
       showProgress
@@ -147,7 +205,7 @@ export default function UserOnboarding() {
         tooltip: {
           borderRadius: '18px',
           padding: '24px',
-          maxWidth: '340px',
+          maxWidth: '320px',
           background: '#18181b',
           border: '1px solid rgba(255,255,255,0.07)',
           boxShadow: '0 20px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05)',
