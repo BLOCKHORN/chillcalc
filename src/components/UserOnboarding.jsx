@@ -1,42 +1,16 @@
 import { useEffect, useState, useRef } from 'react'
-import Joyride, { STATUS } from 'react-joyride'
+import * as ReactJoyride from 'react-joyride'
 import { supabase } from '../lib/supabase'
 
+const Joyride = ReactJoyride.default || ReactJoyride
+const STATUS = ReactJoyride.STATUS
+
 const steps = [
-  {
-    target: 'body',
-    content: 'Bienvenido a EasyPocket. Te hacemos un tour rápido.',
-    placement: 'center',
-    disableBeacon: true,
-  },
-  {
-    target: 'body',
-    title: 'Dashboard',
-    content: 'Aquí ves el resumen de tu patrimonio neto.',
-    placement: 'center',
-    disableBeacon: true,
-  },
-  {
-    target: 'body',
-    title: 'Cartera',
-    content: 'Gestiona tus cuentas bancarias.',
-    placement: 'center',
-    disableBeacon: true,
-  },
-  {
-    target: 'body',
-    title: 'Movimientos',
-    content: 'Consulta todos tus ingresos y gastos.',
-    placement: 'center',
-    disableBeacon: true,
-  },
-  {
-    target: 'body',
-    title: '¡Listo!',
-    content: 'Ya puedes empezar a usar EasyPocket.',
-    placement: 'center',
-    disableBeacon: true,
-  },
+  { target: 'body', content: 'Bienvenido a EasyPocket. Te hacemos un tour rápido.', placement: 'center', disableBeacon: true },
+  { target: 'body', title: 'Dashboard', content: 'Aquí ves el resumen de tu patrimonio neto.', placement: 'center', disableBeacon: true },
+  { target: 'body', title: 'Cartera', content: 'Gestiona tus cuentas bancarias.', placement: 'center', disableBeacon: true },
+  { target: 'body', title: 'Movimientos', content: 'Consulta todos tus ingresos y gastos.', placement: 'center', disableBeacon: true },
+  { target: 'body', title: '¡Listo!', content: 'Ya puedes empezar a usar EasyPocket.', placement: 'center', disableBeacon: true },
 ]
 
 export default function UserOnboarding() {
@@ -66,7 +40,7 @@ export default function UserOnboarding() {
   }, [])
 
   const handleJoyrideCallback = async (data) => {
-    const { status, action, type } = data
+    const { status, type, action } = data
     console.log('🎯 Joyride event — type:', type, '| status:', status, '| action:', action)
 
     const isFinished = status === STATUS.FINISHED || status === STATUS.SKIPPED
@@ -122,12 +96,7 @@ export default function UserOnboarding() {
         },
         tooltip: { borderRadius: '16px', padding: '20px' },
       }}
-      locale={{
-        back: 'Atrás',
-        last: 'Finalizar',
-        next: 'Siguiente',
-        skip: 'Saltar',
-      }}
+      locale={{ back: 'Atrás', last: 'Finalizar', next: 'Siguiente', skip: 'Saltar' }}
     />
   )
 }
