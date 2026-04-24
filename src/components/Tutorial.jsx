@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 // IMPORTANTE: react-joyride normalmente se importa así (Joyride como default, STATUS como nombrado)
-import Joyride, { STATUS } from 'react-joyride' 
+import Joyride from 'react-joyride' 
 import { supabase } from '../lib/supabase'
 
 export default function Tutorial() {
