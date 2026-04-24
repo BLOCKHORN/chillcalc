@@ -125,7 +125,6 @@ export default function UserOnboarding() {
 
   useEffect(() => {
     const checkTutorial = async () => {
-      localStorage.removeItem('onboarding_visto')
       if (localStorage.getItem('onboarding_visto') === 'true') return
 
       const { data: authData } = await supabase.auth.getUser()
