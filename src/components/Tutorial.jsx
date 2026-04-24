@@ -17,19 +17,15 @@ export default function Tutorial() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('perfiles')
         .select('tutorial_completado')
         .eq('id', user.id)
         .maybeSingle()
 
-      if (error) console.error("❌ Error leyendo perfil:", error.message)
-
+      // Solo si es estrictamente false arrancamos
       if (data && data.tutorial_completado === false) {
-        console.log("🎯 Usuario nuevo detectado. Arrancando tutorial...")
         setTimeout(() => setRun(true), 1500)
-      } else {
-        console.log("✅ El usuario ya completó el tutorial anteriormente.")
       }
     }
     verificarTutorial()
@@ -38,24 +34,24 @@ export default function Tutorial() {
   const handleJoyrideCallback = async (data) => {
     const { status } = data
     
+    // Si termina o salta, mandamos la orden de guardar
     if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
-      console.log("🏁 Tutorial finalizado o saltado. Guardando en DB...")
       setRun(false)
       
       const { data: { user } } = await supabase.auth.getUser()
-      
-      if (user) {
-        const { error } = await supabase
-          .from('perfiles')
-          .update({ tutorial_completado: true })
-          .eq('id', user.id)
+      if (!user) return
 
-        if (error) {
-          console.error("❌ ERROR AL GUARDAR:", error.message)
-          console.error("Detalles:", error)
-        } else {
-          console.log("🚀 GUARDADO EXITOSO. Ya no volverá a salir.")
-        }
+      console.log("Intentando guardar progreso para el usuario:", user.id)
+
+      const { error } = await supabase
+        .from('perfiles')
+        .update({ tutorial_completado: true })
+        .eq('id', user.id)
+
+      if (error) {
+        console.error("Error al guardar tutorial:", error.message)
+      } else {
+        console.log("Tutorial marcado como completado en la base de datos.")
       }
     }
   }
@@ -81,34 +77,34 @@ export default function Tutorial() {
     {
       target: isMobile ? '.tour-mobile-cuentas' : '.tour-desktop-cuentas',
       title: '💳 Cartera',
-      content: 'Crea aquí tus bancos, tarjetas o efectivo. Es la base de todo: sin cuentas no hay rastreo.',
+      content: 'Crea aquí tus bancos, tarjetas o efectivo. Es la base de todo.',
     },
     {
       target: isMobile ? '.tour-mobile-transacciones' : '.tour-desktop-transacciones',
       title: '💸 Movimientos',
-      content: 'Anota tus gastos e ingresos. Categorízalos para saber exactamente dónde se va tu dinero.',
+      content: 'Anota tus gastos e ingresos. Categorízalos para controlar tu dinero.',
     },
     {
       target: isMobile ? '.tour-mobile-suscripciones' : '.tour-desktop-suscripciones',
       title: '📅 Suscripciones',
-      content: 'Controla Netflix, Spotify o el gimnasio. Te avisaremos antes de que te cobren el siguiente mes.',
+      content: 'Controla tus pagos recurrentes como Netflix o el gimnasio.',
     },
     {
       target: isMobile ? '.tour-mobile-objetivos' : '.tour-desktop-objetivos',
       title: '🎯 Objetivos',
-      content: '¿Ahorrando para un viaje o un coche? Crea una meta y mira cómo te acercas a ella cada mes.',
+      content: 'Crea metas de ahorro y mira cómo te acercas a ellas cada mes.',
     },
     {
       target: isMobile ? '.tour-mobile-compartir' : '.tour-desktop-compartir',
       title: '👥 Dividir Gastos',
-      content: 'Ideal para cenas con amigos o gastos de piso compartido. Cuentas claras, amistades largas.',
+      content: 'Ideal para cenas con amigos o gastos compartidos.',
     },
     {
       target: 'body',
       title: '🏁 ¡Todo listo!',
-      content: 'Ya conoces las herramientas. El primer paso ahora es ir a "Cuentas" y crear tu primera cartera.',
+      content: 'Ya puedes empezar. El primer paso es crear tu primera cartera en "Cuentas".',
       placement: 'center',
-      locale: { last: '¡Finalizar!' }
+      locale: { last: 'Finalizar' }
     }
   ]
 
