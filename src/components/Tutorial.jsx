@@ -6,7 +6,7 @@ export default function Tutorial() {
   const [run, setRun] = useState(false)
   const [userId, setUserId] = useState(null)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
-  const hasSaved = useRef(false) // Evita que se guarde dos veces
+  const hasSaved = useRef(false)
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768)
@@ -15,54 +15,60 @@ export default function Tutorial() {
   }, [])
 
   useEffect(() => {
-    const inicializarTutorial = async () => {
+    const inicializar = async () => {
+      // 1. Verificamos si el usuario ya lo saltó en este navegador (Fuerza bruta local)
+      if (localStorage.getItem('easypocket_tutorial_done') === 'true') {
+        console.log("✅ Tutorial saltado por LocalStorage.")
+        return
+      }
+
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-      
       setUserId(user.id)
-      console.log("🛠️ Usuario detectado:", user.id)
 
-      const { data } = await supabase
+      // 2. Verificamos en la base de datos
+      const { data, error } = await supabase
         .from('perfiles')
         .select('tutorial_completado')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
+
+      if (error) {
+        console.warn("⚠️ No se pudo leer de la DB (posible error de CORS), confiando en LocalStorage.")
+        return
+      }
 
       if (data && data.tutorial_completado === false) {
-        console.log("🚀 Estado FALSE en DB. Lanzando tutorial...")
-        setTimeout(() => setRun(true), 1000)
-      } else {
-        console.log("✅ El usuario ya tiene tutorial_completado = true")
+        setTimeout(() => setRun(true), 1500)
       }
     }
-    inicializarTutorial()
+    inicializar()
   }, [])
 
-  const marcarComoCompletado = async () => {
-    if (!userId || hasSaved.current) return
+  const finalizarTutorial = async () => {
+    if (hasSaved.current) return
     hasSaved.current = true
-    
-    console.log("📡 Enviando UPDATE a Supabase para el usuario:", userId)
-    
-    const { error } = await supabase
-      .from('perfiles')
-      .update({ tutorial_completado: true })
-      .eq('id', userId)
 
-    if (error) {
-      console.error("❌ ERROR AL GUARDAR:", error.message)
-      hasSaved.current = false // Reintentar si falla
-    } else {
-      console.log("🏆 GUARDADO CON ÉXITO. El tutorial no volverá a salir.")
-      setRun(false)
+    // Guardado local inmediato (para que no vuelva a salir aunque falle la red)
+    localStorage.setItem('easypocket_tutorial_done', 'true')
+    setRun(false)
+
+    if (userId) {
+      console.log("📡 Intentando sincronizar con base de datos...")
+      const { error } = await supabase
+        .from('perfiles')
+        .update({ tutorial_completado: true })
+        .eq('id', userId)
+
+      if (error) console.error("❌ Error de sincronización DB:", error.message)
+      else console.log("🚀 Sincronizado con éxito.")
     }
   }
 
   const handleJoyrideCallback = (data) => {
     const { status } = data
-    // Si el usuario llega al final o le da a saltar
     if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
-      marcarComoCompletado()
+      finalizarTutorial()
     }
   }
 
@@ -72,7 +78,7 @@ export default function Tutorial() {
       content: (
         <div className="text-left">
           <p className="font-bold text-lg mb-2 text-brand-400">¡Bienvenido a EasyPocket! 🚀</p>
-          <p>Te enseñamos a usar tu nuevo centro de mando financiero en 1 minuto.</p>
+          <p>Te enseñamos a usar tu centro financiero en 30 segundos.</p>
         </div>
       ),
       placement: 'center',
@@ -82,37 +88,37 @@ export default function Tutorial() {
     {
       target: isMobile ? '.tour-mobile-header' : '.tour-desktop-logo',
       title: '🏠 Dashboard',
-      content: 'Tu visión general con el resumen de tu patrimonio neto.',
+      content: 'Resumen de tu patrimonio neto total.',
     },
     {
       target: isMobile ? '.tour-mobile-cuentas' : '.tour-desktop-cuentas',
       title: '💳 Cartera',
-      content: 'Crea aquí tus bancos, tarjetas o efectivo.',
+      content: 'Registra tus bancos, tarjetas o efectivo.',
     },
     {
       target: isMobile ? '.tour-mobile-transacciones' : '.tour-desktop-transacciones',
       title: '💸 Movimientos',
-      content: 'Anota tus gastos e ingresos para controlarlo todo.',
+      content: 'Anota tus gastos e ingresos diarios.',
     },
     {
       target: isMobile ? '.tour-mobile-suscripciones' : '.tour-desktop-suscripciones',
       title: '📅 Suscripciones',
-      content: 'Gestiona tus pagos recurrentes (Netflix, Gym...).',
+      content: 'Controla tus pagos recurrentes.',
     },
     {
       target: isMobile ? '.tour-mobile-objetivos' : '.tour-desktop-objetivos',
       title: '🎯 Objetivos',
-      content: 'Crea metas de ahorro y mira tu progreso.',
+      content: 'Tus metas de ahorro a la vista.',
     },
     {
       target: isMobile ? '.tour-mobile-compartir' : '.tour-desktop-compartir',
       title: '👥 Dividir Gastos',
-      content: 'Ideal para cuentas con amigos o pareja.',
+      content: 'Gastos compartidos con amigos o pareja.',
     },
     {
       target: 'body',
-      title: '🏁 ¡Todo listo!',
-      content: 'Ya puedes empezar. Haz clic en Finalizar para guardar tu progreso.',
+      title: '🏁 ¡Listo!',
+      content: 'Crea tu primera cuenta para empezar.',
       placement: 'center',
       locale: { last: 'Finalizar' }
     }
