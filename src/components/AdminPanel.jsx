@@ -149,7 +149,7 @@ export default function AdminPanel() {
                             <div className="flex gap-10">
                               {cargandoDetalle && !uStats ? (
                                 <div className="flex items-center gap-2 text-xs font-bold text-brand-400">
-                                  <Loader2 size={14} className="animate-spin" /> Sincronizando...
+                                  <Loader2 size={14} className="animate-spin" /> Sincronizando....
                                 </div>
                               ) : (
                                 <>
