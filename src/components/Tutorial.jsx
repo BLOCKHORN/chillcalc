@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 
 export default function Tutorial() {
-  const [Joyride, setJoyride] = useState(null)
+  const [JoyrideComponent, setJoyrideComponent] = useState(null)
   const [run, setRun] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false)
@@ -11,31 +11,54 @@ export default function Tutorial() {
     setMounted(true)
     const handleResize = () => setIsMobile(window.innerWidth < 768)
     window.addEventListener('resize', handleResize)
-    
-    import('react-joyride').then((module) => {
-      const component = module.default || module
-      setJoyride(() => component)
-    }).catch(err => console.error("Error cargando Joyride:", err))
+
+    import('react-joyride')
+      .then((mod) => {
+        // Extraccion ultra-segura para evitar el Error #130
+        const comp = mod.default?.default || mod.default || mod
+        
+        // Solo lo guardamos si React lo reconoce como componente (funcion o clase)
+        if (typeof comp === 'function' || (typeof comp === 'object' && comp.$$typeof)) {
+          setJoyrideComponent(() => comp)
+        } else {
+          console.warn("Joyride cargado pero no es un componente valido.")
+        }
+      })
+      .catch((err) => console.error("Fallo al cargar la libreria:", err))
 
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
   useEffect(() => {
-    if (!mounted || !Joyride) return
+    if (!mounted || !JoyrideComponent) return
+    
     const init = async () => {
       if (localStorage.getItem('tutorial_visto') === 'true') return
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-      const { data } = await supabase.from('perfiles').select('tutorial_completado').eq('id', user.id).maybeSingle()
-      if (data && data.tutorial_completado === false) setRun(true)
+      
+      const { data } = await supabase
+        .from('perfiles')
+        .select('tutorial_completado')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (data && data.tutorial_completado === false) {
+        setRun(true)
+      }
     }
     init()
-  }, [mounted, Joyride])
+  }, [mounted, JoyrideComponent])
 
   const saveStatus = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    const { data, error } = await supabase.from('perfiles').update({ tutorial_completado: true }).eq('id', user.id).select()
+    const { data, error } = await supabase
+      .from('perfiles')
+      .update({ tutorial_completado: true })
+      .eq('id', user.id)
+      .select()
+
     if (!error && data?.length > 0) {
       localStorage.setItem('tutorial_visto', 'true')
       setRun(false)
@@ -44,10 +67,13 @@ export default function Tutorial() {
 
   const handleCallback = (data) => {
     const { status, action } = data
-    if (['finished', 'skipped'].includes(status) || action === 'close') saveStatus()
+    if (['finished', 'skipped'].includes(status) || action === 'close') {
+      saveStatus()
+    }
   }
 
-  if (!mounted || !Joyride) return null
+  // Si no hay componente valido, devolvemos null para que la web NO se rompa
+  if (!mounted || !JoyrideComponent) return null
 
   const steps = [
     { target: 'body', content: '¡Bienvenido! Vamos a configurar tu cuenta en 30 segundos.', placement: 'center' },
@@ -59,6 +85,9 @@ export default function Tutorial() {
     { target: isMobile ? '.tour-mobile-compartir' : '.tour-desktop-compartir', title: 'Dividir Gastos', content: 'Cuentas con amigos o pareja.' },
     { target: 'body', title: '¡Listo!', content: 'Crea tu primera cuenta para empezar.', placement: 'center' }
   ]
+
+  // Usamos el estado que contiene el componente validado
+  const Joyride = JoyrideComponent
 
   return (
     <Joyride
