@@ -14,13 +14,12 @@ export default function Tutorial() {
 
   useEffect(() => {
     const init = async () => {
-      // Prioridad 1: LocalStorage (para que no moleste mientras arreglamos la DB)
       if (localStorage.getItem('tutorial_visto') === 'true') return
       
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('perfiles')
         .select('tutorial_completado')
         .eq('id', user.id)
@@ -38,39 +37,43 @@ export default function Tutorial() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      console.log("💾 Guardando estado en base de datos...")
+      console.log("💾 Iniciando guardado definitivo en Supabase...")
 
-      // 1. Intentamos el guardado en Supabase primero
       const { data, error } = await supabase
         .from('perfiles')
-        .update({ tutorial_completado: true })
-        .eq('id', user.id)
+        .upsert({ 
+          id: user.id,
+          email: user.email,
+          tutorial_completado: true
+        }, { onConflict: 'id' })
         .select()
 
       if (error) throw error
 
-      if (data && data.length > 0) {
-        console.log("✅ DB actualizada correctamente")
-        // 2. Solo si la DB responde bien, guardamos en LocalStorage y cerramos
-        localStorage.setItem('tutorial_visto', 'true')
-        setRun(false)
-      } else {
-        console.warn("⚠️ La DB no devolvió datos. ¿Existe la fila para este ID?")
-        // Forzamos el cierre local de todos modos para no bloquear al usuario
-        localStorage.setItem('tutorial_visto', 'true')
-        setRun(false)
-      }
-    } catch (err) {
-      console.error("❌ Fallo crítico al guardar tutorial:", err.message)
-      // Si falla la red, al menos lo cerramos en local para esta sesión
+      console.log("✅ DB actualizada con éxito:", data)
+      localStorage.setItem('tutorial_visto', 'true')
       setRun(false)
+
+    } catch (err) {
+      console.error("❌ Fallo en Supabase al guardar:", err.message)
+      setRun(false) // Lo cerramos igual para no bloquear la pantalla al usuario
     }
   }
 
   const handleCallback = (data) => {
-    const { status } = data
-    // Capturamos 'finished' (fin) o 'skipped' (clic en la X o fuera)
-    if (status === 'finished' || status === 'skipped') {
+    const { status, type, action } = data
+    
+    // Este log es vital: te dirá en consola exactamente qué detecta la app cuando haces clic
+    console.log(`👀 Evento Joyride -> Tipo: ${type} | Acción: ${action} | Estado: ${status}`)
+    
+    // Red de arrastre: si el estado es finalizado/saltado, O el tipo es fin de tour, O la acción es cerrar
+    if (
+      status === 'finished' || 
+      status === 'skipped' || 
+      type === 'tour:end' || 
+      action === 'close'
+    ) {
+      console.log("🎯 Fin de tutorial detectado. Disparando guardado...")
       saveStatus()
     }
   }
