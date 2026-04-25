@@ -70,13 +70,13 @@ export default function Objetivos() {
       <div className="absolute top-40 left-10 w-64 h-64 bg-emerald-500/5 rounded-full blur-[100px] pointer-events-none" />
 
       <header className="mb-10 pt-2 relative z-10">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="w-full text-center md:text-left">
             <p className="text-[10px] md:text-xs font-black text-text-muted uppercase tracking-widest mb-2 flex items-center justify-center md:justify-start gap-2">
               <Target size={14} className="text-brand-400" />
               Metas y Proyección
             </p>
-            <h1 className="text-5xl md:text-6xl font-black text-text-main mb-1 tracking-tighter leading-none">
+            <h1 className="text-5xl md:text-6xl font-black text-text-main tracking-tighter leading-none">
               Tus Objetivos
             </h1>
           </div>
