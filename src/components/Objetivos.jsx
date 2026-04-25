@@ -66,7 +66,6 @@ export default function Objetivos() {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-24 md:pb-12 px-1 md:px-0 relative w-full">
       
-      {/* Soft Glow Backlight */}
       <div className="absolute top-10 right-20 w-72 h-72 bg-brand-500/5 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute top-40 left-10 w-64 h-64 bg-emerald-500/5 rounded-full blur-[100px] pointer-events-none" />
 
@@ -131,7 +130,6 @@ export default function Objetivos() {
                 </div>
               </div>
 
-              {/* Progress Bar Container */}
               <div className="mb-6 bg-surface-solid/50 p-4 rounded-2xl border border-border-subtle/30">
                 <div className="mb-2.5 flex justify-between items-end">
                   <span className="text-[10px] font-black uppercase tracking-widest text-text-muted">Progreso Actual</span>
@@ -164,8 +162,8 @@ export default function Objetivos() {
                       <div>
                         <p className="text-[9px] uppercase font-black tracking-widest text-text-muted mb-1.5">Tiempo Estimado</p>
                         <p className="text-2xl md:text-3xl font-black text-text-main tracking-tighter leading-none mb-1">
-                          {proyeccion.anos > 0 && `${proyeccion.anos}A `}
-                          {proyeccion.mesesResto > 0 && `${proyeccion.mesesResto}M`}
+                          {proyeccion.anos > 0 && `${proyeccion.anos} ${proyeccion.anos === 1 ? 'Año' : 'Años'} `}
+                          {proyeccion.mesesResto > 0 && `${proyeccion.mesesResto} ${proyeccion.mesesResto === 1 ? 'Mes' : 'Meses'}`}
                           {proyeccion.anos === 0 && proyeccion.mesesResto === 0 && '¡Ya casi!'}
                         </p>
                         <p className="text-[10px] font-black uppercase tracking-widest text-brand-400 opacity-80">
