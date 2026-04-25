@@ -52,7 +52,7 @@ export default function Sidebar() {
         <div className="px-3 mb-2 text-[10px] font-black text-text-muted uppercase tracking-widest opacity-80">
           Menú Principal
         </div>
-        {navItems.map(({ id, label, icon: Icon }) => {
+        {navItems.map(({ id, label }) => {
           const isActive = location.pathname === `/${id}`
           
           return (
