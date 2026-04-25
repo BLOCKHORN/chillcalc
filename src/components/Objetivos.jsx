@@ -81,7 +81,7 @@ export default function Objetivos() {
             </h1>
           </div>
           
-          <div className="flex w-full md:w-auto md:mr-8">
+          <div className="flex w-full md:w-auto md:mr-16">
             <button 
               onClick={handleNuevo} 
               className="flex-1 md:flex-none flex items-center justify-center gap-2.5 px-6 py-3.5 md:py-3 rounded-xl font-bold bg-brand-500/10 text-brand-400 hover:bg-brand-500/20 active:scale-95 transition-all text-sm w-full md:w-auto border border-brand-500/20 shadow-lg shadow-brand-500/5 group uppercase tracking-widest"
