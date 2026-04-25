@@ -6,7 +6,6 @@ import ModalCategorias from './ModalCategorias'
 
 const formatoEuros = (num) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(num || 0)
 
-// Mapeo de colores para los botones de filtro
 const PALETA_COLORES = {
   slate: 'text-slate-400 bg-slate-400/10 border-slate-400/20',
   orange: 'text-orange-400 bg-orange-400/10 border-orange-400/20',
@@ -97,12 +96,12 @@ export default function Transacciones() {
             </h1>
           </div>
           
-          <div className="flex gap-2 w-full md:w-auto">
+          <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
             <button 
               onClick={() => setModalCategoriasAbierto(true)} 
-              className="p-3 rounded-xl border border-border-subtle bg-surface-solid/60 backdrop-blur-md text-text-muted hover:text-text-main transition-all active:scale-95"
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-border-subtle bg-surface-solid/60 backdrop-blur-md text-text-muted hover:text-text-main transition-all active:scale-95 text-xs font-black uppercase tracking-widest"
             >
-              <Tags size={20} />
+              <Tags size={16} strokeWidth={3} /> Categorías
             </button>
             <button 
               onClick={() => setModalAbierto(true)} 
@@ -113,7 +112,6 @@ export default function Transacciones() {
           </div>
         </div>
 
-        {/* --- NUEVA SECCIÓN DE FILTROS RÁPIDOS (BOTONES) --- */}
         <div className="space-y-4 bg-surface-solid/40 p-5 rounded-3xl border border-border-subtle/50 backdrop-blur-md shadow-xl mb-8">
           <div className="flex flex-col gap-3">
             <span className="text-[9px] font-black text-text-muted uppercase tracking-[0.2em] px-1 flex items-center gap-2">
@@ -164,7 +162,6 @@ export default function Transacciones() {
         </div>
       </header>
 
-      {/* Listado de Transacciones */}
       <div className="bg-surface-solid/40 backdrop-blur-xl border border-border-subtle/50 rounded-3xl overflow-hidden shadow-2xl relative z-10">
         <div className="w-full flex flex-col">
           {transaccionesFiltradas.length > 0 ? (
