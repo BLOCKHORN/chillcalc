@@ -10,8 +10,8 @@
 }
 
 :root {
-  --bg-app: #000000;
-  --bg-gradient: radial-gradient(circle at 50% 0%, #18181b 0%, #000000 70%);
+  --bg-app: #09090b;
+  --bg-gradient: radial-gradient(circle at 50% 0%, #18181b 0%, #09090b 70%);
   --text-main: #e2e8f0;
   --text-muted: #94a3b8;
   --surface: rgba(24, 24, 27, 0.6);
