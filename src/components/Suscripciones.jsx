@@ -47,7 +47,7 @@ export default function Suscripciones() {
         <button 
           onClick={() => setMostrarFormulario(!mostrarFormulario)}
           className={`px-8 py-4 rounded-xl font-bold text-[15px] transition-all active:scale-95 flex items-center justify-center gap-3 shadow-xl ${
-            mostrarFormulario ? 'bg-surface-hover text-text-main border border-border-subtle' : 'bg-text-main text-bg-app'
+            mostrarFormulario ? 'bg-white/5 text-text-main border border-border-subtle' : 'bg-brand-emerald text-white shadow-brand-emerald/20'
           }`}
         >
           {mostrarFormulario ? <X size={20} /> : <Plus size={20} strokeWidth={2.5} />}

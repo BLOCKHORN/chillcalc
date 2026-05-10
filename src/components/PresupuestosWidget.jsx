@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react'
 import { useStore } from '../store/useStore'
 import { motion } from 'framer-motion'
-import { Target, ChevronRight, PieChart, Sparkles, ShieldCheck, Zap } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import ModalPresupuesto from './ModalPresupuesto'
+import PrivacyValue from './PrivacyValue'
 
 export default function PresupuestosWidget() {
   const { transacciones, presupuestos, formatCurrency, categorias } = useStore()
@@ -30,61 +31,56 @@ export default function PresupuestosWidget() {
     setModalAbierto(true)
   }
 
-  // Mapeo de colores "Apple" para categorías
-  const getCategoryColor = (catName) => {
+  const getCategoryTheme = (catName) => {
     const cat = categorias.find(c => c.nombre === catName)
-    if (!cat) return 'bg-white opacity-40'
-    
-    const colors = {
-      'emerald': 'bg-brand-emerald',
-      'rose': 'bg-danger',
-      'orange': 'bg-warning',
-      'blue': 'bg-info',
-      'purple': 'bg-purple-500',
-      'pink': 'bg-pink-500',
-      'yellow': 'bg-yellow-400',
-      'slate': 'bg-slate-400'
+    const themes = {
+      'emerald': { bg: 'bg-brand-emerald' },
+      'rose': { bg: 'bg-red-600' },
+      'orange': { bg: 'bg-orange-600' },
+      'blue': { bg: 'bg-blue-600' },
+      'purple': { bg: 'bg-purple-600' },
+      'pink': { bg: 'bg-pink-600' },
+      'yellow': { bg: 'bg-yellow-500' },
+      'slate': { bg: 'bg-slate-600' }
     }
-    return colors[cat.color] || 'bg-white opacity-40'
+    return themes[cat?.color] || themes['slate']
   }
 
   return (
-    <div className="card !p-10">
-      <div className="flex justify-between items-center mb-12">
-        <div className="flex items-center gap-3">
-           <div className="w-9 h-9 rounded-xl bg-white/5 border border-border-subtle flex items-center justify-center text-white opacity-80">
-              <Target size={18} strokeWidth={1.5} />
+    <div className="card !p-8">
+      <div className="flex justify-between items-center mb-10">
+        <div className="flex items-center gap-2">
+           <div className="w-1 h-4 bg-brand-emerald" />
+           <div>
+              <h3 className="text-[14px] font-black text-text-main uppercase tracking-[0.2em]">Presupuestos</h3>
            </div>
-           <h3 className="text-lg font-bold text-text-main tracking-tight">Presupuestos</h3>
         </div>
-        <button onClick={() => abrirConfig()} className="text-[12px] font-bold text-text-muted hover:text-white transition-all flex items-center gap-1">
-          Configurar <ChevronRight size={14} />
+        <button onClick={() => abrirConfig()} className="p-1 text-text-muted hover:text-white transition-all">
+          <Plus size={18} />
         </button>
       </div>
 
       {presupuestos.length === 0 ? (
-        <div className="py-12 text-center opacity-20">
-           <PieChart size={32} className="mx-auto mb-4" />
-           <p className="text-[11px] font-black uppercase tracking-[0.3em]">Sin límites definidos</p>
+        <div className="py-8 text-center opacity-10">
+           <p className="text-[10px] font-black uppercase tracking-[0.4em]">Sin límites definidos</p>
         </div>
       ) : (
-        <div className="space-y-10">
+        <div className="space-y-8">
           {presupuestosCalculados.map(p => {
             const pct = (p.gastado / p.limite) * 100
             const isDanger = pct > 95
-            const barColor = isDanger ? 'bg-danger' : getCategoryColor(p.categoria)
+            const theme = getCategoryTheme(p.categoria)
 
             return (
-              <div key={p.id} className="space-y-4 cursor-pointer group" onClick={() => abrirConfig(p.categoria)}>
-                <div className="flex justify-between items-end">
-                   <div className="flex items-center gap-3">
-                      <div className={`w-1.5 h-1.5 rounded-full ${barColor.replace('bg-', 'bg-')}`} />
-                      <div>
-                         <p className="text-[15px] font-bold text-text-main tracking-tight group-hover:text-brand-emerald transition-colors">{p.categoria}</p>
-                         <p className="text-[12px] text-text-muted font-medium mt-0.5">{formatCurrency(p.gastado)} de {formatCurrency(p.limite)}</p>
-                      </div>
+              <div key={p.id} className="space-y-3 cursor-pointer group" onClick={() => abrirConfig(p.categoria)}>
+                <div className="flex justify-between items-end px-1">
+                   <div>
+                      <p className="text-[13px] font-bold text-text-main tracking-tight group-hover:text-brand-emerald transition-colors uppercase">{p.categoria}</p>
+                      <p className="text-[11px] text-text-muted font-bold mt-0.5">
+                         <PrivacyValue value={formatCurrency(p.gastado)} /> / {formatCurrency(p.limite)}
+                      </p>
                    </div>
-                   <span className={`text-[12px] font-black tracking-widest ${isDanger ? 'text-danger' : 'text-text-muted'}`}>
+                   <span className={`text-[11px] font-black tracking-widest ${isDanger ? 'text-red-500' : 'text-text-muted'}`}>
                       {pct.toFixed(0)}%
                    </span>
                 </div>
@@ -92,7 +88,7 @@ export default function PresupuestosWidget() {
                    <motion.div 
                       initial={{ width: 0 }}
                       animate={{ width: `${Math.min(100, pct)}%` }}
-                      className={`h-full transition-colors ${barColor}`}
+                      className={`h-full transition-colors ${isDanger ? 'bg-red-600' : theme.bg}`}
                    />
                 </div>
               </div>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
 import { supabase } from './lib/supabase'
 import { useStore } from './store/useStore'
 import MainLayout from './layouts/MainLayout'
@@ -19,6 +19,7 @@ import PoliticaPrivacidad from './components/PoliticaPrivacidad'
 import AdminPanel from './components/AdminPanel'
 import GlobalToast from './components/GlobalToast'
 import CommandPalette from './components/CommandPalette'
+import ErrorBoundary from './components/ErrorBoundary'
 
 function RutasPrivadas({ session, children }) {
   if (!session) return <Navigate to="/login" replace />
@@ -33,11 +34,6 @@ function RutasPrivadas({ session, children }) {
 function SplitEnrutador() {
   const { token } = useParams()
   return <VistaPublicaSplit token={token} />
-}
-
-function LandingEnrutador() {
-  const navigate = useNavigate()
-  return <Landing onAcceder={(dest) => navigate(dest === 'login' ? '/login' : '/dashboard')} />
 }
 
 export default function App() {
@@ -75,36 +71,35 @@ export default function App() {
   if (loading) {
     return (
       <div className="min-h-screen bg-bg-app flex items-center justify-center text-text-muted font-mono text-xs tracking-widest uppercase">
-        Estableciendo conexión segura...
+        Iniciando Protocolos de Seguridad...
       </div>
     )
   }
 
   return (
-    <BrowserRouter>
-      <GlobalToast />
-      <CommandPalette />
-      <Routes>
-        {/* 1. RUTAS PÚBLICAS (Accesibles siempre) */}
-        <Route path="/" element={session ? <Navigate to="/dashboard" replace /> : <LandingEnrutador />} />
-        <Route path="/login" element={session ? <Navigate to="/dashboard" replace /> : <Auth />} />
-        <Route path="/split/:token" element={<SplitEnrutador />} />
-        <Route path="/privacidad" element={<PoliticaPrivacidad />} />
-        
-        {/* 2. RUTAS PRIVADAS (Solo con sesión) */}
-        <Route path="/dashboard" element={<RutasPrivadas session={session}><Dashboard /></RutasPrivadas>} />
-        <Route path="/cuentas" element={<RutasPrivadas session={session}><Cuentas /></RutasPrivadas>} />
-        <Route path="/transacciones" element={<RutasPrivadas session={session}><Transacciones /></RutasPrivadas>} />
-        <Route path="/suscripciones" element={<RutasPrivadas session={session}><Suscripciones /></RutasPrivadas>} />
-        <Route path="/fire" element={<RutasPrivadas session={session}><FIRE /></RutasPrivadas>} />
-        <Route path="/calendario" element={<RutasPrivadas session={session}><Calendario /></RutasPrivadas>} />
-        <Route path="/objetivos" element={<RutasPrivadas session={session}><Objetivos /></RutasPrivadas>} />
-        <Route path="/compartir" element={<RutasPrivadas session={session}><CompartirGastos /></RutasPrivadas>} />
-        <Route path="/admin" element={<RutasPrivadas session={session}><AdminPanel /></RutasPrivadas>} />
-        
-        {/* 3. COMODÍN (Debe ir AL FINAL) */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <GlobalToast />
+        <CommandPalette />
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={session ? <Navigate to="/dashboard" replace /> : <Auth />} />
+          <Route path="/split/:token" element={<SplitEnrutador />} />
+          <Route path="/privacidad" element={<PoliticaPrivacidad />} />
+          
+          <Route path="/dashboard" element={<RutasPrivadas session={session}><Dashboard /></RutasPrivadas>} />
+          <Route path="/cuentas" element={<RutasPrivadas session={session}><Cuentas /></RutasPrivadas>} />
+          <Route path="/transacciones" element={<RutasPrivadas session={session}><Transacciones /></RutasPrivadas>} />
+          <Route path="/suscripciones" element={<RutasPrivadas session={session}><Suscripciones /></RutasPrivadas>} />
+          <Route path="/fire" element={<RutasPrivadas session={session}><FIRE /></RutasPrivadas>} />
+          <Route path="/calendario" element={<RutasPrivadas session={session}><Calendario /></RutasPrivadas>} />
+          <Route path="/objetivos" element={<RutasPrivadas session={session}><Objetivos /></RutasPrivadas>} />
+          <Route path="/compartir" element={<RutasPrivadas session={session}><CompartirGastos /></RutasPrivadas>} />
+          <Route path="/admin" element={<RutasPrivadas session={session}><AdminPanel /></RutasPrivadas>} />
+          
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </ErrorBoundary>
   )
 }

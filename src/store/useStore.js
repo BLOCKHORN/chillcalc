@@ -44,7 +44,20 @@ export const useStore = create((set, get) => ({
       'coinbase': 'www.coinbase.com',
       'binance': 'www.binance.com',
       'kraken': 'www.kraken.com',
-      'degiro': 'www.degiro.es'
+      'degiro': 'www.degiro.es',
+      'netflix': 'www.netflix.com',
+      'spotify': 'www.spotify.com',
+      'disney': 'www.disneyplus.com',
+      'amazon': 'www.amazon.es',
+      'hbo': 'www.max.com',
+      'apple': 'www.apple.com',
+      'google': 'www.google.com',
+      'microsoft': 'www.microsoft.com',
+      'chatgpt': 'openai.com',
+      'midjourney': 'midjourney.com',
+      'adobe': 'www.adobe.com',
+      'canva': 'www.canva.com',
+      'figma': 'www.figma.com'
     }
     const key = Object.keys(banks).find(k => n.includes(k))
     return key ? `https://www.google.com/s2/favicons?domain=${banks[key]}&sz=128` : null
@@ -590,6 +603,23 @@ export const useStore = create((set, get) => ({
   },
 
   patrimonioTotal: () => get().cuentas.reduce((acc, c) => acc + (Number(c.saldo) || 0), 0),
+
+  cargarStatsPublicas: async () => {
+    try {
+      const { count: cuentasCount, error: err1 } = await supabase.from('cuentas').select('*', { count: 'exact', head: true })
+      const { count: txCount, error: err2 } = await supabase.from('transacciones').select('*', { count: 'exact', head: true })
+      
+      if (err1 || err2) throw new Error("Fallo al cargar stats públicas")
+      
+      return {
+        total_cuentas: cuentasCount || 0,
+        total_movimientos: txCount || 0
+      }
+    } catch (e) {
+      console.warn("Aviso: No se pudieron obtener estadísticas públicas:", e.message)
+      return { total_cuentas: 0, total_movimientos: 0 }
+    }
+  },
 
   metricasMesActual: () => {
     const hoy = new Date()
