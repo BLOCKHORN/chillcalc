@@ -1,168 +1,129 @@
 import { useState, useCallback } from 'react'
 import { useStore } from '../store/useStore'
-import { Building2, CreditCard, Banknote, LineChart, Wallet, Settings2, Trash2, Globe, Plus, Star } from 'lucide-react'
+import { Wallet, Settings2, Trash2, Globe, Plus, Star, ChevronRight, ArrowRight } from 'lucide-react'
 import ModalCuenta from './ModalCuenta'
 import ModalEditarCuenta from './ModalEditarCuenta'
 import ModalEliminarCuenta from './ModalEliminarCuenta'
-
-const formatoEuros = (num) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(num || 0)
+import PrivacyValue from './PrivacyValue'
 
 export default function Cuentas() {
   const [modalAbierto, setModalAbierto] = useState(false)
   const [cuentaEditando, setCuentaEditando] = useState(null)
   const [cuentaEliminando, setCuentaEliminando] = useState(null)
   
-  const cuentas = useStore(state => state.cuentas)
-  const marcarFavorita = useStore(state => state.marcarFavorita)
-
-  const getIcon = useCallback((icono) => {
-    const props = { size: 20, className: "text-text-main group-hover:text-brand-400 transition-colors" }
-    switch(icono) {
-      case 'bank': return <Building2 {...props} />
-      case 'card': return <CreditCard {...props} />
-      case 'cash': return <Banknote {...props} />
-      case 'chart': return <LineChart size={20} className="text-brand-400 drop-shadow-[0_0_8px_rgba(var(--brand-500),0.5)]" />
-      default: return <Wallet {...props} />
-    }
-  }, [])
+  const { cuentas, marcarFavorita, formatCurrency, getBankLogo } = useStore()
+  const [logoErrors, setLogoErrors] = useState({})
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 md:pb-0 px-1 md:px-0 relative w-full">
+    <div className="pb-32 pt-16 px-8 max-w-7xl mx-auto animate-apple">
       
-      <div className="absolute top-10 left-20 w-72 h-72 bg-brand-500/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute top-40 right-10 w-64 h-64 bg-indigo-500/5 rounded-full blur-[100px] pointer-events-none" />
-
-      <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 pt-2 relative z-10">
-        <div className="w-full text-center md:text-left">
-          <p className="text-[10px] md:text-xs font-black text-text-muted uppercase tracking-widest mb-2 flex items-center justify-center md:justify-start gap-2">
-            <Wallet size={14} className="text-brand-400" />
-            Tu Bóveda
-          </p>
-          <h2 className="text-5xl md:text-6xl font-black text-text-main mb-1 tracking-tighter leading-none">
-            Cuentas
-          </h2>
+      <header className="mb-20 flex flex-col md:flex-row justify-between items-end gap-12">
+        <div>
+          <h2 className="text-[13px] font-bold text-text-muted uppercase tracking-[0.2em] mb-4">Activos y Pasivos Consolidados</h2>
+          <h1 className="text-7xl font-bold tracking-tight text-text-main">Entities</h1>
         </div>
 
-        <div className="flex w-full md:w-auto md:mr-12">
-          <button 
-            onClick={() => setModalAbierto(true)} 
-            className="flex-1 md:flex-none flex items-center justify-center gap-2.5 px-6 py-3.5 md:py-3 rounded-xl font-bold bg-brand-500/10 text-brand-400 hover:bg-brand-500/20 active:scale-95 transition-all text-sm w-full md:w-auto border border-brand-500/20 shadow-lg shadow-brand-500/5 group uppercase tracking-widest"
-          >
-            <Plus size={18} className="group-hover:rotate-90 transition-transform"/> 
-            <span>Nueva Cuenta</span>
-          </button>
-        </div>
+        <button 
+          onClick={() => setModalAbierto(true)} 
+          className="px-8 py-4 rounded-xl bg-text-main text-bg-app font-bold text-[15px] hover:opacity-90 active:scale-95 transition-all shadow-xl flex items-center gap-3"
+        >
+          <Plus size={18} strokeWidth={2.5} /> New Entity
+        </button>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 relative z-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
         {cuentas.map(c => {
           const esInversion = c.tipo === 'inversion'
           const esRemunerada = c.tipo === 'remunerada'
-          
           const valSaldo = Number(c.saldo || 0)
           const valInvertido = Number(c.capitalInvertido || 0)
-          const valTae = Number(c.tae || 0)
-          
           const beneficio = esInversion ? (valSaldo - valInvertido) : 0
           const pct = esInversion && valInvertido > 0 ? (beneficio / valInvertido) * 100 : 0
-          
-          const gananciaAnual = esRemunerada ? (valSaldo * (valTae / 100)) : 0
-          const gananciaMensual = gananciaAnual / 12
+          const logoUrl = getBankLogo(c.nombre)
+          const hasError = logoErrors[c.id]
 
           return (
-            <div key={c.id} className={`bg-surface-solid/40 backdrop-blur-xl border rounded-3xl p-6 flex flex-col justify-between min-h-[200px] group relative transition-all duration-300 hover:-translate-y-1 shadow-xl shadow-black/5 overflow-hidden ${c.favorita ? 'border-yellow-500/50 hover:border-yellow-400/80' : 'border-border-subtle/50 hover:border-border-subtle/80'}`}>
-              
-              <div className="flex justify-between items-start mb-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-surface-solid/60 rounded-2xl border border-border-subtle/50 shadow-sm group-hover:bg-surface transition-colors">
-                    {getIcon(c.icono)}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-black text-lg text-text-main leading-none truncate max-w-[120px]">{c.nombre}</h3>
-                      <button 
-                        onClick={() => marcarFavorita(c.id)}
-                        className={`p-1 rounded transition-all active:scale-90 ${c.favorita ? 'text-yellow-400' : 'text-text-muted/30 hover:text-yellow-400/70'}`}
-                        title={c.favorita ? "Cuenta Favorita" : "Marcar como Favorita"}
-                      >
-                        <Star size={16} fill={c.favorita ? "currentColor" : "none"} strokeWidth={c.favorita ? 1 : 2.5} />
-                      </button>
+            <div key={c.id} className="card !p-0 overflow-hidden flex flex-col group hover:border-border-focus">
+              <div className="p-10 flex-1">
+                 <div className="flex justify-between items-start mb-12">
+                    <div className="w-14 h-14 rounded-2xl bg-white/5 border border-border-subtle flex items-center justify-center overflow-hidden">
+                       {logoUrl && !hasError ? (
+                         <img 
+                           src={logoUrl} 
+                           alt={c.nombre} 
+                           className="w-full h-full object-contain p-2" 
+                           onError={() => setLogoErrors(prev => ({ ...prev, [c.id]: true }))}
+                         />
+                       ) : (
+                         <Wallet size={24} className="text-text-muted" strokeWidth={1.5} />
+                       )}
                     </div>
-                    <span className="text-[9px] uppercase font-black tracking-widest text-text-muted mt-1.5 block">
-                      {esRemunerada ? 'Cuenta Ahorro' : c.tipo}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                  <button 
-                    onClick={() => setCuentaEditando(c.id)} 
-                    className="p-2 text-text-muted hover:text-brand-400 bg-surface-solid md:bg-surface-solid/50 rounded-xl border border-border-subtle/50 hover:border-brand-500/30 transition-all active:scale-90"
-                  >
-                    <Settings2 size={16} strokeWidth={2.5} />
-                  </button>
-                  <button 
-                    onClick={() => setCuentaEliminando(c.id)} 
-                    className="p-2 text-text-muted hover:text-danger bg-surface-solid md:bg-surface-solid/50 rounded-xl border border-border-subtle/50 hover:border-danger/30 transition-all active:scale-90"
-                  >
-                    <Trash2 size={16} strokeWidth={2.5} />
-                  </button>
-                </div>
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                       <button onClick={() => setCuentaEditando(c.id)} className="p-2 text-text-muted hover:text-text-main transition-colors">
+                          <Settings2 size={18} />
+                       </button>
+                       <button onClick={() => setCuentaEliminando(c.id)} className="p-2 text-text-muted hover:text-danger transition-colors">
+                          <Trash2 size={18} />
+                       </button>
+                    </div>
+                 </div>
+
+                 <div className="mb-8">
+                    <h3 className="text-xl font-bold text-text-main tracking-tight">{c.nombre}</h3>
+                    <p className="text-[12px] font-bold text-text-muted uppercase tracking-[0.2em] mt-2">{c.tipo}</p>
+                 </div>
+
+                 <div className="flex justify-between items-end">
+                    <div>
+                       <p className="text-4xl font-bold text-text-main tracking-tighter">
+                          <PrivacyValue value={formatCurrency(valSaldo)} />
+                       </p>
+                       {c.favorita && (
+                         <div className="flex items-center gap-2 mt-4 text-[10px] font-black uppercase tracking-widest text-text-muted opacity-60">
+                            <div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px_#fff]" />
+                            Primary Account
+                         </div>
+                       )}
+                    </div>
+                    <button 
+                      onClick={() => marcarFavorita(c.id)}
+                      className={`p-3 rounded-xl transition-all ${c.favorita ? 'text-white bg-white/10' : 'text-text-muted hover:text-white hover:bg-white/5'}`}
+                    >
+                      <Star size={20} fill={c.favorita ? "currentColor" : "none"} strokeWidth={1.5} />
+                    </button>
+                 </div>
               </div>
-              
-              <div className="flex-1 flex flex-col justify-end">
-                <p className="text-3xl md:text-4xl font-black text-text-main tracking-tighter leading-none mb-2">
-                  {formatoEuros(valSaldo)}
-                </p>
-                
-                {esInversion && (
-                  <div className="mt-5 space-y-3 pt-4 border-t border-border-subtle/30">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[9px] font-black text-brand-400 bg-brand-500/10 px-2.5 py-1 rounded-lg border border-brand-500/20 uppercase tracking-widest">
-                        {c.ticker || 'Sin Ticker'}
-                      </span>
-                      <div className="flex flex-col items-end">
-                        <span className="text-[8px] text-text-muted uppercase font-black tracking-widest mb-0.5">Rendimiento</span>
-                        <span className={`text-[11px] font-black tracking-wider ${beneficio > 0.01 ? 'text-brand-400' : beneficio < -0.01 ? 'text-danger' : 'text-text-muted'}`}>
-                          {beneficio > 0.01 ? '+' : ''}{formatoEuros(beneficio)} ({pct.toFixed(2)}%)
+
+              {(esInversion || esRemunerada) && (
+                <div className="px-10 py-8 bg-white/[0.02] border-t border-border-subtle flex justify-between items-center">
+                   {esInversion ? (
+                      <>
+                        <span className="text-[11px] font-black text-text-muted uppercase tracking-[0.2em]">{c.ticker || 'Asset'}</span>
+                        <span className={`text-[15px] font-bold ${beneficio >= 0 ? 'text-text-main' : 'text-danger'}`}>
+                           {beneficio >= 0 ? '+' : ''}{pct.toFixed(2)}%
                         </span>
-                      </div>
-                    </div>
-
-                    <div className="flex justify-between items-center text-[10px] uppercase font-black p-3 bg-surface-solid/50 rounded-xl border border-border-subtle/50">
-                      <span className="text-text-muted flex items-center gap-1.5">
-                        <Globe size={12} className="text-brand-400 opacity-70" /> Mercado
-                      </span>
-                      <span className="text-text-main text-xs">
-                        {c.precioActual > 0 ? formatoEuros(c.precioActual) : '---'}
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {esRemunerada && (
-                  <div className="mt-5 pt-4 border-t border-border-subtle/30 flex flex-col gap-3">
-                    <div className="inline-flex">
-                      <span className="text-brand-400 bg-brand-500/10 border border-brand-500/20 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest">
-                        +{valTae.toFixed(2)}% TAE
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center gap-4 bg-surface-solid/50 rounded-xl border border-border-subtle/50 p-3">
-                      <div className="flex flex-col">
-                        <span className="text-[8px] text-text-muted uppercase font-black tracking-widest mb-0.5">Mensual</span>
-                        <span className="text-text-main text-xs font-black">+{formatoEuros(gananciaMensual)}</span>
-                      </div>
-                      <div className="flex flex-col text-right">
-                        <span className="text-[8px] text-text-muted uppercase font-black tracking-widest mb-0.5">Anual</span>
-                        <span className="text-text-main text-xs font-black">+{formatoEuros(gananciaAnual)}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
+                      </>
+                   ) : (
+                      <>
+                        <span className="text-[11px] font-black text-text-muted uppercase tracking-[0.2em]">Yield Performance</span>
+                        <span className="text-[15px] font-bold text-text-main">+{c.tae}% APY</span>
+                      </>
+                   )}
+                </div>
+              )}
             </div>
           )
         })}
+
+        <button 
+          onClick={() => setModalAbierto(true)}
+          className="h-full min-h-[320px] border-2 border-dashed border-border-subtle rounded-2xl flex flex-col items-center justify-center gap-6 text-text-muted hover:text-text-main hover:border-white/20 hover:bg-white/[0.01] transition-all group"
+        >
+          <div className="w-16 h-16 rounded-full border border-border-subtle flex items-center justify-center group-hover:scale-110 transition-transform">
+             <Plus size={32} strokeWidth={1.5} />
+          </div>
+          <p className="text-[14px] font-bold tracking-tight">Expand Portfolio</p>
+        </button>
       </div>
 
       <ModalCuenta isOpen={modalAbierto} onClose={() => setModalAbierto(false)} />

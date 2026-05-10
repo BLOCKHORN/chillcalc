@@ -28,11 +28,23 @@ export default function Auth() {
 
   const handleGoogleLogin = async () => {
     setLoadingGoogle(true)
+    
+    // Detectamos si estamos en local o producción
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    const redirectUrl = isLocal 
+      ? 'http://localhost:5173/dashboard' 
+      : `${window.location.origin}/dashboard`
+    
+    console.log("Forzando redirección a:", redirectUrl)
+    
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        // Redirige al dashboard automáticamente después de autorizar en Google
-        redirectTo: `${window.location.origin}/dashboard` 
+        redirectTo: redirectUrl,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        }
       }
     })
 

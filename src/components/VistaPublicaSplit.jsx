@@ -1,139 +1,179 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useStore } from '../store/useStore'
-import { Users, Receipt, ArrowRightLeft, Loader2, Info } from 'lucide-react'
-
-const formatoEuros = (num) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(num || 0)
+import { motion } from 'framer-motion'
+import { Users, Receipt, ArrowRightLeft, Loader2, Info, Landmark, CheckCircle2, Wallet, HandCoins, ArrowRight } from 'lucide-react'
+import PrivacyValue from './PrivacyValue'
 
 const calcularBalances = (grupo) => {
-  const { split_participantes: integrantes, split_gastos: gastos } = grupo
+  const { split_participantes: integrantes, split_gastos: gastos, split_liquidaciones: liquidaciones = [] } = grupo
   if (!integrantes || integrantes.length === 0) return []
+  
   const balances = {}
   integrantes.forEach(p => balances[p.id] = 0)
+  
   const totalGastado = gastos.reduce((acc, g) => acc + Number(g.monto), 0)
   const cuotaPorPersona = totalGastado / integrantes.length
+  
   gastos.forEach(g => balances[g.pagado_por_id] += Number(g.monto))
-  return integrantes.map(p => ({ ...p, balance: balances[p.id] - cuotaPorPersona, pagadoTotal: balances[p.id] }))
+
+  return integrantes.map(p => {
+    let balanceBase = balances[p.id] - cuotaPorPersona
+    const pagosHechos = liquidaciones.filter(l => l.deudor_id === p.id).reduce((acc, l) => acc + Number(l.monto), 0)
+    const pagosRecibidos = liquidaciones.filter(l => l.acreedor_id === p.id).reduce((acc, l) => acc + Number(l.monto), 0)
+    const balanceFinal = balanceBase + pagosHechos - pagosRecibidos
+
+    return { 
+      ...p, 
+      balance: balanceFinal, 
+      pagadoTotal: balances[p.id] 
+    }
+  })
 }
 
 export default function VistaPublicaSplit({ token }) {
-  const { cargarGrupoPublico } = useStore()
+  const { cargarGrupoPublico, formatCurrency } = useStore()
   
   const [grupo, setGrupo] = useState(null)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(false)
 
   useEffect(() => {
+    // Forzar modo oscuro para consistencia de marca
     document.documentElement.classList.remove('light-mode') 
-    
     const cargarDatos = async () => {
       const data = await cargarGrupoPublico(token)
-      if (data) {
-        setGrupo(data)
-      } else {
-        setError(true)
-      }
+      if (data) setGrupo(data)
+      else setError(true)
       setCargando(false)
     }
-
     cargarDatos()
   }, [token, cargarGrupoPublico])
 
   const balances = useMemo(() => grupo ? calcularBalances(grupo) : [], [grupo])
+  const totalGrupo = useMemo(() => grupo?.split_gastos?.reduce((acc, g) => acc + Number(g.monto), 0) || 0, [grupo])
 
   if (cargando) {
     return (
-      <div className="min-h-screen bg-bg-app flex flex-col items-center justify-center text-brand-400 gap-4">
-        <Loader2 size={32} className="animate-spin" />
-        <p className="font-black uppercase tracking-widest text-[10px] text-text-muted">Cargando cuentas...</p>
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white gap-6">
+        <div className="w-12 h-12 rounded-2xl bg-brand-emerald/10 border border-brand-emerald/20 flex items-center justify-center">
+           <Loader2 size={24} className="animate-spin text-brand-emerald" />
+        </div>
+        <p className="font-bold uppercase tracking-[0.3em] text-[10px] opacity-40">Sincronizando Engine...</p>
       </div>
     )
   }
 
   if (error || !grupo) {
     return (
-      <div className="min-h-screen bg-bg-app flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-20 h-20 bg-surface-solid rounded-full flex items-center justify-center mb-6 text-danger/50">
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-8 text-center">
+        <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-8 text-danger/50 border border-white/5">
           <Info size={40} />
         </div>
-        <h1 className="text-2xl font-black text-text-main mb-2">Enlace caducado o invalido</h1>
-        <p className="text-text-muted text-sm font-bold max-w-xs">Parece que este grupo ya no existe o el enlace es incorrecto. Pide que te vuelvan a invitar.</p>
+        <h1 className="text-3xl font-bold text-white mb-3 tracking-tight">Acceso Denegado</h1>
+        <p className="text-text-muted text-[15px] font-medium max-w-xs leading-relaxed">Este enlace ha expirado o el grupo ya no se encuentra en el servidor central.</p>
+        <button onClick={() => window.location.href = '/'} className="mt-10 px-8 py-3 rounded-xl bg-white text-black font-bold text-[14px]">Volver al Inicio</button>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-bg-app text-text-main pb-20">
-      <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
+    <div className="min-h-screen bg-black text-white selection:bg-brand-emerald selection:text-white pb-32 animate-apple">
+      <div className="max-w-5xl mx-auto px-8 pt-20">
         
-        <header className="mb-8 pt-4">
-          <div className="flex items-center gap-2 mb-2 justify-center sm:justify-start opacity-70">
-            <Users size={14} className="text-brand-400" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-brand-400">EasyPocket Shared</span>
+        <header className="mb-20 flex flex-col md:flex-row justify-between items-end gap-12">
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-brand-emerald flex items-center justify-center text-white shadow-lg">
+                <Users size={18} strokeWidth={2.5} />
+              </div>
+              <span className="text-[11px] font-black uppercase tracking-[0.4em] text-brand-emerald">EasyPocket Engine</span>
+            </div>
+            <h1 className="text-6xl md:text-7xl font-bold tracking-tight text-white mb-2">{grupo.nombre}</h1>
+            <div className="flex items-center gap-2 text-text-muted mt-4">
+               <CheckCircle2 size={14} className="text-brand-emerald" />
+               <p className="text-[13px] font-bold uppercase tracking-widest">{grupo.split_participantes.length} Participantes Sincronizados</p>
+            </div>
           </div>
-          <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-center sm:text-left leading-tight">
-            {grupo.nombre}
-          </h1>
-          <p className="text-center sm:text-left text-xs font-bold text-text-muted uppercase tracking-widest mt-2">
-            {grupo.split_participantes.length} Participantes
-          </p>
+          <div className="text-right">
+             <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.3em] mb-2">Gasto Total Acumulado</p>
+             <p className="text-5xl font-bold tracking-tighter">{formatCurrency(totalGrupo)}</p>
+          </div>
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <section>
-            <h2 className="text-[10px] font-black uppercase text-text-muted mb-4 tracking-widest px-1 flex items-center gap-2">
-              <ArrowRightLeft size={12} className="text-brand-400" /> Resumen de Deudas
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+          <section className="lg:col-span-5 space-y-8">
+            <h2 className="text-[11px] font-black uppercase text-text-muted tracking-[0.3em] px-2 flex items-center gap-2">
+              <ArrowRightLeft size={14} className="text-brand-emerald" /> Estado de Balances
             </h2>
-            <div className="space-y-3">
-              {balances.map(p => (
-                <div key={p.id} className="bg-surface-solid/60 backdrop-blur-md flex items-center justify-between p-5 rounded-2xl border border-border-subtle/50 border-l-4 shadow-md" style={{ borderLeftColor: p.balance >= 0 ? 'var(--brand-500)' : 'var(--danger)' }}>
-                   <div className="overflow-hidden mr-2">
-                      <p className="text-lg font-black text-text-main truncate leading-tight">{p.nombre}</p>
-                      <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mt-1">Pagado: <span className="text-text-main">{formatoEuros(p.pagadoTotal)}</span></p>
-                   </div>
-                   <div className="text-right shrink-0">
-                      <p className={`text-2xl font-black leading-none mb-1 tracking-tighter ${p.balance >= 0 ? 'text-brand-400' : 'text-danger'}`}>
-                        {p.balance >= 0 ? '+' : ''}{formatoEuros(p.balance)}
-                      </p>
-                      <p className="text-[9px] font-black text-text-muted uppercase tracking-widest">
-                        {p.balance >= 0 ? 'Le deben' : 'Debe dinero'}
-                      </p>
-                   </div>
-                </div>
-              ))}
+            <div className="space-y-4">
+              {balances.map(p => {
+                const isPositive = p.balance > 0.01
+                const isSettled = Math.abs(p.balance) < 0.01
+                return (
+                  <div key={p.id} className="card !p-8 flex items-center justify-between group hover:border-border-focus transition-all">
+                     <div className="flex items-center gap-5">
+                        <div className={`w-12 h-12 rounded-full border border-border-subtle flex items-center justify-center text-[15px] font-black ${isSettled ? 'text-text-muted' : (isPositive ? 'text-brand-emerald bg-brand-emerald/5' : 'text-danger bg-danger/5')}`}>
+                           {p.nombre[0].toUpperCase()}
+                        </div>
+                        <div>
+                           <p className="text-[17px] font-bold text-white truncate">{p.nombre}</p>
+                           <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest mt-1">Total Aportado: {formatCurrency(p.pagadoTotal)}</p>
+                        </div>
+                     </div>
+                     <div className="text-right">
+                        <p className={`text-2xl font-bold tracking-tighter ${isSettled ? 'text-text-muted' : (isPositive ? 'text-brand-emerald' : 'text-danger')}`}>
+                          {isPositive ? '+' : ''}{formatCurrency(isSettled ? 0 : p.balance)}
+                        </p>
+                     </div>
+                  </div>
+                )
+              })}
             </div>
           </section>
 
-          <section>
-            <div className="flex items-center justify-between mb-4 px-1">
-              <h3 className="text-[10px] font-black uppercase text-text-muted tracking-widest flex items-center gap-2">
-                <Receipt size={12} className="text-brand-400" /> Historial de Pagos
+          <section className="lg:col-span-7 space-y-8">
+            <div className="flex items-center justify-between px-2">
+              <h3 className="text-[11px] font-black uppercase text-text-muted tracking-[0.3em] flex items-center gap-2">
+                <Receipt size={14} className="text-brand-emerald" /> Historial de Operaciones
               </h3>
-              <span className="text-[9px] font-black text-brand-400 bg-brand-500/10 px-2 py-1 rounded-md uppercase tracking-widest">{grupo.split_gastos.length} Movimientos</span>
+              <span className="text-[10px] font-bold text-text-muted bg-white/5 px-3 py-1 rounded-full uppercase tracking-widest">{grupo.split_gastos.length} Registros</span>
             </div>
-            <div className="space-y-3">
-              {grupo.split_gastos.map(g => (
-                <div key={g.id} className="flex items-center justify-between p-4 bg-surface-solid/40 rounded-2xl border border-border-subtle/50">
-                  <div className="overflow-hidden flex items-center gap-4">
-                    <div className="p-2.5 bg-surface rounded-xl border border-border-subtle text-text-muted">
-                      <Receipt size={18} />
+            
+            <div className="card !p-0 overflow-hidden divide-y divide-border-subtle/50">
+              {grupo.split_gastos.length > 0 ? (
+                [...grupo.split_gastos].reverse().map(g => (
+                  <div key={g.id} className="p-8 flex items-center justify-between group hover:bg-white/[0.01] transition-all">
+                    <div className="flex items-center gap-6 overflow-hidden">
+                      <div className="p-3 bg-white/5 rounded-xl border border-border-subtle text-text-muted shrink-0 group-hover:text-brand-emerald transition-colors">
+                        <Receipt size={20} />
+                      </div>
+                      <div className="overflow-hidden">
+                        <p className="text-[17px] font-bold text-white truncate tracking-tight">{g.descripcion}</p>
+                        <p className="text-[12px] text-text-muted font-bold uppercase tracking-widest mt-1 opacity-60">
+                          {g.fecha} • {grupo.split_participantes.find(p => p.id === g.pagado_por_id)?.nombre} pagó <span className="text-white">{formatCurrency(g.monto)}</span>
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-black text-text-main truncate leading-tight mb-0.5">{g.descripcion}</p>
-                      <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest mt-1">
-                        <span>{g.fecha || 'N/A'}</span> • <span className="text-text-main">{grupo.split_participantes.find(p => p.id === g.pagado_por_id)?.nombre}</span> pago <span className="text-brand-400 font-black">{formatoEuros(g.monto)}</span>
-                      </p>
-                    </div>
+                    <ArrowRight size={18} className="text-text-muted opacity-0 group-hover:opacity-100 transition-all mr-2" />
                   </div>
-                </div>
-              ))}
-              {grupo.split_gastos.length === 0 && (
-                <div className="text-center py-10 opacity-50 bg-surface-solid/30 rounded-2xl border border-dashed border-border-subtle">
-                  <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Aun no hay gastos registrados.</p>
+                ))
+              ) : (
+                <div className="py-32 text-center">
+                  <Info size={32} className="mx-auto mb-4 opacity-20" />
+                  <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.3em]">No hay actividad en el engine</p>
                 </div>
               )}
             </div>
           </section>
         </div>
+
+        <footer className="mt-40 pt-12 border-t border-white/5 flex justify-between items-center opacity-40">
+           <div className="flex items-center gap-2">
+              <Landmark size={14} />
+              <span className="text-[11px] font-black uppercase tracking-[0.3em]">Verified by EasyPocket Terminal</span>
+           </div>
+           <p className="text-[10px] font-bold">© 2026</p>
+        </footer>
       </div>
     </div>
   )

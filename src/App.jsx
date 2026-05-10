@@ -10,11 +10,15 @@ import Transacciones from './components/Transacciones'
 import Objetivos from './components/Objetivos'
 import CompartirGastos from './components/CompartirGastos'
 import Suscripciones from './components/Suscripciones'
+import FIRE from './components/FIRE'
+import Calendario from './components/Calendario'
 import BottomNav from './components/BottomNav'
 import VistaPublicaSplit from './components/VistaPublicaSplit'
 import Landing from './components/Landing'
 import PoliticaPrivacidad from './components/PoliticaPrivacidad'
 import AdminPanel from './components/AdminPanel'
+import GlobalToast from './components/GlobalToast'
+import CommandPalette from './components/CommandPalette'
 
 function RutasPrivadas({ session, children }) {
   if (!session) return <Navigate to="/login" replace />
@@ -78,6 +82,8 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <GlobalToast />
+      <CommandPalette />
       <Routes>
         {/* 1. RUTAS PÚBLICAS (Accesibles siempre) */}
         <Route path="/" element={session ? <Navigate to="/dashboard" replace /> : <LandingEnrutador />} />
@@ -90,6 +96,8 @@ export default function App() {
         <Route path="/cuentas" element={<RutasPrivadas session={session}><Cuentas /></RutasPrivadas>} />
         <Route path="/transacciones" element={<RutasPrivadas session={session}><Transacciones /></RutasPrivadas>} />
         <Route path="/suscripciones" element={<RutasPrivadas session={session}><Suscripciones /></RutasPrivadas>} />
+        <Route path="/fire" element={<RutasPrivadas session={session}><FIRE /></RutasPrivadas>} />
+        <Route path="/calendario" element={<RutasPrivadas session={session}><Calendario /></RutasPrivadas>} />
         <Route path="/objetivos" element={<RutasPrivadas session={session}><Objetivos /></RutasPrivadas>} />
         <Route path="/compartir" element={<RutasPrivadas session={session}><CompartirGastos /></RutasPrivadas>} />
         <Route path="/admin" element={<RutasPrivadas session={session}><AdminPanel /></RutasPrivadas>} />

@@ -1,4 +1,4 @@
-const FINNHUB_API_KEY = 'd740k8hr01qno4pvvvu0d740k8hr01qno4pvvvug' // <-- Pon tu clave aquí
+const FINNHUB_API_KEY = import.meta.env.VITE_FINNHUB_API_KEY
 
 export const getMarketPrice = async (ticker, moneda = 'EUR') => {
   try {
