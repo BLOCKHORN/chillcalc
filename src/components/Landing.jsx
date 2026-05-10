@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, useScroll, useTransform } from 'framer-motion'
-import { ArrowRight, Command } from 'lucide-react'
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
+import { ArrowRight, Command, TrendingUp, Shield, Zap, Globe, Cpu, Users, PieChart } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useStore } from '../store/useStore'
 
@@ -15,7 +15,7 @@ const Navbar = ({ sesion, navigate }) => {
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-1000 px-6 ${isScrolled ? 'py-4' : 'py-8'}`}>
-      <div className={`max-w-7xl mx-auto flex items-center justify-between px-10 py-3 rounded-full border border-white/5 transition-all duration-700 ${isScrolled ? 'bg-black/80 backdrop-blur-2xl shadow-2xl' : 'bg-transparent'}`}>
+      <div className={`max-w-7xl mx-auto flex items-center justify-between px-10 py-3 rounded-full border border-white/5 transition-all duration-700 ${isScrolled ? 'bg-black/80 backdrop-blur-3xl shadow-2xl' : 'bg-transparent'}`}>
         <div className="flex items-center gap-4 cursor-pointer group" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
           <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-black shadow-2xl transition-transform duration-700 group-hover:scale-110">
             <Command size={22} strokeWidth={2.5} />
@@ -52,7 +52,7 @@ const Navbar = ({ sesion, navigate }) => {
           </button>
           <button 
             onClick={() => navigate('/login')}
-            className="px-8 py-3 rounded-full text-[11px] font-bold uppercase tracking-[0.4em] bg-white text-black hover:bg-brand-emerald hover:text-white transition-all active:scale-95"
+            className="px-8 py-3 rounded-full text-[11px] font-bold uppercase tracking-[0.4em] bg-white text-black hover:bg-brand-emerald hover:text-white transition-all active:scale-95 shadow-xl shadow-white/5"
           >
             Terminal
           </button>
@@ -63,15 +63,15 @@ const Navbar = ({ sesion, navigate }) => {
 }
 
 const ArchitecturalSection = ({ id, src, title, desc, reverse = false }) => (
-  <div id={id} className={`flex flex-col ${reverse ? 'lg:flex-row-reverse' : 'lg:flex-row'} items-center gap-32 py-60 scroll-mt-20`}>
+  <div id={id} className={`flex flex-col ${reverse ? 'lg:flex-row-reverse' : 'lg:flex-row'} items-center gap-32 py-60 scroll-mt-20 px-4`}>
     <div className="w-full lg:w-3/5 aspect-video rounded-[4rem] overflow-hidden border border-white/5 shadow-2xl relative group">
       <img src={src} className="w-full h-full object-cover opacity-60 mix-blend-luminosity group-hover:scale-105 transition-transform duration-[3000ms] ease-out" alt={title} />
       <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
     </div>
-    <div className="w-full lg:w-2/5 space-y-12 px-4">
+    <div className="w-full lg:w-2/5 space-y-12">
        <h3 className="text-6xl md:text-8xl font-bold tracking-tighter text-white uppercase leading-[0.85]">{title}</h3>
        <p className="text-2xl md:text-3xl text-white/30 font-light leading-tight tracking-tighter uppercase italic">{desc}</p>
-       <div className="w-24 h-0.5 bg-brand-emerald opacity-50" />
+       <div className="w-24 h-0.5 bg-brand-emerald opacity-50 shadow-[0_0_20px_#008f58]" />
     </div>
   </div>
 )
@@ -85,8 +85,9 @@ export default function Landing() {
 
   const heroRef = useRef(null)
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] })
-  const y = useTransform(scrollYProgress, [0, 1], ["0%", "20%"])
-  const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0])
+  const yText = useTransform(scrollYProgress, [0, 1], ["0%", "30%"])
+  const scaleImage = useTransform(scrollYProgress, [0, 1], [1, 0.9])
+  const opacityText = useTransform(scrollYProgress, [0, 0.8], [1, 0])
 
   useEffect(() => {
     Promise.all([supabase.auth.getSession(), cargarStatsPublicas()]).then(([{ data: { session } }, publicStats]) => {
@@ -100,39 +101,85 @@ export default function Landing() {
     <div className="bg-black text-white selection:bg-brand-emerald selection:text-white overflow-x-hidden font-sans antialiased">
       <Navbar sesion={sesion} navigate={navigate} />
 
-      {/* --- HERO: ABSOLUTE TYPOGRAPHY --- */}
-      <section ref={heroRef} className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden pt-20">
-        <motion.div style={{ y, opacity }} className="relative z-10 text-center max-w-7xl">
-          <h1 className="text-[20vw] lg:text-[18rem] font-bold tracking-[-0.09em] leading-[0.7] mb-20 uppercase">
-            ESTADO<br />
-            <span className="text-transparent bg-clip-text bg-linear-to-b from-white/20 to-white/2">PURO.</span>
+      {/* --- HERO: THE WEALTH TERMINAL --- */}
+      <section ref={heroRef} className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden pt-40 md:pt-48">
+        
+        {/* Webflow-style Background Details */}
+        <div className="absolute inset-0 z-0">
+           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_50%_0%,_#1e293b_0%,_transparent_60%)] opacity-30" />
+           <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay" />
+        </div>
+
+        <motion.div style={{ y: yText, opacity: opacityText }} className="relative z-10 text-center max-w-5xl">
+          <h1 className="text-6xl md:text-8xl font-bold tracking-tight mb-10 uppercase">
+            TU PATRIMONIO,<br />
+            <span className="text-white/20">BAJO CONTROL.</span>
           </h1>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-16">
+          <p className="text-lg md:text-xl text-white/40 max-w-2xl mx-auto mb-16 leading-relaxed font-medium">
+            Easypocket es la terminal de alta fidelidad diseñada para gestionar capital, inversiones y gastos compartidos con precisión técnica y elegancia.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-8">
             <button
               onClick={() => navigate('/login')}
-              className="group bg-white text-black px-24 py-12 rounded-full font-bold uppercase tracking-[0.6em] text-[13px] hover:scale-105 transition-all shadow-[0_0_120px_rgba(255,255,255,0.2)] active:scale-95 flex items-center gap-8"
+              className="group bg-white text-black px-12 py-5 rounded-full font-bold uppercase tracking-[0.4em] text-[10px] hover:scale-105 transition-all shadow-[0_0_80px_rgba(255,255,255,0.1)] active:scale-95 flex items-center gap-4"
             >
-              Inicializar Terminal
-              <ArrowRight size={22} strokeWidth={3} />
+              Acceder al Terminal
+              <ArrowRight size={18} strokeWidth={3} />
             </button>
+            <div className="flex -space-x-3">
+               {[1,2,3,4].map(i => (
+                 <div key={i} className="w-8 h-8 rounded-full border-2 border-black bg-white/5 overflow-hidden">
+                    <img src={`https://i.pravatar.cc/100?u=${i}`} alt="user" className="w-full h-full object-cover opacity-80" />
+                 </div>
+               ))}
+               <div className="w-8 h-8 rounded-full border-2 border-black bg-brand-emerald flex items-center justify-center text-[9px] font-black">+2k</div>
+            </div>
           </div>
         </motion.div>
 
-        {/* High-Res Hero Detail */}
+        {/* New Hero Image: Integrated Wealth/Tech Concept */}
         <motion.div 
-          initial={{ y: 300, opacity: 0 }}
+          style={{ scale: scaleImage }}
+          initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.3, duration: 2, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-40 w-full max-w-[1800px] aspect-[21/6] relative overflow-hidden"
+          transition={{ delay: 0.2, duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
+          className="mt-32 w-full max-w-6xl aspect-video relative rounded-[3rem] border border-white/10 overflow-hidden shadow-2xl"
         >
           <img 
-            src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=3000" 
-            className="w-full h-full object-cover opacity-40 mix-blend-luminosity" 
-            alt="Hardware Detail"
+            src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=2500" 
+            className="w-full h-full object-cover opacity-80 mix-blend-luminosity" 
+            alt="Wealth Terminal Interface"
           />
-          <div className="absolute inset-0 bg-linear-to-t from-black via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
+          
+          {/* Subtle Overlay Badge */}
+          <div className="absolute top-10 left-10 p-6 rounded-2xl bg-black/40 backdrop-blur-xl border border-white/5 shadow-2xl">
+             <div className="flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full bg-brand-emerald animate-pulse" />
+                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white">Market Protocol: Active</p>
+             </div>
+          </div>
         </motion.div>
+      </section>
+
+      {/* --- STATS: INSTITUTIONAL --- */}
+      <section className="py-40 border-y border-white/5 bg-white/[0.01]">
+        <div className="max-w-7xl mx-auto px-12 grid grid-cols-1 md:grid-cols-3 gap-32">
+          <div>
+            <h2 className="text-6xl font-bold tracking-tighter mb-4">{stats.total_movimientos.toLocaleString()}+</h2>
+            <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.5em]">Operaciones Sincronizadas</p>
+          </div>
+          <div>
+            <h2 className="text-6xl font-bold tracking-tighter mb-4">99.9%</h2>
+            <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.5em]">Disponibilidad Total</p>
+          </div>
+          <div>
+            <h2 className="text-6xl font-bold tracking-tighter mb-4">AES-256</h2>
+            <p className="text-[10px] font-black text-white/30 uppercase tracking-[0.5em]">Protocolo de Privacidad</p>
+          </div>
+        </div>
       </section>
 
       {/* --- ARCHITECTURAL CONTENT --- */}
@@ -140,34 +187,34 @@ export default function Landing() {
         
         <ArchitecturalSection 
           id="intelligence"
-          src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=2500"
+          src="https://images.unsplash.com/photo-1611974714024-4607a55746ee?auto=format&fit=crop&q=80&w=2000"
           title="Inteligencia Atómica"
-          desc="Heurística de Red de Alta Precisión."
+          desc="Heurística de Red de Alta Precisión para el análisis de flujos de capital."
         />
 
         <div id="security" className="grid grid-cols-1 md:grid-cols-2 gap-40 py-60 border-y border-white/5 scroll-mt-20">
            <div className="space-y-12">
-              <h2 className="text-[12rem] font-bold tracking-tighter leading-none">{stats.total_movimientos.toLocaleString()}+</h2>
-              <p className="text-[11px] font-bold text-white/20 uppercase tracking-[0.8em]">Operaciones Ejecutadas</p>
+              <h2 className="text-8xl md:text-[10rem] font-bold tracking-tighter leading-none">SAFE.</h2>
+              <p className="text-[11px] font-bold text-white/30 uppercase tracking-[0.8em]">Seguridad por Diseño</p>
            </div>
            <div className="space-y-12 flex flex-col justify-center px-4">
-              <h4 className="text-6xl font-bold tracking-tight uppercase text-brand-emerald">Integridad Bancaria</h4>
-              <p className="text-2xl text-white/30 font-light leading-relaxed tracking-tighter uppercase">Protocolos de seguridad distribuida.</p>
+              <h4 className="text-5xl font-bold tracking-tight uppercase text-brand-emerald">Integridad Bancaria</h4>
+              <p className="text-2xl text-white/40 font-light leading-relaxed tracking-tighter uppercase">Cifrado a nivel de servidor y disparadores PostgreSQL para garantizar precisión absoluta.</p>
            </div>
         </div>
 
         <ArchitecturalSection 
           id="engine"
-          src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=2000"
+          src="https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=2500"
           title="Shared Engine"
-          desc="Liquidación de Capital Colaborativo."
+          desc="Protocolos de Liquidación de Capital Colaborativo y Proyectos Distribuidos."
           reverse
         />
 
         <div className="py-80 text-center space-y-24">
-           <h2 className="text-[16vw] font-bold tracking-[-0.08em] leading-none mb-32 uppercase">
+           <h2 className="text-[14vw] font-bold tracking-[-0.08em] leading-none mb-32 uppercase">
               EL FUTURO<br />
-              <span className="text-transparent bg-clip-text bg-linear-to-b from-brand-emerald to-brand-emerald/10">ES TUYO.</span>
+              <span className="text-transparent bg-clip-text bg-linear-to-b from-brand-emerald to-brand-emerald/10 text-glow">ES TUYO.</span>
            </h2>
            <button 
              onClick={() => navigate('/login')}
