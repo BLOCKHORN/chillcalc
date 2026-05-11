@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react' // Importación vital añadida
 import { useStore } from '../store/useStore'
 import { Navigate } from 'react-router-dom'
-import { Shield, ShieldAlert, User, Loader2, Users, Wallet, ArrowRightLeft, ChevronDown, ChevronUp } from 'lucide-react'
+import { Shield, ShieldAlert, User, Loader2, Users, Wallet, ArrowLeftRight, ChevronDown, ChevronUp } from 'lucide-react'
 
 export default function AdminPanel() {
   const { rolUsuario, cargarUsuariosAdmin, cambiarRolAdmin, cargarEstadisticasAdmin, cargarStatsUsuarioAdmin } = useStore()
@@ -75,7 +75,7 @@ export default function AdminPanel() {
         {[
           { label: 'Usuarios', val: statsGlobales.total_usuarios, icon: Users, color: 'text-blue-400' },
           { label: 'Cuentas', val: statsGlobales.total_cuentas, icon: Wallet, color: 'text-emerald-400' },
-          { label: 'Operaciones', val: statsGlobales.total_transacciones, icon: ArrowRightLeft, color: 'text-amber-400' },
+          { label: 'Operaciones', val: statsGlobales.total_transacciones, icon: ArrowLeftRight, color: 'text-amber-400' },
         ].map((item, i) => (
           <div key={i} className="bg-surface-solid border border-border-subtle p-6 rounded-2xl relative overflow-hidden group">
             <item.icon className={`absolute -right-2 -bottom-2 size-24 opacity-5 ${item.color}`} />
@@ -163,7 +163,7 @@ export default function AdminPanel() {
                                   <div className="flex flex-col gap-1">
                                     <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Movimientos</span>
                                     <div className="flex items-center gap-2">
-                                      <ArrowRightLeft size={16} className="text-amber-400" />
+                                      <ArrowLeftRight size={16} className="text-amber-400" />
                                       <span className="text-xl font-black text-text-main">{uStats?.num_transacciones || 0}</span>
                                     </div>
                                   </div>

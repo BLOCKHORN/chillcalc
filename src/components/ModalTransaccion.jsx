@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useStore } from '../store/useStore'
-import { X, Loader2, Calendar, Euro, FileText, Tag, CreditCard, ArrowRightLeft, ShieldCheck, Zap } from 'lucide-react'
+import { X, Loader2, Calendar, Euro, FileText, Tag, CreditCard, ArrowLeftRight, ShieldCheck, Zap } from 'lucide-react'
 
 const PALETA_COLORES = {
   slate: { bg: 'bg-slate-500', pill: 'text-slate-400 bg-white/5 border-white/10' },
@@ -105,9 +105,9 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
 
   return (
     <div className="fixed inset-0 z-[1000] flex items-end sm:items-center justify-center p-0 sm:p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-500">
-      <div className="bg-black border-t sm:border border-border-subtle rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-xl shadow-2xl flex flex-col max-h-[95vh] overflow-hidden animate-apple">
+      <div className="bg-surface-solid border-t sm:border border-border-subtle rounded-t-[2.5rem] sm:rounded-[2.5rem] w-full max-w-xl shadow-2xl flex flex-col max-h-[95vh] overflow-hidden animate-apple">
         
-        <div className="flex justify-between items-center p-8 border-b border-border-subtle bg-white/[0.01]">
+        <div className="flex justify-between items-center p-8 border-b border-border-subtle bg-text-main/[0.01]">
           <div>
             <h3 className="text-2xl font-bold text-text-main tracking-tight">
               {editarDatos ? 'Modificar Registro' : 'Nueva Operación'}
@@ -116,7 +116,7 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
               {editarDatos ? 'Protocolo de Edición' : 'Sincronización de Capital'}
             </p>
           </div>
-          <button onClick={onClose} className="p-3 text-text-muted hover:text-white bg-white/5 rounded-full transition-all">
+          <button onClick={onClose} className="p-3 text-text-muted hover:text-text-main bg-text-main/5 rounded-full transition-all">
             <X size={24} />
           </button>
         </div>
@@ -124,13 +124,13 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
         <form onSubmit={handleSubmit} className="p-8 flex flex-col gap-10 overflow-y-auto no-scrollbar">
           
           {/* Selector de Tipo (Compacto Apple) */}
-          <div className="flex p-1 bg-white/5 border border-border-subtle rounded-2xl">
+          <div className="flex p-1 bg-text-main/5 border border-border-subtle rounded-2xl">
             {['gasto', 'ingreso', 'transferencia'].map(t => (
               <button
                 key={t}
                 type="button"
                 onClick={() => setTipo(t)}
-                className={`flex-1 py-3 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all ${tipo === t ? 'bg-white text-black shadow-lg' : 'text-text-muted hover:text-white'}`}
+                className={`flex-1 py-3 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all ${tipo === t ? 'bg-text-main text-bg-app shadow-lg' : 'text-text-muted hover:text-text-main'}`}
               >
                 {t === 'transferencia' ? 'Traspaso' : t}
               </button>
@@ -147,7 +147,7 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
                 <input
                   type="number" step="0.01" value={monto} autoFocus
                   onChange={(e) => setMonto(e.target.value)}
-                  className="w-full bg-white/[0.02] border border-border-subtle rounded-2xl px-6 py-5 text-text-main text-4xl font-black focus:outline-none focus:border-brand-emerald transition-all shadow-inner"
+                  className="w-full bg-text-main/[0.02] border border-border-subtle rounded-2xl px-6 py-5 text-text-main text-4xl font-black focus:outline-none focus:border-brand-emerald transition-all shadow-inner"
                   placeholder="0.00" required
                 />
                 <span className="absolute right-6 top-1/2 -translate-y-1/2 text-text-muted font-bold text-xl">€</span>
@@ -160,7 +160,7 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
               <input
                 type="text" value={desc}
                 onChange={(e) => setDesc(e.target.value)}
-                className="w-full bg-white/[0.02] border border-border-subtle rounded-xl px-6 py-4 text-text-main text-lg font-bold focus:outline-none focus:border-white transition-all shadow-sm"
+                className="w-full bg-text-main/[0.02] border border-border-subtle rounded-xl px-6 py-4 text-text-main text-lg font-bold focus:outline-none focus:border-text-main transition-all shadow-sm"
                 placeholder={tipo === 'transferencia' ? 'Origen -> Destino' : 'Descripción del flujo...'}
               />
             </div>
@@ -183,7 +183,7 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
                       <button
                         key={cat.id} type="button"
                         onClick={() => setCategoria(cat.nombre)}
-                        className={`px-4 py-2.5 rounded-xl text-[13px] font-bold transition-all border ${isSelected ? 'bg-white text-black border-white shadow-xl' : 'bg-white/5 border-border-subtle text-text-muted hover:text-white'}`}
+                        className={`px-4 py-2.5 rounded-xl text-[13px] font-bold transition-all border ${isSelected ? 'bg-text-main text-bg-app border-text-main shadow-xl' : 'bg-text-main/5 border-border-subtle text-text-muted hover:text-text-main'}`}
                       >
                         <span className="mr-2">{cat.emoji}</span>
                         {cat.nombre}
@@ -199,18 +199,18 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
                <label className="text-[11px] font-black text-text-muted uppercase tracking-[0.3em] px-2">Punto de Sincronización</label>
                {tipo === 'transferencia' ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 relative">
-                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black border border-border-subtle flex items-center justify-center text-text-muted z-10 hidden sm:flex">
-                       <ArrowRightLeft size={14} />
+                    <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-surface-solid border border-border-subtle flex items-center justify-center text-text-muted z-10 hidden sm:flex">
+                       <ArrowLeftRight size={14} />
                     </div>
-                    <select value={cuentaId} onChange={(e) => setCuentaId(e.target.value)} className="w-full bg-white/[0.02] border border-border-subtle rounded-xl p-4 text-[14px] font-bold text-text-main outline-none appearance-none">
+                    <select value={cuentaId} onChange={(e) => setCuentaId(e.target.value)} className="w-full bg-text-main/[0.02] border border-border-subtle rounded-xl p-4 text-[14px] font-bold text-text-main outline-none appearance-none">
                        {cuentas.map(c => <option key={c.id} value={c.id}>DE: {c.nombre}</option>)}
                     </select>
-                    <select value={cuentaDestinoId} onChange={(e) => setCuentaDestinoId(e.target.value)} className="w-full bg-white/[0.02] border border-border-subtle rounded-xl p-4 text-[14px] font-bold text-text-main outline-none appearance-none">
+                    <select value={cuentaDestinoId} onChange={(e) => setCuentaDestinoId(e.target.value)} className="w-full bg-text-main/[0.02] border border-border-subtle rounded-xl p-4 text-[14px] font-bold text-text-main outline-none appearance-none">
                        {cuentas.map(c => <option key={c.id} value={c.id}>PARA: {c.nombre}</option>)}
                     </select>
                   </div>
                ) : (
-                  <select value={cuentaId} onChange={(e) => setCuentaId(e.target.value)} className="w-full bg-white/[0.02] border border-border-subtle rounded-xl p-4 text-[15px] font-bold text-text-main outline-none appearance-none">
+                  <select value={cuentaId} onChange={(e) => setCuentaId(e.target.value)} className="w-full bg-text-main/[0.02] border border-border-subtle rounded-xl p-4 text-[15px] font-bold text-text-main outline-none appearance-none">
                     {cuentas.map(c => <option key={c.id} value={c.id}>{c.nombre} (Saldo actual)</option>)}
                   </select>
                )}
@@ -219,7 +219,7 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
             {/* Fecha */}
             <div className="space-y-4">
               <label className="text-[11px] font-black text-text-muted uppercase tracking-[0.3em] px-2">Marca Temporal</label>
-              <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className="w-full bg-white/[0.02] border border-border-subtle rounded-xl p-4 text-[15px] font-bold text-text-main outline-none" />
+              <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className="w-full bg-text-main/[0.02] border border-border-subtle rounded-xl p-4 text-[15px] font-bold text-text-main outline-none" />
             </div>
           </div>
 

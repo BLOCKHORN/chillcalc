@@ -10,14 +10,14 @@
 }
 
 :root {
-  --bg-app: #000000;
+  --bg-app: #0a0a0a;
   --text-main: #ffffff;
-  --text-muted: #6e6e73; /* Apple Gray */
-  --surface: #121212; /* Deep solid gray */
-  --surface-hover: #1c1c1e;
-  --surface-solid: #000000;
+  --text-muted: #86868b;
+  --surface: #1c1c1e;
+  --surface-hover: #2c2c2e;
+  --surface-solid: #121212;
   --border-subtle: #2c2c2e;
-  --border-focus: #48484a;
+  --border-focus: #3a3a3c;
   --brand-color: #ffffff;
 }
 

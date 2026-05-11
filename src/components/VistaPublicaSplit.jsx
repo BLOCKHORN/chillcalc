@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useStore } from '../store/useStore'
 import { motion } from 'framer-motion'
 import { 
-  Users, Receipt, ArrowRightLeft, Loader2, Info, Landmark, 
+  Users, Receipt, ArrowLeftRight, Loader2, Info, Landmark, 
   CheckCircle2, Wallet, HandCoins, ArrowRight, Plus, Send, ChevronRight
 } from 'lucide-react'
 import PrivacyValue from './PrivacyValue'
@@ -90,7 +90,7 @@ export default function VistaPublicaSplit({ token }) {
 
   if (cargando) {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white gap-6">
+      <div className="min-h-screen bg-bg-app flex flex-col items-center justify-center text-white gap-6">
         <div className="w-12 h-12 rounded-2xl bg-brand-emerald/10 border border-brand-emerald/20 flex items-center justify-center">
            <Loader2 size={24} className="animate-spin text-brand-emerald" />
         </div>
@@ -101,7 +101,7 @@ export default function VistaPublicaSplit({ token }) {
 
   if (error || !grupo) {
     return (
-      <div className="min-h-screen bg-black flex flex-col items-center justify-center p-8 text-center">
+      <div className="min-h-screen bg-bg-app flex flex-col items-center justify-center p-8 text-center">
         <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-8 text-danger/50 border border-white/5">
           <Info size={40} />
         </div>
@@ -113,7 +113,7 @@ export default function VistaPublicaSplit({ token }) {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-brand-emerald selection:text-white pb-32 animate-apple">
+    <div className="min-h-screen bg-bg-app text-white selection:bg-brand-emerald selection:text-white pb-32 animate-apple">
       <div className="max-w-7xl mx-auto px-8 pt-20">
         
         <header className="mb-20 flex flex-col md:flex-row justify-between items-end gap-12">
@@ -140,7 +140,7 @@ export default function VistaPublicaSplit({ token }) {
           <section className="lg:col-span-4 space-y-12">
             <div>
               <h2 className="text-[11px] font-black uppercase text-text-muted tracking-[0.3em] px-2 mb-10 flex items-center gap-2">
-                <ArrowRightLeft size={14} className="text-brand-emerald" /> Estado de Balances
+                <ArrowLeftRight size={14} className="text-brand-emerald" /> Estado de Balances
               </h2>
               <div className="space-y-4">
                 {balances.map(p => {
@@ -179,7 +179,7 @@ export default function VistaPublicaSplit({ token }) {
                     <input 
                       required
                       value={formGasto.desc} onChange={e => setFormGasto({...formGasto, desc: e.target.value})}
-                      className="w-full bg-black border border-border-subtle rounded-xl p-4 text-[14px] font-bold outline-none focus:border-brand-emerald transition-all" 
+                      className="w-full bg-bg-app border border-border-subtle rounded-xl p-4 text-[14px] font-bold outline-none focus:border-brand-emerald transition-all" 
                       placeholder="Ej: Cena del viernes"
                     />
                   </div>
@@ -189,7 +189,7 @@ export default function VistaPublicaSplit({ token }) {
                       <input 
                         required
                         type="number" step="0.01" value={formGasto.monto} onChange={e => setFormGasto({...formGasto, monto: e.target.value})}
-                        className="w-full bg-black border border-border-subtle rounded-xl p-4 text-[14px] font-bold outline-none focus:border-brand-emerald transition-all" 
+                        className="w-full bg-bg-app border border-border-subtle rounded-xl p-4 text-[14px] font-bold outline-none focus:border-brand-emerald transition-all" 
                         placeholder="0.00"
                       />
                     </div>
@@ -198,7 +198,7 @@ export default function VistaPublicaSplit({ token }) {
                       <select 
                         required
                         value={formGasto.pagadoPor} onChange={e => setFormGasto({...formGasto, pagadoPor: e.target.value})}
-                        className="w-full bg-black border border-border-subtle rounded-xl p-4 text-[14px] font-bold outline-none appearance-none cursor-pointer focus:border-brand-emerald transition-all"
+                        className="w-full bg-bg-app border border-border-subtle rounded-xl p-4 text-[14px] font-bold outline-none appearance-none cursor-pointer focus:border-brand-emerald transition-all"
                       >
                         <option value="">Seleccionar...</option>
                         {grupo.split_participantes.map(p => (

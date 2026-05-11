@@ -16,7 +16,7 @@ export default function MainLayout({ children }) {
         
         <MobileHeader />
         
-        <main className="flex-1 w-full pb-32 md:pb-10 pt-20 md:pt-10 px-4 md:px-10 max-w-7xl mx-auto">
+        <main className="flex-1 w-full pb-32 md:pb-10 pt-24 md:pt-10 px-6 md:px-10 max-w-7xl mx-auto">
           {children}
         </main>
       </div>

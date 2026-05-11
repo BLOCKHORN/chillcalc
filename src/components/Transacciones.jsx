@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { useStore } from '../store/useStore'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
-  Plus, Edit2, Trash2, Search, Filter, ArrowRightLeft, CreditCard, ChevronRight, ArrowRight
+  Plus, Edit2, Trash2, Search, Filter, ArrowLeftRight, CreditCard, ChevronRight, ArrowRight
 } from 'lucide-react'
 import ModalTransaccion from './ModalTransaccion'
 import ModalCategorias from './ModalCategorias'
@@ -79,27 +79,52 @@ export default function Transacciones() {
 
         {/* Modern Filter Interface */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-           <div className="lg:col-span-1 space-y-8">
-              <div className="card !p-6">
-                 <h3 className="text-[10px] font-black text-text-muted uppercase tracking-[0.3em] mb-6">Filtro Temporal</h3>
-                 <div className="space-y-1 max-h-[250px] overflow-y-auto no-scrollbar">
-                    <button onClick={() => setFiltroMes('todos')} className={`w-full text-left px-4 py-2.5 rounded-lg text-[13px] font-bold transition-all ${filtroMes === 'todos' ? 'text-brand-emerald bg-brand-emerald/5' : 'text-text-muted hover:text-text-main hover:bg-white/[0.02]'}`}>Completo</button>
+           <div className="lg:col-span-1 space-y-6 md:space-y-8">
+              
+              {/* Filtro Temporal - Scrollable on mobile */}
+              <div className="card !p-5 md:!p-6 overflow-hidden">
+                 <h3 className="text-[10px] font-black text-text-muted uppercase tracking-[0.3em] mb-4 md:mb-6">Filtro Temporal</h3>
+                 <div className="flex md:flex-col gap-2 overflow-x-auto md:overflow-y-auto no-scrollbar scroll-smooth pb-1 md:pb-0">
+                    <button 
+                      onClick={() => setFiltroMes('todos')} 
+                      className={`whitespace-nowrap px-4 py-2.5 rounded-lg text-[13px] font-bold transition-all shrink-0 ${filtroMes === 'todos' ? 'text-brand-emerald bg-brand-emerald/10 border border-brand-emerald/20' : 'text-text-muted hover:text-text-main bg-white/[0.02] border border-transparent'}`}
+                    >
+                      Completo
+                    </button>
                     {mesesDisponibles.map(m => (
-                       <button key={m} onClick={() => setFiltroMes(m)} className={`w-full text-left px-4 py-2.5 rounded-lg text-[13px] font-bold transition-all ${filtroMes === m ? 'text-brand-emerald bg-brand-emerald/5' : 'text-text-muted hover:text-text-main hover:bg-white/[0.02]'}`}>{m}</button>
+                       <button 
+                        key={m} 
+                        onClick={() => setFiltroMes(m)} 
+                        className={`whitespace-nowrap px-4 py-2.5 rounded-lg text-[13px] font-bold transition-all shrink-0 ${filtroMes === m ? 'text-brand-emerald bg-brand-emerald/10 border border-brand-emerald/20' : 'text-text-muted hover:text-text-main bg-white/[0.02] border border-transparent'}`}
+                       >
+                        {m}
+                       </button>
                     ))}
                  </div>
               </div>
 
-              <div className="card !p-6">
-                 <h3 className="text-[10px] font-black text-text-muted uppercase tracking-[0.3em] mb-6">Categorías</h3>
-                 <div className="flex flex-wrap gap-1.5 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
-                    <button onClick={() => setFiltroCategoria('todas')} className={`px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all ${filtroCategoria === 'todas' ? 'bg-brand-emerald border-brand-emerald text-white' : 'border-border-subtle text-text-muted hover:text-text-main'}`}>Todas</button>
+              {/* Categorías - Scrollable on mobile */}
+              <div className="card !p-5 md:!p-6 overflow-hidden relative">
+                 <h3 className="text-[10px] font-black text-text-muted uppercase tracking-[0.3em] mb-4 md:mb-6">Categorías</h3>
+                 <div className="flex md:flex-wrap gap-2 overflow-x-auto md:overflow-y-auto no-scrollbar scroll-smooth pb-1 md:pb-0">
+                    <button 
+                      onClick={() => setFiltroCategoria('todas')} 
+                      className={`whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-bold border transition-all shrink-0 ${filtroCategoria === 'todas' ? 'bg-brand-emerald border-brand-emerald text-white' : 'border-border-subtle text-text-muted hover:text-text-main bg-white/[0.02]'}`}
+                    >
+                      Todas
+                    </button>
                     {categorias.map(cat => (
-                       <button key={cat.id} onClick={() => setFiltroCategoria(cat.nombre)} className={`px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all ${filtroCategoria === cat.nombre ? 'bg-brand-emerald border-brand-emerald text-white' : 'border-border-subtle text-text-muted hover:text-text-main'}`}>
+                       <button 
+                        key={cat.id} 
+                        onClick={() => setFiltroCategoria(cat.nombre)} 
+                        className={`whitespace-nowrap px-4 py-2 rounded-full text-[11px] font-bold border transition-all shrink-0 ${filtroCategoria === cat.nombre ? 'bg-brand-emerald border-brand-emerald text-white' : 'border-border-subtle text-text-muted hover:text-text-main bg-white/[0.02]'}`}
+                       >
                           {cat.nombre}
                        </button>
                     ))}
                  </div>
+                 {/* Indicador de scroll lateral para móvil */}
+                 <div className="absolute right-0 top-[60%] bottom-2 w-8 bg-gradient-to-l from-surface to-transparent pointer-events-none md:hidden" />
               </div>
            </div>
 

@@ -16,17 +16,17 @@ export default function Cuentas() {
 
   return (
     <>
-      <div className="pb-32 pt-16 px-8 max-w-7xl mx-auto animate-apple">
+      <div className="pb-32 pt-4 md:pt-16 px-0 md:px-8 max-w-7xl mx-auto animate-apple">
         
-        <header className="mb-20 flex flex-col md:flex-row justify-between items-end gap-12">
+        <header className="mb-12 md:mb-20 flex flex-col md:flex-row justify-between items-start md:items-end gap-8 md:gap-12 px-2 md:px-0">
           <div>
-            <h2 className="text-[13px] font-bold text-text-muted uppercase tracking-[0.2em] mb-4">Activos y Pasivos Consolidados</h2>
-            <h1 className="text-7xl font-bold tracking-tight text-text-main">Entities</h1>
+            <h2 className="text-[11px] md:text-[13px] font-bold text-text-muted uppercase tracking-[0.2em] mb-3 md:mb-4">Activos y Pasivos Consolidados</h2>
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-text-main">Entities</h1>
           </div>
 
           <button 
             onClick={() => setModalAbierto(true)} 
-            className="px-8 py-4 rounded-xl bg-text-main text-bg-app font-bold text-[15px] hover:opacity-90 active:scale-95 transition-all shadow-xl flex items-center gap-3"
+            className="w-full md:w-auto px-8 py-4 rounded-xl bg-text-main text-bg-app font-bold text-[14px] md:text-[15px] hover:opacity-90 active:scale-95 transition-all shadow-xl flex items-center justify-center gap-3"
           >
             <Plus size={18} strokeWidth={2.5} /> New Entity
           </button>

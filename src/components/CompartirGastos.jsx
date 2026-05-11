@@ -3,7 +3,7 @@ import { useStore } from '../store/useStore'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Users, Plus, Trash2, ArrowRight, ChevronLeft, UserPlus, 
-  Receipt, Share2, Check, ArrowRightLeft, Wallet, HandCoins, 
+  Receipt, Share2, Check, ArrowLeftRight, Wallet, HandCoins, 
   User, Send, X, MoreHorizontal, Info, Globe, ShieldCheck, Zap, ChevronRight,
   AlertCircle
 } from 'lucide-react'
@@ -163,7 +163,7 @@ export default function CompartirGastos() {
             <label className="text-[11px] font-black uppercase text-text-muted tracking-[0.3em]">Nombre del viaje o evento</label>
             <input 
               value={nombreGrupo} onChange={e => setNombreGrupo(e.target.value)}
-              className="w-full bg-black border border-border-subtle rounded-2xl p-6 text-2xl font-bold text-text-main outline-none focus:border-brand-emerald transition-all shadow-inner" 
+              className="w-full bg-surface-solid border border-border-subtle rounded-2xl p-6 text-2xl font-bold text-text-main outline-none focus:border-brand-emerald transition-all shadow-inner" 
               placeholder="Ej: Viaje a Roma 🇮🇹"
             />
           </div>
@@ -176,7 +176,7 @@ export default function CompartirGastos() {
                    <input 
                     value={amigo} 
                     onChange={e => { const n = [...amigos]; n[idx] = e.target.value; setAmigos(n); }}
-                    className="w-full bg-black border border-border-subtle rounded-xl py-4 pl-12 pr-12 text-[16px] font-bold text-text-main outline-none focus:border-brand-emerald transition-all" 
+                    className="w-full bg-surface-solid border border-border-subtle rounded-xl py-4 pl-12 pr-12 text-[16px] font-bold text-text-main outline-none focus:border-brand-emerald transition-all" 
                     placeholder={idx === 0 ? "Tú" : `Nombre del amigo ${idx + 1}`}
                   />
                   {idx > 1 && (
@@ -352,7 +352,7 @@ export default function CompartirGastos() {
                       </h4>
                       <div className="card !p-8 border-brand-emerald/20 bg-brand-emerald/[0.01] space-y-4 shadow-[0_20px_50px_rgba(0,143,88,0.05)]">
                          {transferenciasSugeridas.map((t) => (
-                           <div key={`${t.deId}-${t.paraId}`} className="flex items-center justify-between p-6 bg-black border border-border-subtle rounded-2xl group hover:border-brand-emerald transition-all shadow-inner">
+                           <div key={`${t.deId}-${t.paraId}`} className="flex items-center justify-between p-6 bg-surface-solid border border-border-subtle rounded-2xl group hover:border-brand-emerald transition-all shadow-inner">
                               <div className="flex items-center gap-5">
                                  <span className="text-[15px] font-bold text-text-main">{t.de}</span>
                                  <ArrowRight size={16} className="text-text-muted opacity-20" />
@@ -386,7 +386,7 @@ export default function CompartirGastos() {
                           <input 
                             required
                             value={formGasto.desc} onChange={e => setFormGasto({...formGasto, desc: e.target.value})} 
-                            className="w-full bg-black border border-border-subtle rounded-xl p-6 text-[18px] font-bold text-text-main outline-none focus:border-white transition-all shadow-inner" 
+                            className="w-full bg-surface-solid border border-border-subtle rounded-xl p-6 text-[18px] font-bold text-text-main outline-none focus:border-white transition-all shadow-inner" 
                             placeholder="Cena, Gasolina, Supermercado..." 
                           />
                        </div>
@@ -397,7 +397,7 @@ export default function CompartirGastos() {
                                 <input 
                                   required
                                   type="number" step="0.01" value={formGasto.monto} onChange={e => setFormGasto({...formGasto, monto: e.target.value})} 
-                                  className="w-full bg-black border border-border-subtle rounded-xl p-6 text-3xl font-black text-text-main outline-none focus:border-brand-emerald transition-all" 
+                                  className="w-full bg-surface-solid border border-border-subtle rounded-xl p-6 text-3xl font-black text-text-main outline-none focus:border-brand-emerald transition-all" 
                                   placeholder="0.00" 
                                 />
                                 <span className="absolute right-6 top-1/2 -translate-y-1/2 text-text-muted font-bold text-xl">€</span>
@@ -409,7 +409,7 @@ export default function CompartirGastos() {
                                 <select 
                                   required
                                   value={formGasto.pagadoPor} onChange={e => setFormGasto({...formGasto, pagadoPor: e.target.value})} 
-                                  className="w-full bg-black border border-border-subtle rounded-xl p-6 text-[15px] font-bold text-text-main outline-none appearance-none cursor-pointer focus:border-brand-emerald shadow-inner"
+                                  className="w-full bg-surface-solid border border-border-subtle rounded-xl p-6 text-[15px] font-bold text-text-main outline-none appearance-none cursor-pointer focus:border-brand-emerald shadow-inner"
                                 >
                                   <option value="">Seleccionar persona...</option>
                                   {grupoSeleccionado.split_participantes?.map((p) => (

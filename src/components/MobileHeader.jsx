@@ -1,9 +1,11 @@
-import { LogOut } from 'lucide-react'
+import { LogOut, Sun, Moon } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { useStore } from '../store/useStore'
 
 export default function MobileHeader() {
   const navigate = useNavigate()
+  const { tema, toggleTema } = useStore()
 
   const cerrarSesion = async () => {
     await supabase.auth.signOut()
@@ -25,12 +27,21 @@ export default function MobileHeader() {
         </span>
       </button>
 
-      <button 
-        onClick={cerrarSesion}
-        className="p-2 text-text-muted hover:text-danger active:scale-90 transition-all"
-      >
-        <LogOut size={20} />
-      </button>
+      <div className="flex items-center gap-2">
+        <button 
+          onClick={toggleTema}
+          className="p-2 text-text-muted hover:text-text-main active:scale-90 transition-all"
+        >
+          {tema === 'dark' ? <Moon size={20} /> : <Sun size={20} className="text-warning" />}
+        </button>
+
+        <button 
+          onClick={cerrarSesion}
+          className="p-2 text-text-muted hover:text-danger active:scale-90 transition-all"
+        >
+          <LogOut size={20} />
+        </button>
+      </div>
     </header>
   )
 }

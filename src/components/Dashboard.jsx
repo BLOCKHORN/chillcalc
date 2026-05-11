@@ -4,7 +4,8 @@ import { motion } from 'framer-motion'
 import { 
   ArrowUpRight, ArrowDownRight, Wallet, 
   Plus, TrendingUp, TrendingDown, Bell, Landmark, ChevronRight,
-  PieChart as PieIcon, LineChart as ChartIcon, Calendar, ArrowRight
+  PieChart as PieIcon, LineChart as ChartIcon, Calendar, ArrowRight,
+  ArrowLeftRight
 } from 'lucide-react'
 import { 
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -90,37 +91,45 @@ export default function Dashboard() {
 
   return (
     <>
-      <div className="min-h-screen pb-24 pt-12 px-8 max-w-7xl mx-auto animate-apple">
+      <div className="min-h-screen pb-24 pt-4 md:pt-12 px-0 md:px-8 max-w-7xl mx-auto animate-apple">
         
         {/* AI Intelligence Row - Tighter */}
-        <div className="mb-12">
+        <div className="mb-10 md:mb-12">
            <InsightsWidget />
         </div>
 
         {/* Hero Header - Tighter */}
-        <header className="mb-16 flex flex-col md:flex-row justify-between items-end gap-10">
+        <header className="mb-12 md:mb-16 flex flex-col md:flex-row justify-between items-start md:items-end gap-8 md:gap-10 px-2 md:px-0">
           <div>
             <div className="flex items-center gap-2 mb-3">
                <div className="w-1.5 h-1.5 rounded-full bg-brand-emerald shadow-[0_0_8px_#008f58]" />
-               <h2 className="text-[11px] font-black text-text-muted uppercase tracking-[0.3em]">Patrimonio Consolidado</h2>
+               <h2 className="text-[10px] md:text-[11px] font-black text-text-muted uppercase tracking-[0.3em]">Patrimonio Consolidado</h2>
             </div>
-            <h1 className="text-6xl md:text-7xl font-bold tracking-tight text-text-main">
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-text-main">
               <PrivacyValue value={formatCurrency(patrimonioActual)} />
             </h1>
           </div>
-          <div className="flex gap-3">
+          <div className="flex md:flex-wrap gap-3 w-full md:w-auto overflow-x-auto no-scrollbar pb-2 md:pb-0 scroll-smooth">
             <button 
               onClick={() => abrirModal('ingreso')}
-              className="px-6 py-3 rounded-xl bg-text-main text-bg-app font-bold text-[14px] hover:opacity-90 active:scale-95 transition-all"
+              className="px-6 py-3.5 rounded-xl bg-brand-emerald text-white font-bold text-[13px] md:text-[14px] hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-brand-emerald/20 flex items-center justify-center gap-2 shrink-0 min-w-[120px] md:min-w-0"
             >
-              Añadir Capital
+              <Plus size={16} md:size={18} strokeWidth={3} /> Ingreso
             </button>
             <button 
               onClick={() => abrirModal('gasto')}
-              className="px-6 py-3 rounded-xl bg-white/[0.03] border border-border-subtle text-text-main font-bold text-[14px] hover:bg-white/[0.08] transition-all active:scale-95"
+              className="px-6 py-3.5 rounded-xl bg-danger text-white font-bold text-[13px] md:text-[14px] hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-danger/20 flex items-center justify-center gap-2 shrink-0 min-w-[120px] md:min-w-0"
             >
-              Gasto
+              <Plus size={16} md:size={18} strokeWidth={3} /> Gasto
             </button>
+            <button 
+              onClick={() => abrirModal('transferencia')}
+              className="px-6 py-3.5 rounded-xl bg-text-main/10 border border-text-main/5 text-text-main font-bold text-[13px] md:text-[14px] hover:bg-text-main/20 active:scale-95 transition-all flex items-center justify-center gap-2 shrink-0 min-w-[130px] md:min-w-0"
+            >
+              <ArrowLeftRight size={16} md:size={18} strokeWidth={2.5} /> Traspaso
+            </button>
+            {/* Indicador de más botones en móvil */}
+            <div className="w-4 shrink-0 md:hidden" />
           </div>
         </header>
 
@@ -147,7 +156,7 @@ export default function Dashboard() {
                </div>
             </div>
             <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" debounce={100}>
                 <AreaChart data={trendData}>
                   <defs>
                     <linearGradient id="appleGrad" x1="0" y1="0" x2="0" y2="1">

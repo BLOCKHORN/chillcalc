@@ -107,9 +107,8 @@ export default function Landing() {
         {/* Webflow-style Background Details */}
         <div className="absolute inset-0 z-0">
            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_50%_0%,_#1e293b_0%,_transparent_60%)] opacity-30" />
-           <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay" />
+           <div className="absolute inset-0 opacity-[0.03] mix-blend-overlay pointer-events-none" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
         </div>
-
         <motion.div style={{ y: yText, opacity: opacityText }} className="relative z-10 text-center max-w-5xl">
           <h1 className="text-6xl md:text-8xl font-bold tracking-tight mb-10 uppercase">
             TU PATRIMONIO,<br />

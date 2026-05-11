@@ -18,6 +18,7 @@ export const useStore = create((set, get) => ({
   tema: 'dark',
   toast: null,
   modoPrivacidad: false,
+  lastMarketUpdate: null,
 
   toggleModoPrivacidad: () => set(state => ({ modoPrivacidad: !state.modoPrivacidad })),
 
@@ -283,21 +284,46 @@ export const useStore = create((set, get) => ({
   },
 
   actualizarPreciosMercado: async (idEspecifico = null) => {
-    const { cuentas } = get()
+    const { cuentas, lastMarketUpdate } = get()
+    
+    // Si no es una actualización forzada (idEspecifico), solo actualizamos si ha pasado más de 1 hora
+    if (!idEspecifico && lastMarketUpdate) {
+      const unaHora = 60 * 60 * 1000
+      if (Date.now() - lastMarketUpdate < unaHora) {
+        console.log("Precios de mercado actualizados recientemente. Saltando actualización automática.")
+        return
+      }
+    }
+
     const cuentasInversion = cuentas.filter(c => c.tipo === 'inversion' && c.ticker && (!idEspecifico || c.id === idEspecifico))
     if (cuentasInversion.length === 0) return
+
     try {
-      const promesas = cuentasInversion.map(async (c) => {
+      let huboCambios = false
+      const nuevasCuentas = [...cuentas]
+
+      for (const c of cuentasInversion) {
         const precioReal = await getMarketPrice(c.ticker, c.moneda)
+        
         if (precioReal && precioReal > 0) {
           const { error } = await supabase.from('cuentas').update({ precio_actual: precioReal }).eq('id', c.id)
-          if (error) throw error
-          return { id: c.id, precioActual: precioReal }
+          if (!error) {
+            const idx = nuevasCuentas.findIndex(nc => nc.id === c.id)
+            if (idx !== -1) {
+              nuevasCuentas[idx] = { ...nuevasCuentas[idx], precioActual: precioReal }
+              huboCambios = true
+            }
+          }
         }
-        return null
-      })
-      await Promise.all(promesas)
-      await get().cargarDatosNube()
+        await new Promise(resolve => setTimeout(resolve, 1100))
+      }
+
+      if (huboCambios) {
+        set({ cuentas: nuevasCuentas, lastMarketUpdate: Date.now() })
+      } else if (!idEspecifico) {
+        // Marcamos la actualización aunque no haya cambios para evitar reintentos inmediatos si la API falló (429)
+        set({ lastMarketUpdate: Date.now() })
+      }
     } catch (error) {
       console.error("Error actualizando precios:", error)
     }
@@ -735,5 +761,60 @@ export const useStore = create((set, get) => ({
     const valorActual = inversiones.reduce((acc, c) => acc + Number(c.saldo || 0), 0)
     const rendimiento = invertido > 0 ? ((valorActual - invertido) / invertido) * 100 : 0
     return { invertido, valorActual, rendimiento }
+  },
+
+  cargarUsuariosAdmin: async () => {
+    const { data, error } = await supabase.from('perfiles').select('*').order('created_at', { ascending: false })
+    if (error) {
+      console.error(error)
+      return []
+    }
+    return data
+  },
+
+  cambiarRolAdmin: async (userId, nuevoRol) => {
+    const { mostrarToast } = get()
+    const { error } = await supabase.from('perfiles').update({ rol: nuevoRol }).eq('id', userId)
+    if (error) {
+      mostrarToast('Error al cambiar rol', 'error')
+      return false
+    }
+    mostrarToast('Rol actualizado', 'success')
+    return true
+  },
+
+  cargarEstadisticasAdmin: async () => {
+    try {
+      const { count: userCount } = await supabase.from('perfiles').select('*', { count: 'exact', head: true })
+      const { count: accountsCount } = await supabase.from('cuentas').select('*', { count: 'exact', head: true })
+      const { count: txCount } = await supabase.from('transacciones').select('*', { count: 'exact', head: true })
+      
+      return {
+        total_usuarios: userCount || 0,
+        total_cuentas: accountsCount || 0,
+        total_transacciones: txCount || 0
+      }
+    } catch (e) {
+      console.error(e)
+      return { total_usuarios: 0, total_cuentas: 0, total_transacciones: 0 }
+    }
+  },
+
+  cargarStatsUsuarioAdmin: async (userId) => {
+    try {
+      const { count: accountsCount } = await supabase.from('cuentas').select('*', { count: 'exact', head: true }).eq('user_id', userId)
+      const { count: txCount } = await supabase.from('transacciones').select('*', { count: 'exact', head: true }).eq('user_id', userId)
+      const { data: cuentas } = await supabase.from('cuentas').select('saldo').eq('user_id', userId)
+      const patrimonio = cuentas?.reduce((acc, c) => acc + (Number(c.saldo) || 0), 0) || 0
+
+      return {
+        cuentas: accountsCount || 0,
+        transacciones: txCount || 0,
+        patrimonio
+      }
+    } catch (e) {
+      console.error(e)
+      return { cuentas: 0, transacciones: 0, patrimonio: 0 }
+    }
   }
 }))

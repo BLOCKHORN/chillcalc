@@ -10,6 +10,12 @@ export const getMarketPrice = async (ticker, moneda = 'EUR') => {
     }
     
     const resStock = await fetch(`https://finnhub.io/api/v1/quote?symbol=${cleanTicker}&token=${FINNHUB_API_KEY}`)
+    
+    if (resStock.status === 429) {
+      console.warn("Finnhub: Rate limit excedido (429). Usando datos locales o reintentando luego.")
+      return null
+    }
+
     if (!resStock.ok) throw new Error("Fallo al conectar con Finnhub")
     
     const dataStock = await resStock.json()

@@ -55,16 +55,8 @@ export default function App() {
       if (session) useStore.getState().cargarDatosNube()
     })
 
-    const intervalId = setInterval(() => {
-      const { cuentas, actualizarPreciosMercado } = useStore.getState()
-      if (cuentas.some(c => c.tipo === 'inversion')) {
-        actualizarPreciosMercado()
-      }
-    }, 3600000)
-
     return () => {
       subscription?.unsubscribe()
-      clearInterval(intervalId)
     }
   }, [tema])
 
