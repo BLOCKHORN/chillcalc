@@ -4,32 +4,37 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Users, Plus, Trash2, ArrowRight, ChevronLeft, UserPlus, 
   Receipt, Share2, Check, ArrowRightLeft, Wallet, HandCoins, 
-  User, Send, X, MoreHorizontal, Info, Globe, ShieldCheck, Zap, ChevronRight
+  User, Send, X, MoreHorizontal, Info, Globe, ShieldCheck, Zap, ChevronRight,
+  AlertCircle
 } from 'lucide-react'
 import PrivacyValue from './PrivacyValue'
 
 const calcularBalances = (grupo) => {
-  const { split_participantes: integrantes, split_gastos: gastos, split_liquidaciones: liquidaciones = [] } = grupo
+  const { split_participantes: integrantes = [], split_gastos: gastos = [], split_liquidaciones: liquidaciones = [] } = grupo
   if (!integrantes || integrantes.length === 0) return []
   
   const balances = {}
   integrantes.forEach(p => balances[p.id] = 0)
   
-  const totalGastado = gastos.reduce((acc, g) => acc + Number(g.monto), 0)
+  const totalGastado = gastos.reduce((acc, g) => acc + Number(g.monto || 0), 0)
   const cuotaPorPersona = totalGastado / integrantes.length
   
-  gastos.forEach(g => balances[g.pagado_por_id] += Number(g.monto))
+  gastos.forEach(g => {
+    if (balances[g.pagado_por_id] !== undefined) {
+      balances[g.pagado_por_id] += Number(g.monto || 0)
+    }
+  })
 
   return integrantes.map(p => {
-    let balanceBase = balances[p.id] - cuotaPorPersona
-    const pagosHechos = liquidaciones.filter(l => l.deudor_id === p.id).reduce((acc, l) => acc + Number(l.monto), 0)
-    const pagosRecibidos = liquidaciones.filter(l => l.acreedor_id === p.id).reduce((acc, l) => acc + Number(l.monto), 0)
+    let balanceBase = (balances[p.id] || 0) - cuotaPorPersona
+    const pagosHechos = liquidaciones.filter(l => l.deudor_id === p.id).reduce((acc, l) => acc + Number(l.monto || 0), 0)
+    const pagosRecibidos = liquidaciones.filter(l => l.acreedor_id === p.id).reduce((acc, l) => acc + Number(l.monto || 0), 0)
     const balanceFinal = balanceBase + pagosHechos - pagosRecibidos
 
     return { 
       ...p, 
-      balance: balanceFinal, 
-      pagadoTotal: balances[p.id] 
+      balance: isNaN(balanceFinal) ? 0 : balanceFinal, 
+      pagadoTotal: balances[p.id] || 0 
     }
   })
 }
@@ -38,7 +43,7 @@ export default function CompartirGastos() {
   const { 
     gruposSplit, crearGrupoSplit, eliminarGrupoSplit, 
     agregarGastoSplit, eliminarGastoSplit, obtenerEnlaceCompartir, 
-    registrarLiquidacionSplit, formatCurrency 
+    registrarLiquidacionSplit, formatCurrency, mostrarToast 
   } = useStore()
 
   const [grupoActivoId, setGrupoActivoId] = useState(null)
@@ -48,14 +53,15 @@ export default function CompartirGastos() {
   const [amigos, setAmigos] = useState(['Tú', ''])
   const [formGasto, setFormGasto] = useState({ desc: '', monto: '', pagadoPor: '' })
   const [copiado, setCopiado] = useState(false)
+  const [cargando, setCargando] = useState(false)
 
   const grupoSeleccionado = gruposSplit.find(g => g.id === grupoActivoId)
   const balances = useMemo(() => grupoSeleccionado ? calcularBalances(grupoSeleccionado) : [], [grupoSeleccionado])
 
   const transferenciasSugeridas = useMemo(() => {
     if (!balances.length) return []
-    const deudores = balances.filter(b => b.balance < -0.01).map(b => ({ ...b, balance: Math.abs(b.balance) })).sort((a, b) => b.balance - a.balance)
-    const acreedores = balances.filter(b => b.balance > 0.01).map(b => ({ ...b })).sort((a, b) => b.balance - a.balance)
+    const deudores = [...balances].filter(b => b.balance < -0.01).map(b => ({ ...b, balance: Math.abs(b.balance) })).sort((a, b) => b.balance - a.balance)
+    const acreedores = [...balances].filter(b => b.balance > 0.01).map(b => ({ ...b })).sort((a, b) => b.balance - a.balance)
     
     const trans = []
     let i = 0, j = 0
@@ -81,23 +87,40 @@ export default function CompartirGastos() {
 
   const handleCrearGrupo = async () => {
     const amigosFiltrados = amigos.filter(a => a.trim() !== '')
-    await crearGrupoSplit(nombreGrupo, amigosFiltrados)
-    setPasoCreacion(false); setNombreGrupo(''); setAmigos(['Tú', ''])
+    if (amigosFiltrados.length < 2) {
+      mostrarToast('Añade al menos un amigo', 'error')
+      return
+    }
+    setCargando(true)
+    const exito = await crearGrupoSplit(nombreGrupo, amigosFiltrados)
+    setCargando(false)
+    if (exito) {
+      setPasoCreacion(false); setNombreGrupo(''); setAmigos(['Tú', ''])
+    }
   }
 
   const handleNuevoGasto = async (e) => {
     e.preventDefault()
-    if (!formGasto.desc || !formGasto.monto || !formGasto.pagadoPor) return
+    if (!formGasto.desc || !formGasto.monto || !formGasto.pagadoPor) {
+      mostrarToast('Faltan campos obligatorios', 'error')
+      return
+    }
     const hoy = new Date()
     const fecha = `${String(hoy.getDate()).padStart(2, '0')}/${String(hoy.getMonth() + 1).padStart(2, '0')}/${hoy.getFullYear()}`
-    await agregarGastoSplit({
+    
+    setCargando(true)
+    const exito = await agregarGastoSplit({
       grupo_id: grupoActivoId,
       descripcion: formGasto.desc,
       monto: parseFloat(formGasto.monto),
       pagado_por_id: formGasto.pagadoPor,
       fecha
     })
-    setFormGasto({ desc: '', monto: '', pagadoPor: '' })
+    setCargando(false)
+    
+    if (exito) {
+      setFormGasto({ desc: '', monto: '', pagadoPor: '' })
+    }
   }
 
   const handleCompartir = async () => {
@@ -106,11 +129,15 @@ export default function CompartirGastos() {
     try {
       await navigator.clipboard.writeText(enlace)
       setCopiado(true); setTimeout(() => setCopiado(false), 2000)
-    } catch (err) { console.error(err) }
+      mostrarToast('Enlace de invitación copiado', 'success')
+    } catch (err) { 
+      console.error(err)
+      mostrarToast('No se pudo copiar el enlace', 'error')
+    }
   }
 
   const handleMarcarPagado = async (trans) => {
-    if (window.confirm(`¿Confirmas liquidación de ${formatCurrency(trans.monto)}?`)) {
+    if (window.confirm(`¿Confirmas que ${trans.de} ha pagado ${formatCurrency(trans.monto)} a ${trans.para}?`)) {
       await registrarLiquidacionSplit({
         grupo_id: grupoActivoId,
         deudor_id: trans.deId,
@@ -126,22 +153,22 @@ export default function CompartirGastos() {
         <header className="mb-16 flex items-center gap-6">
           <button onClick={() => setPasoCreacion(false)} className="p-4 bg-white/5 rounded-full border border-border-subtle hover:bg-white/10 transition-all shadow-xl"><ChevronLeft size={24}/></button>
           <div>
-             <h2 className="text-4xl font-bold tracking-tight text-text-main">Nuevo Engine</h2>
-             <p className="text-sm text-text-muted mt-1 uppercase tracking-widest font-bold">Inicialización de Protocolo</p>
+             <h2 className="text-4xl font-bold tracking-tight text-text-main">Nuevo Grupo</h2>
+             <p className="text-sm text-text-muted mt-1 uppercase tracking-widest font-bold">Dividir gastos con amigos</p>
           </div>
         </header>
 
         <div className="card space-y-12 !p-12 border-white/10 bg-white/[0.01]">
           <div className="space-y-4">
-            <label className="text-[11px] font-black uppercase text-text-muted tracking-[0.3em]">Identificador del Proyecto</label>
+            <label className="text-[11px] font-black uppercase text-text-muted tracking-[0.3em]">Nombre del viaje o evento</label>
             <input 
               value={nombreGrupo} onChange={e => setNombreGrupo(e.target.value)}
               className="w-full bg-black border border-border-subtle rounded-2xl p-6 text-2xl font-bold text-text-main outline-none focus:border-brand-emerald transition-all shadow-inner" 
-              placeholder="Ej: VIAJE_ROMA_2024"
+              placeholder="Ej: Viaje a Roma 🇮🇹"
             />
           </div>
           <div className="space-y-6">
-            <label className="text-[11px] font-black uppercase text-text-muted tracking-[0.3em]">Nodos Participantes</label>
+            <label className="text-[11px] font-black uppercase text-text-muted tracking-[0.3em]">¿Quién participa?</label>
             <div className="space-y-3">
               {amigos.map((amigo, idx) => (
                 <div key={idx} className="relative group">
@@ -150,7 +177,7 @@ export default function CompartirGastos() {
                     value={amigo} 
                     onChange={e => { const n = [...amigos]; n[idx] = e.target.value; setAmigos(n); }}
                     className="w-full bg-black border border-border-subtle rounded-xl py-4 pl-12 pr-12 text-[16px] font-bold text-text-main outline-none focus:border-brand-emerald transition-all" 
-                    placeholder={idx === 0 ? "Tú (Operador)" : `Socio ${idx + 1}`}
+                    placeholder={idx === 0 ? "Tú" : `Nombre del amigo ${idx + 1}`}
                   />
                   {idx > 1 && (
                     <button onClick={() => setAmigos(amigos.filter((_, i) => i !== idx))} className="absolute right-4 top-1/2 -translate-y-1/2 text-text-muted hover:text-danger opacity-0 group-hover:opacity-100 transition-all p-2">
@@ -163,16 +190,16 @@ export default function CompartirGastos() {
                 onClick={() => setAmigos([...amigos, ''])}
                 className="w-full py-5 border border-dashed border-border-subtle rounded-2xl text-text-muted text-[11px] font-black uppercase tracking-[0.3em] hover:text-white hover:bg-white/[0.02] transition-all"
               >
-                <Plus size={16} className="inline mr-2" /> Vincular Socio
+                <Plus size={16} className="inline mr-2" /> Añadir Persona
               </button>
             </div>
           </div>
           <button 
-            disabled={!nombreGrupo || amigos.filter(a => a !== '').length < 2}
+            disabled={!nombreGrupo || amigos.filter(a => a !== '').length < 2 || cargando}
             onClick={handleCrearGrupo}
             className="w-full btn-primary py-6 rounded-2xl text-[15px] font-bold shadow-2xl disabled:opacity-20"
           >
-            Sincronizar Shared Engine
+            {cargando ? 'Creando...' : 'Crear Grupo Tricount'}
           </button>
         </div>
       </div>
@@ -185,14 +212,14 @@ export default function CompartirGastos() {
         <>
           <header className="mb-24 flex flex-col md:flex-row justify-between items-end gap-12">
             <div>
-              <p className="text-[13px] font-semibold text-text-muted mb-3 tracking-tight uppercase">Protocolos de Colaboración</p>
-              <h1 className="text-7xl md:text-8xl font-bold tracking-tight text-text-main">Shared<span className="text-brand-emerald">.</span></h1>
+              <p className="text-[13px] font-semibold text-text-muted mb-3 tracking-tight uppercase">Gestión de Gastos Compartidos</p>
+              <h1 className="text-7xl md:text-8xl font-bold tracking-tight text-text-main">Dividir<span className="text-brand-emerald">.</span></h1>
             </div>
             <button 
               onClick={() => setPasoCreacion(true)}
               className="px-10 py-5 rounded-full bg-text-main text-bg-app font-bold text-[15px] hover:opacity-90 active:scale-95 transition-all shadow-2xl flex items-center gap-3"
             >
-              <Plus size={20} strokeWidth={3} /> Nuevo Engine
+              <Plus size={20} strokeWidth={3} /> Nuevo Grupo
             </button>
           </header>
 
@@ -209,14 +236,14 @@ export default function CompartirGastos() {
                          <Users size={28} strokeWidth={1.5} />
                       </div>
                       <div className="px-4 py-1.5 rounded-full bg-brand-emerald/5 border border-brand-emerald/20 text-[10px] font-black text-brand-emerald uppercase tracking-widest">
-                        {grupo.split_participantes?.length} Nodos
+                        {grupo.split_participantes?.length || 0} personas
                       </div>
                    </div>
                    <h3 className="text-3xl font-bold text-text-main tracking-tight leading-[1.1]">{grupo.nombre}</h3>
                 </div>
                 
                 <div className="p-10 border-t border-border-subtle bg-white/[0.01] flex items-center justify-between">
-                   <span className="text-[11px] font-black text-text-muted uppercase tracking-[0.3em]">Estado Activo</span>
+                   <span className="text-[11px] font-black text-text-muted uppercase tracking-[0.3em]">Abrir grupo</span>
                    <ArrowRight size={20} className="text-text-muted group-hover:text-brand-emerald group-hover:translate-x-1 transition-all" />
                 </div>
               </div>
@@ -225,8 +252,8 @@ export default function CompartirGastos() {
             {gruposSplit.length === 0 && (
               <div className="col-span-full card border-dashed !bg-transparent border-border-subtle/50 py-40 text-center">
                  <ShieldCheck size={48} className="mx-auto mb-8 text-text-muted opacity-20" strokeWidth={1} />
-                 <h3 className="text-2xl font-bold text-text-main mb-4 tracking-tight">Arquitectura Compartida Inactiva</h3>
-                 <p className="text-sm text-text-muted max-w-sm mx-auto leading-relaxed">Inicializa un Shared Engine para gestionar capital distribuido con total integridad técnica.</p>
+                 <h3 className="text-2xl font-bold text-text-main mb-4 tracking-tight">No tienes grupos activos</h3>
+                 <p className="text-sm text-text-muted max-w-sm mx-auto leading-relaxed">Crea un grupo para empezar a dividir gastos con tus amigos de forma sencilla.</p>
               </div>
             )}
           </div>
@@ -242,7 +269,7 @@ export default function CompartirGastos() {
                   <ChevronLeft size={28} />
                 </button>
                 <div className="overflow-hidden">
-                   <p className="text-[13px] font-semibold text-text-muted mb-2 tracking-tight uppercase">Engine en Ejecución</p>
+                   <p className="text-[13px] font-semibold text-text-muted mb-2 tracking-tight uppercase">Grupo Activo</p>
                    <h1 className="text-6xl font-bold tracking-tight text-text-main truncate leading-none">{grupoSeleccionado?.nombre}</h1>
                 </div>
               </div>
@@ -252,10 +279,10 @@ export default function CompartirGastos() {
                   onClick={handleCompartir}
                   className={`px-8 py-4 rounded-xl text-[14px] font-bold transition-all border shadow-2xl flex items-center gap-3 active:scale-95 ${copiado ? 'bg-brand-emerald text-white border-brand-emerald' : 'bg-white/5 text-text-main border-border-subtle hover:bg-white/10'}`}
                 >
-                  {copiado ? <><Check size={20} /> Token Copiado</> : <><Share2 size={20} className="text-brand-emerald" /> Generar Acceso</>}
+                  {copiado ? <><Check size={20} /> Enlace Copiado</> : <><Share2 size={20} className="text-brand-emerald" /> Compartir con Amigos</>}
                 </button>
                 <button 
-                  onClick={() => { if(confirm('¿Desmantelar este Shared Engine?')) { eliminarGrupoSplit(grupoSeleccionado.id); setGrupoActivoId(null); } }} 
+                  onClick={() => { if(confirm('¿Eliminar definitivamente este grupo?')) { eliminarGrupoSplit(grupoSeleccionado.id); setGrupoActivoId(null); } }} 
                   className="p-4 text-text-muted border border-border-subtle hover:text-danger hover:bg-danger/5 rounded-xl transition-all"
                 >
                   <Trash2 size={22} />
@@ -266,17 +293,17 @@ export default function CompartirGastos() {
            {/* Metrics Grid */}
            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
               <div className="card !p-10 border-white/5 bg-white/[0.01]">
-                <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.3em] mb-6">Capital Acumulado</p>
+                <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.3em] mb-6">Gasto Total</p>
                 <p className="text-5xl font-bold text-text-main tracking-tighter"><PrivacyValue value={formatCurrency(stats.total)} /></p>
               </div>
               <div className="card !p-10 border-white/5 bg-white/[0.01]">
-                <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.3em] mb-6">Ratio por Nodo</p>
+                <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.3em] mb-6">Cuota Media</p>
                 <p className="text-5xl font-bold text-text-main tracking-tighter"><PrivacyValue value={formatCurrency(stats.porPersona)} /></p>
               </div>
               <div className="card !p-10 border-brand-emerald/20 bg-brand-emerald/[0.02]">
-                <p className="text-[11px] font-black text-brand-emerald uppercase tracking-[0.3em] mb-6">Tu Posición Neta</p>
+                <p className="text-[11px] font-black text-brand-emerald uppercase tracking-[0.3em] mb-6">Tu Balance</p>
                 <p className="text-5xl font-bold text-brand-emerald tracking-tighter">
-                   <PrivacyValue value={formatCurrency(balances.find(b => b.nombre === 'Tú')?.balance || 0)} />
+                   <PrivacyValue value={formatCurrency(balances.find(b => b.nombre?.toLowerCase() === 'tú' || b.nombre?.toLowerCase() === 'yo')?.balance || balances[0]?.balance || 0)} />
                 </p>
               </div>
            </div>
@@ -286,10 +313,10 @@ export default function CompartirGastos() {
               <div className="lg:col-span-5 space-y-12">
                  <section>
                     <div className="flex items-center justify-between mb-10 px-2">
-                       <h4 className="text-[11px] font-black uppercase text-text-muted tracking-[0.4em]">Auditoría de Balances</h4>
+                       <h4 className="text-[11px] font-black uppercase text-text-muted tracking-[0.4em]">Balances Individuales</h4>
                        <div className="flex items-center gap-2">
                           <div className="w-1.5 h-1.5 rounded-full bg-brand-emerald shadow-[0_0_8px_#008f58]" />
-                          <span className="text-[10px] font-bold text-text-muted uppercase">Sincronizado</span>
+                          <span className="text-[10px] font-bold text-text-muted uppercase">Al día</span>
                        </div>
                     </div>
                     <div className="space-y-4">
@@ -300,11 +327,11 @@ export default function CompartirGastos() {
                             <div key={p.id} className="p-8 rounded-3xl bg-white/[0.01] border border-border-subtle flex items-center justify-between group hover:border-white/20 transition-all">
                                <div className="flex items-center gap-6">
                                   <div className={`w-14 h-14 rounded-2xl border border-border-subtle flex items-center justify-center text-[18px] font-bold ${isSettled ? 'text-text-muted bg-white/5' : (isPositive ? 'text-brand-emerald bg-brand-emerald/10 border-brand-emerald/20' : 'text-danger bg-danger/10 border-danger/20')}`}>
-                                     {p.nombre[0].toUpperCase()}
+                                     {p.nombre?.[0]?.toUpperCase() || '?'}
                                   </div>
                                   <div>
                                      <p className="text-[18px] font-bold text-text-main tracking-tight">{p.nombre}</p>
-                                     <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest mt-1.5 opacity-60">Fondo: {formatCurrency(p.pagadoTotal)}</p>
+                                     <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest mt-1.5 opacity-60">Pagó: {formatCurrency(p.pagadoTotal)}</p>
                                   </div>
                                </div>
                                <div className="text-right">
@@ -321,7 +348,7 @@ export default function CompartirGastos() {
                  {transferenciasSugeridas.length > 0 && (
                    <section className="animate-apple">
                       <h4 className="text-[11px] font-black uppercase text-text-muted mb-10 tracking-[0.4em] px-2 flex items-center gap-3">
-                         <Zap size={14} className="text-brand-emerald" /> Resolución de Conflictos
+                         <Zap size={14} className="text-brand-emerald" /> ¿Cómo liquidar deudas?
                       </h4>
                       <div className="card !p-8 border-brand-emerald/20 bg-brand-emerald/[0.01] space-y-4 shadow-[0_20px_50px_rgba(0,143,88,0.05)]">
                          {transferenciasSugeridas.map((t) => (
@@ -337,7 +364,7 @@ export default function CompartirGastos() {
                                    onClick={() => handleMarcarPagado(t)}
                                    className="px-6 py-2.5 bg-brand-emerald text-white rounded-xl text-[11px] font-black uppercase tracking-widest hover:brightness-110 active:scale-95 transition-all shadow-xl shadow-brand-emerald/20"
                                  >
-                                   Liquidar
+                                   Pagado
                                  </button>
                               </div>
                            </div>
@@ -351,22 +378,24 @@ export default function CompartirGastos() {
               <div className="lg:col-span-7 space-y-16">
                  <section>
                     <h4 className="text-[11px] font-black uppercase text-text-muted mb-10 tracking-[0.4em] px-2 flex items-center gap-3">
-                       <Plus size={14} className="text-brand-emerald" /> Registro de Operación
+                       <Plus size={14} className="text-brand-emerald" /> Añadir Gasto
                     </h4>
                     <form onSubmit={handleNuevoGasto} className="card !p-12 space-y-10 border-white/10 bg-white/[0.01] shadow-2xl">
                        <div className="space-y-4">
-                          <label className="text-[11px] font-black uppercase text-text-muted tracking-[0.3em]">Descripción del Concepto</label>
+                          <label className="text-[11px] font-black uppercase text-text-muted tracking-[0.3em]">¿Qué has pagado?</label>
                           <input 
+                            required
                             value={formGasto.desc} onChange={e => setFormGasto({...formGasto, desc: e.target.value})} 
                             className="w-full bg-black border border-border-subtle rounded-xl p-6 text-[18px] font-bold text-text-main outline-none focus:border-white transition-all shadow-inner" 
-                            placeholder="Cena institucional, Transporte, Logística..." 
+                            placeholder="Cena, Gasolina, Supermercado..." 
                           />
                        </div>
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                           <div className="space-y-4">
-                             <label className="text-[11px] font-black uppercase text-text-muted tracking-[0.3em]">Cuantía Atómica</label>
+                             <label className="text-[11px] font-black uppercase text-text-muted tracking-[0.3em]">Importe</label>
                              <div className="relative">
                                 <input 
+                                  required
                                   type="number" step="0.01" value={formGasto.monto} onChange={e => setFormGasto({...formGasto, monto: e.target.value})} 
                                   className="w-full bg-black border border-border-subtle rounded-xl p-6 text-3xl font-black text-text-main outline-none focus:border-brand-emerald transition-all" 
                                   placeholder="0.00" 
@@ -375,14 +404,15 @@ export default function CompartirGastos() {
                              </div>
                           </div>
                           <div className="space-y-4">
-                             <label className="text-[11px] font-black uppercase text-text-muted tracking-[0.3em]">Nodo Pagador</label>
+                             <label className="text-[11px] font-black uppercase text-text-muted tracking-[0.3em]">¿Quién lo ha pagado?</label>
                              <div className="relative">
                                 <select 
+                                  required
                                   value={formGasto.pagadoPor} onChange={e => setFormGasto({...formGasto, pagadoPor: e.target.value})} 
                                   className="w-full bg-black border border-border-subtle rounded-xl p-6 text-[15px] font-bold text-text-main outline-none appearance-none cursor-pointer focus:border-brand-emerald shadow-inner"
                                 >
-                                  <option value="">Seleccionar Nodo...</option>
-                                  {grupoSeleccionado.split_participantes.map((p) => (
+                                  <option value="">Seleccionar persona...</option>
+                                  {grupoSeleccionado.split_participantes?.map((p) => (
                                     <option key={p.id} value={p.id}>{p.nombre}</option>
                                   ))}
                                 </select>
@@ -390,18 +420,28 @@ export default function CompartirGastos() {
                              </div>
                           </div>
                        </div>
-                       <button type="submit" className="w-full btn-primary py-6 rounded-2xl text-[15px] font-bold shadow-[0_20px_50px_rgba(255,255,255,0.1)] flex items-center justify-center gap-4 transition-all">
-                          <Send size={20} strokeWidth={2.5} /> Ejecutar Operación
+                       
+                       <div className="p-4 bg-brand-emerald/5 border border-brand-emerald/10 rounded-xl flex items-center gap-3">
+                          <Info size={18} className="text-brand-emerald shrink-0" />
+                          <p className="text-[11px] font-medium text-brand-emerald/80 leading-snug">El gasto se dividirá a partes iguales entre todos los participantes del grupo.</p>
+                       </div>
+
+                       <button 
+                        type="submit" 
+                        disabled={cargando}
+                        className="w-full btn-primary py-6 rounded-2xl text-[15px] font-bold shadow-[0_20px_50px_rgba(255,255,255,0.1)] flex items-center justify-center gap-4 transition-all disabled:opacity-50"
+                       >
+                          {cargando ? 'Guardando...' : <><Send size={20} strokeWidth={2.5} /> Guardar Gasto</>}
                        </button>
                     </form>
 
                     <div className="space-y-4">
                        <div className="flex items-center justify-between mb-8 px-2">
-                          <h4 className="text-[11px] font-black uppercase text-text-muted tracking-[0.4em]">Historial Técnico</h4>
-                          <div className="px-3 py-1 rounded-full border border-border-subtle text-[9px] font-black text-text-muted uppercase tracking-widest">{grupoSeleccionado.split_gastos.length} Entradas</div>
+                          <h4 className="text-[11px] font-black uppercase text-text-muted tracking-[0.4em]">Historial de Gastos</h4>
+                          <div className="px-3 py-1 rounded-full border border-border-subtle text-[9px] font-black text-text-muted uppercase tracking-widest">{(grupoSeleccionado.split_gastos || []).length} registros</div>
                        </div>
-                       {[...grupoSeleccionado.split_gastos].reverse().map(g => {
-                          const pagador = grupoSeleccionado.split_participantes.find(p => p.id === g.pagado_por_id)
+                       {[...(grupoSeleccionado.split_gastos || [])].reverse().map(g => {
+                          const pagador = (grupoSeleccionado.split_participantes || []).find(p => p.id === g.pagado_por_id)
                           return (
                             <div key={g.id} className="flex items-center justify-between p-8 bg-white/[0.01] border border-border-subtle rounded-3xl group transition-all hover:bg-white/[0.02] hover:border-white/10">
                                <div className="flex items-center gap-8 overflow-hidden">
@@ -411,12 +451,12 @@ export default function CompartirGastos() {
                                   <div className="overflow-hidden">
                                      <p className="text-[19px] font-bold text-text-main truncate tracking-tight mb-1">{g.descripcion}</p>
                                      <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.2em] opacity-60">
-                                        {g.fecha} • {pagador?.nombre} ejecutó <span className="text-text-main">{formatCurrency(g.monto)}</span>
+                                        {g.fecha} • {pagador?.nombre} pagó <span className="text-text-main">{formatCurrency(g.monto)}</span>
                                      </p>
                                   </div>
                                </div>
                                <button 
-                                 onClick={() => { if(confirm('¿Eliminar registro de auditoría?')) eliminarGastoSplit(g.id) }} 
+                                 onClick={() => { if(confirm('¿Eliminar este registro?')) eliminarGastoSplit(g.id) }} 
                                  className="p-3 text-text-muted hover:text-danger opacity-0 group-hover:opacity-100 transition-all active:scale-90"
                                >
                                  <Trash2 size={20} />
@@ -424,10 +464,10 @@ export default function CompartirGastos() {
                             </div>
                           )
                        })}
-                       {grupoSeleccionado.split_gastos.length === 0 && (
+                       {(grupoSeleccionado.split_gastos || []).length === 0 && (
                          <div className="py-40 text-center card border-dashed !bg-transparent border-border-subtle/50">
                             <Info size={40} className="mx-auto mb-6 text-text-muted opacity-10" strokeWidth={1} />
-                            <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.4em]">Sin registros de actividad</p>
+                            <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.4em]">Sin movimientos</p>
                          </div>
                        )}
                     </div>

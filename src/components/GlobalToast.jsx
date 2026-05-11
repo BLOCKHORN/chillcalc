@@ -4,17 +4,8 @@ import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react'
 
 export default function GlobalToast() {
   const toast = useStore(state => state.toast)
-  const [visible, setVisible] = useState(false)
 
-  useEffect(() => {
-    if (toast) {
-      setVisible(true)
-    } else {
-      setVisible(false)
-    }
-  }, [toast])
-
-  if (!visible || !toast) return null
+  if (!toast) return null
 
   const config = {
     success: {

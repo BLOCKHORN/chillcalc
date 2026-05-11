@@ -11,21 +11,21 @@ export default function ModalObjetivo({ isOpen, onClose, objetivoEditandoId }) {
   const [tasa, setTasa] = useState('10')
 
   useEffect(() => {
-    if (objetivoEditandoId) {
+    if (isOpen) {
       const obj = objetivos.find(o => o.id === objetivoEditandoId)
       if (obj) {
         setNombre(obj.nombre)
         setMeta(obj.meta)
         setAportacionExtra(obj.aportacionExtra || 0)
         setTasa(obj.tasa || 10)
+      } else {
+        setNombre('')
+        setMeta('')
+        setAportacionExtra('')
+        setTasa(10)
       }
-    } else {
-      setNombre('')
-      setMeta('')
-      setAportacionExtra('')
-      setTasa('10')
     }
-  }, [objetivoEditandoId, isOpen, objetivos])
+  }, [objetivoEditandoId, isOpen])
 
   if (!isOpen) return null
 

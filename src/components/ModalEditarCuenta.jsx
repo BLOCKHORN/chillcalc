@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useStore } from '../store/useStore'
-import { X, Globe, Wallet, Percent, Lock } from 'lucide-react'
+import { X, Globe, Wallet, Percent } from 'lucide-react'
 
 export default function ModalEditarCuenta({ isOpen, onClose, cuentaId }) {
   const { cuentas, editarCuenta } = useStore()
@@ -12,26 +12,27 @@ export default function ModalEditarCuenta({ isOpen, onClose, cuentaId }) {
   const [moneda, setMoneda] = useState('EUR')
 
   useEffect(() => {
-    const cuenta = cuentas.find(c => c.id === cuentaId)
-    if (cuenta && isOpen) {
-      setNombre(cuenta.nombre)
-      setSaldo(cuenta.saldo)
-      setTae(cuenta.tae || 0)
-      setTipo(cuenta.tipo)
-      setTicker(cuenta.ticker || '')
-      setMoneda(cuenta.moneda || 'EUR')
+    if (isOpen) {
+      const cuenta = cuentas.find(c => c.id === cuentaId)
+      if (cuenta) {
+        setNombre(cuenta.nombre)
+        setSaldo(cuenta.saldo)
+        setTae(cuenta.tae || 0)
+        setTipo(cuenta.tipo)
+        setTicker(cuenta.ticker || '')
+        setMoneda(cuenta.moneda || 'EUR')
+      }
     }
-  }, [cuentaId, cuentas, isOpen])
+  }, [cuentaId, isOpen]) // Eliminamos 'cuentas' de las dependencias para evitar reseteos al teclear
 
   if (!isOpen) return null
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    const cuentaOriginal = cuentas.find(c => c.id === cuentaId)
     
     const datosActualizados = {
       nombre,
-      saldo: tipo === 'inversion' ? cuentaOriginal.saldo : (parseFloat(saldo) || 0),
+      saldo: parseFloat(saldo) || 0,
       tae: tipo === 'remunerada' ? (parseFloat(tae) || 0) : 0,
       ticker: tipo === 'inversion' ? ticker.toUpperCase().trim() : null,
       moneda: tipo === 'inversion' ? moneda : 'EUR'
@@ -71,20 +72,18 @@ export default function ModalEditarCuenta({ isOpen, onClose, cuentaId }) {
 
           <div className="grid grid-cols-1 gap-4">
             
-            {tipo !== 'inversion' && (
-              <div>
-                <label className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest mb-2 px-1">
-                  <Wallet size={12} /> Saldo Actual (€)
-                </label>
-                <input 
-                  type="number" step="0.01" 
-                  className="w-full bg-surface-solid border border-border-subtle rounded-xl px-4 py-3.5 text-text-main font-bold focus:outline-none focus:border-brand-500 transition-all" 
-                  value={saldo} 
-                  onChange={e => setSaldo(e.target.value)} 
-                  required
-                />
-              </div>
-            )}
+            <div>
+              <label className="flex items-center gap-2 text-[10px] font-black text-text-muted uppercase tracking-widest mb-2 px-1">
+                <Wallet size={12} /> Saldo Actual (€)
+              </label>
+              <input 
+                type="number" step="0.01" 
+                className="w-full bg-surface-solid border border-border-subtle rounded-xl px-4 py-3.5 text-text-main font-bold focus:outline-none focus:border-brand-500 transition-all" 
+                value={saldo} 
+                onChange={e => setSaldo(e.target.value)} 
+                required
+              />
+            </div>
 
             {tipo === 'inversion' && (
               <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
@@ -120,13 +119,6 @@ export default function ModalEditarCuenta({ isOpen, onClose, cuentaId }) {
                       USD ($)
                     </button>
                   </div>
-                </div>
-
-                <div className="bg-surface border border-border-subtle rounded-xl p-4 flex items-start gap-3 mt-2 opacity-70">
-                  <Lock size={16} className="text-text-muted shrink-0 mt-0.5" />
-                  <p className="text-[10px] text-text-muted font-bold leading-relaxed">
-                    El saldo, capital invertido y precio medio de esta cuenta se calculan automáticamente basándose en las transacciones que registres. No se pueden editar manualmente.
-                  </p>
                 </div>
               </div>
             )}

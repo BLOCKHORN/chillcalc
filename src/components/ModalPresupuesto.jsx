@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useStore } from '../store/useStore'
-import { X, Target, Percent, Sparkles, ShieldCheck, Zap } from 'lucide-react'
+import { X, Target, Sparkles, ShieldCheck, Zap, Info } from 'lucide-react'
 
 export default function ModalPresupuesto({ isOpen, onClose, categoriaInicial }) {
   const { actualizarPresupuesto, presupuestos, categorias } = useStore()
@@ -8,16 +8,18 @@ export default function ModalPresupuesto({ isOpen, onClose, categoriaInicial }) 
   const [limite, setLimite] = useState('')
 
   useEffect(() => {
-    if (categoriaInicial) {
-      setCategoria(categoriaInicial)
-      const exist = presupuestos.find(p => p.categoria === categoriaInicial)
-      if (exist) setLimite(exist.limite)
-      else setLimite('')
-    } else {
-      setCategoria('')
-      setLimite('')
+    if (isOpen) {
+      if (categoriaInicial) {
+        setCategoria(categoriaInicial)
+        const exist = presupuestos.find(p => p.categoria === categoriaInicial)
+        if (exist) setLimite(exist.limite)
+        else setLimite('')
+      } else {
+        setCategoria('')
+        setLimite('')
+      }
     }
-  }, [categoriaInicial, presupuestos, isOpen])
+  }, [categoriaInicial, isOpen])
 
   if (!isOpen) return null
 

@@ -71,7 +71,7 @@ export default function Dashboard() {
   const stats = useMemo(() => {
     const txsFiltradas = transacciones.filter(t => {
       const [_, m, a] = t.fecha.split('/')
-      return `${m}/${a}` === filtroMes && t.tipo !== 'transferencia'
+      return `${m}/${a}` === filtroMes && t.tipo !== 'transferencia' && t.categoria !== 'Ajuste'
     })
     let gas = txsFiltradas.filter(t => t.tipo === 'gasto').reduce((acc, t) => acc + t.monto, 0)
     const catMap = {}

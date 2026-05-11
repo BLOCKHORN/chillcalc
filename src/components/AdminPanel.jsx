@@ -13,12 +13,6 @@ export default function AdminPanel() {
   const [statsUsuarios, setStatsUsuarios] = useState({})
   const [cargandoDetalle, setCargandoDetalle] = useState(false)
 
-  useEffect(() => {
-    if (rolUsuario === 'admin') {
-      inicializarPanel()
-    }
-  }, [rolUsuario])
-
   const inicializarPanel = async () => {
     setCargando(true)
     const [lista, metricas] = await Promise.all([
@@ -29,6 +23,12 @@ export default function AdminPanel() {
     setStatsGlobales(metricas)
     setCargando(false)
   }
+
+  useEffect(() => {
+    if (rolUsuario === 'admin') {
+      inicializarPanel()
+    }
+  }, [rolUsuario])
 
   const toggleUsuario = async (userId) => {
     if (usuarioExpandido === userId) {

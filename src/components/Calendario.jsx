@@ -24,6 +24,9 @@ export default function Calendario() {
   const flowData = useMemo(() => {
     const data = {}
     transacciones.forEach(tx => {
+      // Excluimos la categoría 'Ajuste' de los totales del calendario
+      if (tx.categoria === 'Ajuste') return
+
       const [d, m, y] = tx.fecha.split('/')
       if (parseInt(m) === currentDate.getMonth() + 1 && parseInt(y) === currentDate.getFullYear()) {
         const dia = parseInt(d)

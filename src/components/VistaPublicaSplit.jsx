@@ -1,56 +1,92 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useStore } from '../store/useStore'
 import { motion } from 'framer-motion'
-import { Users, Receipt, ArrowRightLeft, Loader2, Info, Landmark, CheckCircle2, Wallet, HandCoins, ArrowRight } from 'lucide-react'
+import { 
+  Users, Receipt, ArrowRightLeft, Loader2, Info, Landmark, 
+  CheckCircle2, Wallet, HandCoins, ArrowRight, Plus, Send, ChevronRight
+} from 'lucide-react'
 import PrivacyValue from './PrivacyValue'
 
 const calcularBalances = (grupo) => {
-  const { split_participantes: integrantes, split_gastos: gastos, split_liquidaciones: liquidaciones = [] } = grupo
+  const { split_participantes: integrantes = [], split_gastos: gastos = [], split_liquidaciones: liquidaciones = [] } = grupo
   if (!integrantes || integrantes.length === 0) return []
   
   const balances = {}
   integrantes.forEach(p => balances[p.id] = 0)
   
-  const totalGastado = gastos.reduce((acc, g) => acc + Number(g.monto), 0)
+  const totalGastado = gastos.reduce((acc, g) => acc + Number(g.monto || 0), 0)
   const cuotaPorPersona = totalGastado / integrantes.length
   
-  gastos.forEach(g => balances[g.pagado_por_id] += Number(g.monto))
+  gastos.forEach(g => {
+    if (balances[g.pagado_por_id] !== undefined) {
+      balances[g.pagado_por_id] += Number(g.monto || 0)
+    }
+  })
 
   return integrantes.map(p => {
-    let balanceBase = balances[p.id] - cuotaPorPersona
-    const pagosHechos = liquidaciones.filter(l => l.deudor_id === p.id).reduce((acc, l) => acc + Number(l.monto), 0)
-    const pagosRecibidos = liquidaciones.filter(l => l.acreedor_id === p.id).reduce((acc, l) => acc + Number(l.monto), 0)
+    let balanceBase = (balances[p.id] || 0) - cuotaPorPersona
+    const pagosHechos = liquidaciones.filter(l => l.deudor_id === p.id).reduce((acc, l) => acc + Number(l.monto || 0), 0)
+    const pagosRecibidos = liquidaciones.filter(l => l.acreedor_id === p.id).reduce((acc, l) => acc + Number(l.monto || 0), 0)
     const balanceFinal = balanceBase + pagosHechos - pagosRecibidos
 
     return { 
       ...p, 
-      balance: balanceFinal, 
-      pagadoTotal: balances[p.id] 
+      balance: isNaN(balanceFinal) ? 0 : balanceFinal, 
+      pagadoTotal: balances[p.id] || 0 
     }
   })
 }
 
 export default function VistaPublicaSplit({ token }) {
-  const { cargarGrupoPublico, formatCurrency } = useStore()
+  const { cargarGrupoPublico, agregarGastoSplit, formatCurrency, mostrarToast } = useStore()
   
   const [grupo, setGrupo] = useState(null)
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(false)
+  
+  const [formGasto, setFormGasto] = useState({ desc: '', monto: '', pagadoPor: '' })
+  const [enviando, setEnviando] = useState(false)
+
+  const cargarDatos = async () => {
+    const data = await cargarGrupoPublico(token)
+    if (data) setGrupo(data)
+    else setError(true)
+    setCargando(false)
+  }
 
   useEffect(() => {
-    // Forzar modo oscuro para consistencia de marca
     document.documentElement.classList.remove('light-mode') 
-    const cargarDatos = async () => {
-      const data = await cargarGrupoPublico(token)
-      if (data) setGrupo(data)
-      else setError(true)
-      setCargando(false)
-    }
     cargarDatos()
   }, [token, cargarGrupoPublico])
 
   const balances = useMemo(() => grupo ? calcularBalances(grupo) : [], [grupo])
   const totalGrupo = useMemo(() => grupo?.split_gastos?.reduce((acc, g) => acc + Number(g.monto), 0) || 0, [grupo])
+
+  const handleNuevoGasto = async (e) => {
+    e.preventDefault()
+    if (!formGasto.desc || !formGasto.monto || !formGasto.pagadoPor) {
+      mostrarToast('Faltan campos obligatorios', 'error')
+      return
+    }
+    
+    setEnviando(true)
+    const hoy = new Date()
+    const fecha = `${String(hoy.getDate()).padStart(2, '0')}/${String(hoy.getMonth() + 1).padStart(2, '0')}/${hoy.getFullYear()}`
+    
+    const exito = await agregarGastoSplit({
+      grupo_id: grupo.id,
+      descripcion: formGasto.desc,
+      monto: parseFloat(formGasto.monto),
+      pagado_por_id: formGasto.pagadoPor,
+      fecha
+    })
+    
+    if (exito) {
+      setFormGasto({ desc: '', monto: '', pagadoPor: '' })
+      await cargarDatos() // Recargamos para ver el nuevo gasto
+    }
+    setEnviando(false)
+  }
 
   if (cargando) {
     return (
@@ -78,7 +114,7 @@ export default function VistaPublicaSplit({ token }) {
 
   return (
     <div className="min-h-screen bg-black text-white selection:bg-brand-emerald selection:text-white pb-32 animate-apple">
-      <div className="max-w-5xl mx-auto px-8 pt-20">
+      <div className="max-w-7xl mx-auto px-8 pt-20">
         
         <header className="mb-20 flex flex-col md:flex-row justify-between items-end gap-12">
           <div>
@@ -91,7 +127,7 @@ export default function VistaPublicaSplit({ token }) {
             <h1 className="text-6xl md:text-7xl font-bold tracking-tight text-white mb-2">{grupo.nombre}</h1>
             <div className="flex items-center gap-2 text-text-muted mt-4">
                <CheckCircle2 size={14} className="text-brand-emerald" />
-               <p className="text-[13px] font-bold uppercase tracking-widest">{grupo.split_participantes.length} Participantes Sincronizados</p>
+               <p className="text-[13px] font-bold uppercase tracking-widest">{grupo.split_participantes.length} Amigos Sincronizados</p>
             </div>
           </div>
           <div className="text-right">
@@ -100,38 +136,88 @@ export default function VistaPublicaSplit({ token }) {
           </div>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          <section className="lg:col-span-5 space-y-8">
-            <h2 className="text-[11px] font-black uppercase text-text-muted tracking-[0.3em] px-2 flex items-center gap-2">
-              <ArrowRightLeft size={14} className="text-brand-emerald" /> Estado de Balances
-            </h2>
-            <div className="space-y-4">
-              {balances.map(p => {
-                const isPositive = p.balance > 0.01
-                const isSettled = Math.abs(p.balance) < 0.01
-                return (
-                  <div key={p.id} className="card !p-8 flex items-center justify-between group hover:border-border-focus transition-all">
-                     <div className="flex items-center gap-5">
-                        <div className={`w-12 h-12 rounded-full border border-border-subtle flex items-center justify-center text-[15px] font-black ${isSettled ? 'text-text-muted' : (isPositive ? 'text-brand-emerald bg-brand-emerald/5' : 'text-danger bg-danger/5')}`}>
-                           {p.nombre[0].toUpperCase()}
-                        </div>
-                        <div>
-                           <p className="text-[17px] font-bold text-white truncate">{p.nombre}</p>
-                           <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest mt-1">Total Aportado: {formatCurrency(p.pagadoTotal)}</p>
-                        </div>
-                     </div>
-                     <div className="text-right">
-                        <p className={`text-2xl font-bold tracking-tighter ${isSettled ? 'text-text-muted' : (isPositive ? 'text-brand-emerald' : 'text-danger')}`}>
-                          {isPositive ? '+' : ''}{formatCurrency(isSettled ? 0 : p.balance)}
-                        </p>
-                     </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
+          <section className="lg:col-span-4 space-y-12">
+            <div>
+              <h2 className="text-[11px] font-black uppercase text-text-muted tracking-[0.3em] px-2 mb-10 flex items-center gap-2">
+                <ArrowRightLeft size={14} className="text-brand-emerald" /> Estado de Balances
+              </h2>
+              <div className="space-y-4">
+                {balances.map(p => {
+                  const isPositive = p.balance > 0.01
+                  const isSettled = Math.abs(p.balance) < 0.01
+                  return (
+                    <div key={p.id} className="card !p-8 flex items-center justify-between group hover:border-border-focus transition-all bg-white/[0.01]">
+                       <div className="flex items-center gap-5">
+                          <div className={`w-12 h-12 rounded-full border border-border-subtle flex items-center justify-center text-[15px] font-black ${isSettled ? 'text-text-muted' : (isPositive ? 'text-brand-emerald bg-brand-emerald/5' : 'text-danger bg-danger/5')}`}>
+                             {p.nombre[0].toUpperCase()}
+                          </div>
+                          <div>
+                             <p className="text-[17px] font-bold text-white truncate">{p.nombre}</p>
+                             <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest mt-1">Total Aportado: {formatCurrency(p.pagadoTotal)}</p>
+                          </div>
+                       </div>
+                       <div className="text-right">
+                          <p className={`text-2xl font-bold tracking-tighter ${isSettled ? 'text-text-muted' : (isPositive ? 'text-brand-emerald' : 'text-danger')}`}>
+                            {isPositive ? '+' : ''}{formatCurrency(isSettled ? 0 : p.balance)}
+                          </p>
+                       </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Formulario rápido para añadir gasto desde fuera */}
+            <div className="card !p-8 border-brand-emerald/20 bg-brand-emerald/[0.02]">
+               <h3 className="text-[11px] font-black uppercase text-brand-emerald tracking-[0.3em] mb-8 flex items-center gap-2">
+                  <Plus size={14} /> Registrar Nuevo Gasto
+               </h3>
+               <form onSubmit={handleNuevoGasto} className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-black uppercase text-text-muted tracking-widest ml-1">Concepto</label>
+                    <input 
+                      required
+                      value={formGasto.desc} onChange={e => setFormGasto({...formGasto, desc: e.target.value})}
+                      className="w-full bg-black border border-border-subtle rounded-xl p-4 text-[14px] font-bold outline-none focus:border-brand-emerald transition-all" 
+                      placeholder="Ej: Cena del viernes"
+                    />
                   </div>
-                )
-              })}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black uppercase text-text-muted tracking-widest ml-1">Importe (€)</label>
+                      <input 
+                        required
+                        type="number" step="0.01" value={formGasto.monto} onChange={e => setFormGasto({...formGasto, monto: e.target.value})}
+                        className="w-full bg-black border border-border-subtle rounded-xl p-4 text-[14px] font-bold outline-none focus:border-brand-emerald transition-all" 
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[9px] font-black uppercase text-text-muted tracking-widest ml-1">Pagado por</label>
+                      <select 
+                        required
+                        value={formGasto.pagadoPor} onChange={e => setFormGasto({...formGasto, pagadoPor: e.target.value})}
+                        className="w-full bg-black border border-border-subtle rounded-xl p-4 text-[14px] font-bold outline-none appearance-none cursor-pointer focus:border-brand-emerald transition-all"
+                      >
+                        <option value="">Seleccionar...</option>
+                        {grupo.split_participantes.map(p => (
+                          <option key={p.id} value={p.id}>{p.nombre}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <button 
+                    disabled={enviando}
+                    className="w-full btn-primary py-4 rounded-xl text-[13px] font-bold flex items-center justify-center gap-3 active:scale-95 transition-all disabled:opacity-50"
+                  >
+                    {enviando ? 'Sincronizando...' : <><Send size={16} /> Añadir Gasto</>}
+                  </button>
+               </form>
             </div>
           </section>
 
-          <section className="lg:col-span-7 space-y-8">
+          <section className="lg:col-span-8 space-y-8">
             <div className="flex items-center justify-between px-2">
               <h3 className="text-[11px] font-black uppercase text-text-muted tracking-[0.3em] flex items-center gap-2">
                 <Receipt size={14} className="text-brand-emerald" /> Historial de Operaciones
@@ -139,7 +225,7 @@ export default function VistaPublicaSplit({ token }) {
               <span className="text-[10px] font-bold text-text-muted bg-white/5 px-3 py-1 rounded-full uppercase tracking-widest">{grupo.split_gastos.length} Registros</span>
             </div>
             
-            <div className="card !p-0 overflow-hidden divide-y divide-border-subtle/50">
+            <div className="card !p-0 overflow-hidden divide-y divide-border-subtle/50 bg-white/[0.01]">
               {grupo.split_gastos.length > 0 ? (
                 [...grupo.split_gastos].reverse().map(g => (
                   <div key={g.id} className="p-8 flex items-center justify-between group hover:bg-white/[0.01] transition-all">

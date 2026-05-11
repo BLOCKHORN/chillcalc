@@ -21,6 +21,11 @@ export const useStore = create((set, get) => ({
 
   toggleModoPrivacidad: () => set(state => ({ modoPrivacidad: !state.modoPrivacidad })),
 
+  getHoyFormatted: () => {
+    const hoy = new Date()
+    return `${String(hoy.getDate()).padStart(2, '0')}/${String(hoy.getMonth() + 1).padStart(2, '0')}/${hoy.getFullYear()}`
+  },
+
   formatCurrency: (amount) => {
     return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(amount || 0)
   },
@@ -200,7 +205,7 @@ export const useStore = create((set, get) => ({
 
     presupuestos.forEach(p => {
       const gastoActual = transacciones
-        .filter(t => t.categoria === p.categoria && t.tipo === 'gasto')
+        .filter(t => t.categoria === p.categoria && t.tipo === 'gasto' && t.categoria !== 'Ajuste')
         .filter(t => {
           const partes = t.fecha.split('/')
           return parseInt(partes[1]) === currentMonth && parseInt(partes[2]) === currentYear
@@ -217,10 +222,10 @@ export const useStore = create((set, get) => ({
       }
     })
 
-    const categoriasUnicas = [...new Set(transacciones.map(t => t.categoria))]
+    const categoriasUnicas = [...new Set(transacciones.map(t => t.categoria))].filter(cat => cat !== 'Ajuste')
     categoriasUnicas.forEach(cat => {
       const getGasto = (m, y) => transacciones
-        .filter(t => t.categoria === cat && t.tipo === 'gasto')
+        .filter(t => t.categoria === cat && t.tipo === 'gasto' && t.categoria !== 'Ajuste')
         .filter(t => {
           const partes = t.fecha.split('/')
           return parseInt(partes[1]) === m && parseInt(partes[2]) === y
@@ -317,7 +322,11 @@ export const useStore = create((set, get) => ({
       }
       const { data: cuentaCreada, error } = await supabase.from('cuentas').insert([cuentaInsert]).select().single()
       if (error) throw error
+      
       if (saldoInicial > 0 && nuevaCuenta.tipo !== 'inversion') {
+        const hoy = new Date()
+        const fechaHoy = `${String(hoy.getDate()).padStart(2, '0')}/${String(hoy.getMonth() + 1).padStart(2, '0')}/${hoy.getFullYear()}`
+        
         const txInsert = {
           user_id: userId,
           cuenta_id: cuentaCreada.id,
@@ -325,7 +334,7 @@ export const useStore = create((set, get) => ({
           descripcion: 'Saldo Inicial',
           categoria: 'Ajuste',
           tipo: 'ingreso',
-          fecha: new Date().toLocaleDateString('es-ES')
+          fecha: fechaHoy
         }
         await supabase.from('transacciones').insert([txInsert])
       }
@@ -338,10 +347,11 @@ export const useStore = create((set, get) => ({
   },
 
   editarCuenta: async (id, datos) => {
-    const { cargarDatosNube, mostrarToast, cuentas, userId } = get()
+    const { cargarDatosNube, mostrarToast, cuentas, userId, getHoyFormatted } = get()
     try {
       const cuentaOriginal = cuentas.find(c => c.id === id)
       if (!cuentaOriginal) return
+      
       const updateData = {
         nombre: datos.nombre,
         tae: Number(datos.tae || 0),
@@ -350,10 +360,18 @@ export const useStore = create((set, get) => ({
         precio_promedio: datos.precioPromedio !== undefined ? Number(datos.precioPromedio) : undefined,
         moneda: datos.moneda
       }
+
+      // Si el saldo ha cambiado, lo actualizamos directamente
+      if (datos.saldo !== undefined && Number(datos.saldo) !== Number(cuentaOriginal.saldo)) {
+        updateData.saldo = Number(datos.saldo)
+      }
+
       Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key])
+      
       const { error } = await supabase.from('cuentas').update(updateData).eq('id', id)
       if (error) throw error
-      if (datos.saldo !== undefined && Number(datos.saldo) !== Number(cuentaOriginal.saldo) && cuentaOriginal.tipo !== 'inversion') {
+      
+      if (datos.saldo !== undefined && Number(datos.saldo) !== Number(cuentaOriginal.saldo)) {
         const diferencia = Number(datos.saldo) - Number(cuentaOriginal.saldo)
         const txInsert = {
           user_id: userId,
@@ -362,10 +380,11 @@ export const useStore = create((set, get) => ({
           descripcion: 'Ajuste de Saldo Manual',
           categoria: 'Ajuste',
           tipo: diferencia > 0 ? 'ingreso' : 'gasto',
-          fecha: new Date().toLocaleDateString('es-ES')
+          fecha: getHoyFormatted()
         }
         await supabase.from('transacciones').insert([txInsert])
       }
+      
       await cargarDatosNube()
       mostrarToast('Cuenta actualizada', 'success')
     } catch (error) {
@@ -381,7 +400,7 @@ export const useStore = create((set, get) => ({
       if (error) throw error
       await cargarDatosNube()
       mostrarToast('Cuenta eliminada', 'success')
-    } catch (error) {
+    } catch {
       mostrarToast('No se pudo eliminar la cuenta', 'error')
     }
   },
@@ -417,7 +436,7 @@ export const useStore = create((set, get) => ({
       if (error) throw error
       await cargarDatosNube()
       mostrarToast('Transacción registrada', 'success')
-    } catch (error) {
+    } catch {
       mostrarToast('Error al registrar transacción', 'error')
     }
   },
@@ -439,7 +458,7 @@ export const useStore = create((set, get) => ({
       if (error) throw error
       await cargarDatosNube()
       mostrarToast('Transacción actualizada', 'success')
-    } catch (error) {
+    } catch {
       mostrarToast('Error al actualizar transacción', 'error')
     }
   },
@@ -451,7 +470,7 @@ export const useStore = create((set, get) => ({
       if (error) throw error
       await cargarDatosNube()
       mostrarToast('Transacción eliminada', 'success')
-    } catch (error) {
+    } catch {
       mostrarToast('Error al eliminar transacción', 'error')
     }
   },
@@ -496,53 +515,122 @@ export const useStore = create((set, get) => ({
   },
 
   crearGrupoSplit: async (nombre, participantesNombres) => {
-    const uId = get().userId
-    if (!uId) return
+    const { userId: uId, cargarDatosNube, mostrarToast } = get()
+    if (!uId) {
+      mostrarToast('Debes iniciar sesión para crear grupos', 'error')
+      return false
+    }
     
-    // Generamos un token aleatorio seguro para compartir
-    const shareToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
-    
-    const { data: grupo, error } = await supabase.from('split_grupos').insert([{ 
-      nombre, 
-      user_id: uId,
-      share_token: shareToken
-    }]).select().single()
-    
-    if (grupo && !error) {
+    try {
+      // Generamos un UUID real para evitar errores de sintaxis en la DB
+      const shareToken = crypto.randomUUID()
+      
+      const { data, error } = await supabase.from('split_grupos').insert([{ 
+        nombre, 
+        user_id: uId,
+        share_token: shareToken
+      }]).select()
+      
+      if (error) {
+        console.error("Error al crear grupo:", error)
+        throw error
+      }
+
+      const grupo = data && data.length > 0 ? data[0] : null
+      
+      if (!grupo) {
+        throw new Error("No se pudo obtener el grupo creado. Verifica los permisos (RLS).")
+      }
+
       const parts = participantesNombres.map(n => ({ grupo_id: grupo.id, nombre: n }))
-      await supabase.from('split_participantes').insert(parts)
-      await get().cargarDatosNube()
+      const { error: errorParts } = await supabase.from('split_participantes').insert(parts)
+      
+      if (errorParts) {
+         console.error("Error al crear participantes:", errorParts)
+         await supabase.from('split_grupos').delete().eq('id', grupo.id)
+         throw errorParts
+      }
+      
+      await cargarDatosNube()
+      mostrarToast('Grupo de gastos creado', 'success')
+      return true
+    } catch (err) {
+      console.error(err)
+      mostrarToast(`Error: ${err.message || 'No se pudo crear el grupo'}`, 'error')
+      return false
     }
   },
 
   eliminarGrupoSplit: async (id) => {
-    const { error } = await supabase.from('split_grupos').delete().eq('id', id)
-    if (!error) await get().cargarDatosNube()
+    const { cargarDatosNube, mostrarToast } = get()
+    try {
+      const { error } = await supabase.from('split_grupos').delete().eq('id', id)
+      if (error) throw error
+      await cargarDatosNube()
+      mostrarToast('Grupo eliminado', 'success')
+    } catch (err) {
+      console.error(err)
+      mostrarToast('Error al eliminar grupo', 'error')
+    }
   },
 
   agregarGastoSplit: async (gasto) => {
-    const { error } = await supabase.from('split_gastos').insert([gasto])
-    if (!error) await get().cargarDatosNube()
+    const { cargarDatosNube, mostrarToast } = get()
+    try {
+      const { error } = await supabase.from('split_gastos').insert([gasto])
+      if (error) throw error
+      await cargarDatosNube()
+      mostrarToast('Gasto registrado', 'success')
+      return true
+    } catch (err) {
+      console.error(err)
+      mostrarToast('Error al registrar gasto', 'error')
+      return false
+    }
   },
 
   eliminarGastoSplit: async (id) => {
-    const { error } = await supabase.from('split_gastos').delete().eq('id', id)
-    if (!error) await get().cargarDatosNube()
+    const { cargarDatosNube, mostrarToast } = get()
+    try {
+      const { error } = await supabase.from('split_gastos').delete().eq('id', id)
+      if (error) throw error
+      await cargarDatosNube()
+      mostrarToast('Gasto eliminado', 'success')
+    } catch (err) {
+      console.error(err)
+      mostrarToast('Error al eliminar gasto', 'error')
+    }
   },
 
   registrarLiquidacionSplit: async (liquidacion) => {
-    const { error } = await supabase.from('split_liquidaciones').insert([liquidacion])
-    if (!error) await get().cargarDatosNube()
+    const { cargarDatosNube, mostrarToast } = get()
+    try {
+      const { error } = await supabase.from('split_liquidaciones').insert([liquidacion])
+      if (error) throw error
+      await cargarDatosNube()
+      mostrarToast('Pago registrado', 'success')
+    } catch (err) {
+      console.error(err)
+      mostrarToast('Error al registrar pago', 'error')
+    }
   },
 
   eliminarLiquidacionSplit: async (id) => {
-    const { error } = await supabase.from('split_liquidaciones').delete().eq('id', id)
-    if (!error) await get().cargarDatosNube()
+    const { cargarDatosNube, mostrarToast } = get()
+    try {
+      const { error } = await supabase.from('split_liquidaciones').delete().eq('id', id)
+      if (error) throw error
+      await cargarDatosNube()
+      mostrarToast('Liquidación eliminada', 'success')
+    } catch (err) {
+      console.error(err)
+      mostrarToast('Error al eliminar liquidación', 'error')
+    }
   },
   
   cargarGrupoPublico: async (token) => {
     if (!token) return null
-    const { data: grupo, error } = await supabase.from('split_grupos').select('*, split_participantes(*), split_gastos(*)').eq('share_token', token).single()
+    const { data: grupo, error } = await supabase.from('split_grupos').select('*, split_participantes(*), split_gastos(*), split_liquidaciones(*)').eq('share_token', token).single()
     if (error) return null
     return grupo
   },
@@ -633,7 +721,8 @@ export const useStore = create((set, get) => ({
       const mes = parseInt(partes[1])
       const año = parseInt(partes[2])
       const cuenta = cuentas.find(c => c.id === t.cuentaId)
-      return mes === mesActual && año === añoActual && cuenta?.tipo !== 'inversion'
+      // Excluimos la categoría 'Ajuste' y cuentas de inversión de las métricas de gasto mensual
+      return mes === mesActual && año === añoActual && cuenta?.tipo !== 'inversion' && t.categoria !== 'Ajuste'
     })
     const ingresos = txsMes.filter(t => t.tipo === 'ingreso').reduce((acc, t) => acc + Number(t.monto), 0)
     const gastos = txsMes.filter(t => t.tipo === 'gasto').reduce((acc, t) => acc + Number(t.monto), 0)
