@@ -50,109 +50,111 @@ export default function Transacciones() {
   }
 
   return (
-    <div className="min-h-screen pb-24 pt-12 px-8 max-w-7xl mx-auto animate-apple">
-      
-      <header className="mb-12 flex flex-col md:flex-row justify-between items-end gap-10">
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-             <div className="w-1.5 h-1.5 rounded-full bg-brand-emerald shadow-[0_0_8px_#008f58]" />
-             <h2 className="text-[11px] font-black text-text-muted uppercase tracking-[0.3em]">Audit & Integrity Log</h2>
+    <>
+      <div className="min-h-screen pb-24 pt-12 px-8 max-w-7xl mx-auto animate-apple">
+        
+        <header className="mb-12 flex flex-col md:flex-row justify-between items-end gap-10">
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+               <div className="w-1.5 h-1.5 rounded-full bg-brand-emerald shadow-[0_0_8px_#008f58]" />
+               <h2 className="text-[11px] font-black text-text-muted uppercase tracking-[0.3em]">Audit & Integrity Log</h2>
+            </div>
+            <h1 className="text-6xl font-bold tracking-tight text-text-main">Movimientos</h1>
           </div>
-          <h1 className="text-6xl font-bold tracking-tight text-text-main">Movimientos</h1>
+          <div className="flex gap-3">
+             <button 
+               onClick={() => setModalCategoriasAbierto(true)}
+               className="px-6 py-3 rounded-xl bg-white/[0.02] border border-border-subtle text-text-main font-bold text-[13px] hover:bg-white/[0.05] transition-all"
+             >
+               Etiquetas
+             </button>
+             <button 
+               onClick={() => setModalAbierto(true)}
+               className="px-6 py-3 rounded-xl bg-text-main text-bg-app font-bold text-[14px] hover:opacity-90 active:scale-95 transition-all shadow-xl"
+             >
+               Operación
+             </button>
+          </div>
+        </header>
+
+        {/* Modern Filter Interface */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+           <div className="lg:col-span-1 space-y-8">
+              <div className="card !p-6">
+                 <h3 className="text-[10px] font-black text-text-muted uppercase tracking-[0.3em] mb-6">Filtro Temporal</h3>
+                 <div className="space-y-1 max-h-[250px] overflow-y-auto no-scrollbar">
+                    <button onClick={() => setFiltroMes('todos')} className={`w-full text-left px-4 py-2.5 rounded-lg text-[13px] font-bold transition-all ${filtroMes === 'todos' ? 'text-brand-emerald bg-brand-emerald/5' : 'text-text-muted hover:text-text-main hover:bg-white/[0.02]'}`}>Completo</button>
+                    {mesesDisponibles.map(m => (
+                       <button key={m} onClick={() => setFiltroMes(m)} className={`w-full text-left px-4 py-2.5 rounded-lg text-[13px] font-bold transition-all ${filtroMes === m ? 'text-brand-emerald bg-brand-emerald/5' : 'text-text-muted hover:text-text-main hover:bg-white/[0.02]'}`}>{m}</button>
+                    ))}
+                 </div>
+              </div>
+
+              <div className="card !p-6">
+                 <h3 className="text-[10px] font-black text-text-muted uppercase tracking-[0.3em] mb-6">Categorías</h3>
+                 <div className="flex flex-wrap gap-1.5 max-h-[250px] overflow-y-auto pr-2 custom-scrollbar">
+                    <button onClick={() => setFiltroCategoria('todas')} className={`px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all ${filtroCategoria === 'todas' ? 'bg-brand-emerald border-brand-emerald text-white' : 'border-border-subtle text-text-muted hover:text-text-main'}`}>Todas</button>
+                    {categorias.map(cat => (
+                       <button key={cat.id} onClick={() => setFiltroCategoria(cat.nombre)} className={`px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all ${filtroCategoria === cat.nombre ? 'bg-brand-emerald border-brand-emerald text-white' : 'border-border-subtle text-text-muted hover:text-text-main'}`}>
+                          {cat.nombre}
+                       </button>
+                    ))}
+                 </div>
+              </div>
+           </div>
+
+           <div className="lg:col-span-3 card !p-0 overflow-hidden">
+              {transaccionesFiltradas.length > 0 ? (
+                 <div className="divide-y divide-border-subtle/50">
+                    {transaccionesFiltradas.map((t) => {
+                       const esIngreso = t.tipo === 'ingreso'
+                       const cuenta = getCuentaInfo(t.cuentaId)
+                       const logoUrl = getBankLogo(cuenta.nombre)
+                       
+                       return (
+                          <div key={t.id} className="group p-6 flex items-center justify-between hover:bg-white/[0.01] transition-all">
+                             <div className="flex items-center gap-6">
+                                <div className="w-10 h-10 rounded-xl bg-white/[0.02] border border-border-subtle flex items-center justify-center overflow-hidden shrink-0">
+                                   {logoUrl ? (
+                                      <img src={logoUrl} alt={cuenta.nombre} className="w-full h-full object-contain p-2" />
+                                   ) : (
+                                      <CreditCard size={18} className="text-text-muted" strokeWidth={1.5} />
+                                   )}
+                                </div>
+                                <div>
+                                   <p className="text-[15px] font-bold text-text-main tracking-tight group-hover:text-brand-emerald transition-colors">{t.desc || t.categoria}</p>
+                                   <div className="flex items-center gap-2.5 text-[11px] font-bold text-text-muted uppercase tracking-widest mt-1 opacity-50">
+                                      <span>{t.fecha}</span>
+                                      <span>•</span>
+                                      <span>{cuenta.nombre}</span>
+                                   </div>
+                                </div>
+                             </div>
+
+                             <div className="flex items-center gap-10">
+                                <div className={`text-[16px] font-bold tracking-tight ${esIngreso ? 'text-brand-emerald' : 'text-text-muted opacity-80'}`}>
+                                   {esIngreso ? '+' : '-'}<PrivacyValue value={formatCurrency(t.monto)} />
+                                </div>
+                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                   <button onClick={() => abrirEdicion(t)} className="p-1.5 text-text-muted hover:text-text-main transition-colors">
+                                      <Edit2 size={14} />
+                                   </button>
+                                   <button onClick={() => eliminarTransaccion(t.id)} className="p-1.5 text-text-muted hover:text-danger transition-colors">
+                                      <Trash2 size={14} />
+                                   </button>
+                                </div>
+                             </div>
+                          </div>
+                       )
+                    })}
+                 </div>
+              ) : (
+                 <div className="py-32 text-center">
+                    <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.3em]">No activity records found</p>
+                 </div>
+              )}
+           </div>
         </div>
-        <div className="flex gap-3">
-           <button 
-             onClick={() => setModalCategoriasAbierto(true)}
-             className="px-6 py-3 rounded-xl bg-white/[0.02] border border-border-subtle text-text-main font-bold text-[13px] hover:bg-white/[0.05] transition-all"
-           >
-             Etiquetas
-           </button>
-           <button 
-             onClick={() => setModalAbierto(true)}
-             className="px-6 py-3 rounded-xl bg-text-main text-bg-app font-bold text-[14px] hover:opacity-90 active:scale-95 transition-all shadow-xl"
-           >
-             Operación
-           </button>
-        </div>
-      </header>
-
-      {/* Modern Filter Interface */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-         <div className="lg:col-span-1 space-y-8">
-            <div className="card !p-6">
-               <h3 className="text-[10px] font-black text-text-muted uppercase tracking-[0.3em] mb-6">Filtro Temporal</h3>
-               <div className="space-y-1 max-h-[250px] overflow-y-auto no-scrollbar">
-                  <button onClick={() => setFiltroMes('todos')} className={`w-full text-left px-4 py-2.5 rounded-lg text-[13px] font-bold transition-all ${filtroMes === 'todos' ? 'text-brand-emerald bg-brand-emerald/5' : 'text-text-muted hover:text-text-main hover:bg-white/[0.02]'}`}>Completo</button>
-                  {mesesDisponibles.map(m => (
-                     <button key={m} onClick={() => setFiltroMes(m)} className={`w-full text-left px-4 py-2.5 rounded-lg text-[13px] font-bold transition-all ${filtroMes === m ? 'text-brand-emerald bg-brand-emerald/5' : 'text-text-muted hover:text-text-main hover:bg-white/[0.02]'}`}>{m}</button>
-                  ))}
-               </div>
-            </div>
-
-            <div className="card !p-6">
-               <h3 className="text-[10px] font-black text-text-muted uppercase tracking-[0.3em] mb-6">Categorías</h3>
-               <div className="flex flex-wrap gap-1.5">
-                  <button onClick={() => setFiltroCategoria('todas')} className={`px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all ${filtroCategoria === 'todas' ? 'bg-brand-emerald border-brand-emerald text-white' : 'border-border-subtle text-text-muted hover:text-text-main'}`}>Todas</button>
-                  {categorias.map(cat => (
-                     <button key={cat.id} onClick={() => setFiltroCategoria(cat.nombre)} className={`px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all ${filtroCategoria === cat.nombre ? 'bg-brand-emerald border-brand-emerald text-white' : 'border-border-subtle text-text-muted hover:text-text-main'}`}>
-                        {cat.nombre}
-                     </button>
-                  ))}
-               </div>
-            </div>
-         </div>
-
-         <div className="lg:col-span-3 card !p-0 overflow-hidden">
-            {transaccionesFiltradas.length > 0 ? (
-               <div className="divide-y divide-border-subtle/50">
-                  {transaccionesFiltradas.map((t) => {
-                     const esIngreso = t.tipo === 'ingreso'
-                     const cuenta = getCuentaInfo(t.cuentaId)
-                     const logoUrl = getBankLogo(cuenta.nombre)
-                     
-                     return (
-                        <div key={t.id} className="group p-6 flex items-center justify-between hover:bg-white/[0.01] transition-all">
-                           <div className="flex items-center gap-6">
-                              <div className="w-10 h-10 rounded-xl bg-white/[0.02] border border-border-subtle flex items-center justify-center overflow-hidden shrink-0">
-                                 {logoUrl ? (
-                                    <img src={logoUrl} alt={cuenta.nombre} className="w-full h-full object-contain p-2" />
-                                 ) : (
-                                    <CreditCard size={18} className="text-text-muted" strokeWidth={1.5} />
-                                 )}
-                              </div>
-                              <div>
-                                 <p className="text-[15px] font-bold text-text-main tracking-tight group-hover:text-brand-emerald transition-colors">{t.desc || t.categoria}</p>
-                                 <div className="flex items-center gap-2.5 text-[11px] font-bold text-text-muted uppercase tracking-widest mt-1 opacity-50">
-                                    <span>{t.fecha}</span>
-                                    <span>•</span>
-                                    <span>{cuenta.nombre}</span>
-                                 </div>
-                              </div>
-                           </div>
-
-                           <div className="flex items-center gap-10">
-                              <div className={`text-[16px] font-bold tracking-tight ${esIngreso ? 'text-brand-emerald' : 'text-text-muted opacity-80'}`}>
-                                 {esIngreso ? '+' : '-'}<PrivacyValue value={formatCurrency(t.monto)} />
-                              </div>
-                              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                                 <button onClick={() => abrirEdicion(t)} className="p-1.5 text-text-muted hover:text-text-main transition-colors">
-                                    <Edit2 size={14} />
-                                 </button>
-                                 <button onClick={() => eliminarTransaccion(t.id)} className="p-1.5 text-text-muted hover:text-danger transition-colors">
-                                    <Trash2 size={14} />
-                                 </button>
-                              </div>
-                           </div>
-                        </div>
-                     )
-                  })}
-               </div>
-            ) : (
-               <div className="py-32 text-center">
-                  <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.3em]">No activity records found</p>
-               </div>
-            )}
-         </div>
       </div>
 
       <ModalTransaccion 
@@ -161,6 +163,6 @@ export default function Transacciones() {
         editarDatos={transaccionEditando} 
       />
       <ModalCategorias isOpen={modalCategoriasAbierto} onClose={() => setModalCategoriasAbierto(false)} />
-    </div>
+    </>
   )
 }

@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useStore } from '../store/useStore'
-import { X, Trash2, Plus, AlertCircle, Palette } from 'lucide-react'
+import { X, Trash2, Plus, AlertCircle, Palette, Search } from 'lucide-react'
 
 // Mapeo de colores a clases de Tailwind (necesario porque Tailwind no compila clases dinámicas partidas)
 const PALETA_COLORES = {
@@ -26,7 +26,13 @@ export default function ModalCategorias({ isOpen, onClose }) {
   const [nuevaCategoria, setNuevaCategoria] = useState('')
   const [nuevoEmoji, setNuevoEmoji] = useState('🏷️')
   const [nuevoColor, setNuevoColor] = useState('brand')
+  const [busqueda, setBusqueda] = useState('')
   const [error, setError] = useState('')
+
+  const categoriasFiltradas = useMemo(() => {
+    if (!busqueda) return categorias
+    return categorias.filter(c => c.nombre.toLowerCase().includes(busqueda.toLowerCase()))
+  }, [categorias, busqueda])
 
   if (!isOpen) return null
 
@@ -53,6 +59,7 @@ export default function ModalCategorias({ isOpen, onClose }) {
     setNuevaCategoria('')
     setNuevoEmoji('🏷️')
     setNuevoColor('brand')
+    setBusqueda('')
     setError('')
   }
 
@@ -77,6 +84,7 @@ export default function ModalCategorias({ isOpen, onClose }) {
     setNuevaCategoria('')
     setNuevoEmoji('🏷️')
     setNuevoColor('brand')
+    setBusqueda('')
     onClose()
   }
 
@@ -95,6 +103,22 @@ export default function ModalCategorias({ isOpen, onClose }) {
           </button>
         </div>
 
+        {/* Buscador */}
+        {categorias.length > 5 && (
+          <div className="px-6 pt-6 shrink-0">
+            <div className="relative">
+              <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
+              <input 
+                type="text"
+                placeholder="Buscar etiqueta..."
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                className="w-full bg-surface border border-border-subtle rounded-xl pl-11 pr-4 py-3 text-sm text-text-main focus:outline-none focus:border-brand-500 transition-all placeholder:text-text-muted/50"
+              />
+            </div>
+          </div>
+        )}
+
         {/* Lista de Categorías */}
         <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
           {error && (
@@ -104,30 +128,34 @@ export default function ModalCategorias({ isOpen, onClose }) {
             </div>
           )}
 
-          <div className="flex flex-col gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {categorias.length === 0 ? (
-              <div className="py-12 text-center">
+              <div className="py-12 text-center sm:col-span-2">
                 <p className="text-text-muted text-[10px] font-black uppercase tracking-widest">Cargando categorías...</p>
               </div>
+            ) : categoriasFiltradas.length === 0 ? (
+              <div className="py-12 text-center sm:col-span-2">
+                <p className="text-text-muted text-[10px] font-black uppercase tracking-widest">No se encontraron etiquetas</p>
+              </div>
             ) : (
-              categorias.map(cat => {
+              categoriasFiltradas.map(cat => {
                 // Comprobamos si la categoría está siendo usada. (Fallback a nombre por si tienes transacciones viejas)
                 const enUso = transacciones.some(t => t.categoriaId === cat.id || t.categoria === cat.nombre)
                 const estiloPill = PALETA_COLORES[cat.color]?.pill || PALETA_COLORES['slate'].pill
 
                 return (
                   // Usamos cat.id preferiblemente para la key
-                  <div key={cat.id || cat.nombre} className="flex items-center justify-between p-4 bg-surface rounded-2xl border border-border-subtle hover:border-border-subtle/80 transition-colors group">
-                    <div className="flex items-center gap-4">
+                  <div key={cat.id || cat.nombre} className="flex items-center justify-between p-3 bg-surface rounded-2xl border border-border-subtle hover:border-border-subtle/80 transition-colors group">
+                    <div className="flex items-center gap-3 overflow-hidden">
                       {/* Píldora visual */}
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg border shadow-sm ${estiloPill}`}>
+                      <div className={`w-8 h-8 shrink-0 rounded-lg flex items-center justify-center text-base border shadow-sm ${estiloPill}`}>
                         {cat.emoji}
                       </div>
                       
-                      <div className="flex flex-col">
-                        <span className="font-black text-text-main text-sm">{cat.nombre}</span>
+                      <div className="flex flex-col min-w-0">
+                        <span className="font-bold text-text-main text-xs truncate">{cat.nombre}</span>
                         {enUso && (
-                          <span className="text-[8px] font-black uppercase tracking-widest text-text-muted mt-0.5 opacity-60">
+                          <span className="text-[7px] font-black uppercase tracking-widest text-text-muted mt-0.5 opacity-60">
                             En uso
                           </span>
                         )}
@@ -137,9 +165,9 @@ export default function ModalCategorias({ isOpen, onClose }) {
                     <button 
                       onClick={() => handleEliminar(cat)}
                       disabled={enUso}
-                      className={`p-2.5 rounded-xl transition-all ${enUso ? 'opacity-20 cursor-not-allowed' : 'text-text-muted hover:text-danger hover:bg-danger/10 border border-transparent hover:border-danger/20 active:scale-90'}`}
+                      className={`p-2 rounded-lg transition-all shrink-0 ${enUso ? 'opacity-0 cursor-default' : 'text-text-muted hover:text-danger hover:bg-danger/10 border border-transparent hover:border-danger/20 active:scale-90'}`}
                     >
-                      <Trash2 size={16} strokeWidth={2.5} />
+                      <Trash2 size={14} strokeWidth={2.5} />
                     </button>
                   </div>
                 )

@@ -168,11 +168,17 @@ export default function ModalTransaccion({ isOpen, onClose, editarDatos, tipoIni
             {/* Categorías (Pills) */}
             {tipo !== 'transferencia' && (
               <div className="space-y-4">
-                <label className="text-[11px] font-black text-text-muted uppercase tracking-[0.3em] px-2">Etiqueta de Clasificación</label>
-                <div className="flex flex-wrap gap-2.5">
+                <div className="flex justify-between items-center px-2">
+                  <label className="text-[11px] font-black text-text-muted uppercase tracking-[0.3em]">Etiqueta de Clasificación</label>
+                  {categorias.length > 8 && (
+                    <span className="text-[9px] font-black text-brand-emerald uppercase tracking-widest bg-brand-emerald/10 px-2 py-1 rounded-md">
+                      Desliza para ver más
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2.5 max-h-[160px] overflow-y-auto pr-2 custom-scrollbar py-1">
                   {categorias.map(cat => {
                     const isSelected = categoria === cat.nombre
-                    const theme = PALETA_COLORES[cat.color] || PALETA_COLORES.slate
                     return (
                       <button
                         key={cat.id} type="button"
