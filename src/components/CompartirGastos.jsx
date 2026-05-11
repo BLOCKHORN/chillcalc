@@ -16,25 +16,36 @@ const calcularBalances = (grupo) => {
   const balances = {}
   integrantes.forEach(p => balances[p.id] = 0)
   
-  const totalGastado = gastos.reduce((acc, g) => acc + Number(g.monto || 0), 0)
-  const cuotaPorPersona = totalGastado / integrantes.length
-  
   gastos.forEach(g => {
+    const monto = Number(g.monto || 0)
+    const participantesIds = g.participantes_ids && g.participantes_ids.length > 0 
+      ? g.participantes_ids 
+      : integrantes.map(p => p.id)
+    
+    const cuotaPersona = monto / participantesIds.length
+    
+    // El que pagó recupera el total
     if (balances[g.pagado_por_id] !== undefined) {
-      balances[g.pagado_por_id] += Number(g.monto || 0)
+      balances[g.pagado_por_id] += monto
     }
+    
+    // A cada participante se le resta su cuota
+    participantesIds.forEach(pId => {
+      if (balances[pId] !== undefined) {
+        balances[pId] -= cuotaPersona
+      }
+    })
   })
 
   return integrantes.map(p => {
-    let balanceBase = (balances[p.id] || 0) - cuotaPorPersona
     const pagosHechos = liquidaciones.filter(l => l.deudor_id === p.id).reduce((acc, l) => acc + Number(l.monto || 0), 0)
     const pagosRecibidos = liquidaciones.filter(l => l.acreedor_id === p.id).reduce((acc, l) => acc + Number(l.monto || 0), 0)
-    const balanceFinal = balanceBase + pagosHechos - pagosRecibidos
+    const balanceFinal = (balances[p.id] || 0) + pagosHechos - pagosRecibidos
 
     return { 
       ...p, 
       balance: isNaN(balanceFinal) ? 0 : balanceFinal, 
-      pagadoTotal: balances[p.id] || 0 
+      pagadoTotal: gastos.filter(g => g.pagado_por_id === p.id).reduce((acc, g) => acc + Number(g.monto || 0), 0)
     }
   })
 }
@@ -51,11 +62,12 @@ export default function CompartirGastos() {
   
   const [nombreGrupo, setNombreGrupo] = useState('')
   const [amigos, setAmigos] = useState(['Tú', ''])
-  const [formGasto, setFormGasto] = useState({ desc: '', monto: '', pagadoPor: '' })
+  const [formGasto, setFormGasto] = useState({ desc: '', monto: '', pagadoPor: '', paraQuien: [] })
   const [copiado, setCopiado] = useState(false)
   const [cargando, setCargando] = useState(false)
 
   const grupoSeleccionado = gruposSplit.find(g => g.id === grupoActivoId)
+
   const balances = useMemo(() => grupoSeleccionado ? calcularBalances(grupoSeleccionado) : [], [grupoSeleccionado])
 
   const transferenciasSugeridas = useMemo(() => {
@@ -105,6 +117,12 @@ export default function CompartirGastos() {
       mostrarToast('Faltan campos obligatorios', 'error')
       return
     }
+
+    // Si no se ha seleccionado a nadie, por defecto todos
+    const participantesIds = formGasto.paraQuien.length > 0 
+      ? formGasto.paraQuien 
+      : grupoSeleccionado.split_participantes.map(p => p.id)
+
     const hoy = new Date()
     const fecha = `${String(hoy.getDate()).padStart(2, '0')}/${String(hoy.getMonth() + 1).padStart(2, '0')}/${hoy.getFullYear()}`
     
@@ -114,13 +132,28 @@ export default function CompartirGastos() {
       descripcion: formGasto.desc,
       monto: parseFloat(formGasto.monto),
       pagado_por_id: formGasto.pagadoPor,
+      participantes_ids: participantesIds,
       fecha
     })
     setCargando(false)
     
     if (exito) {
-      setFormGasto({ desc: '', monto: '', pagadoPor: '' })
+      setFormGasto({ desc: '', monto: '', pagadoPor: '', paraQuien: [] })
     }
+  }
+
+  const toggleParticipanteGasto = (id) => {
+    setFormGasto(prev => {
+      const existe = prev.paraQuien.length > 0 ? prev.paraQuien.includes(id) : true
+      const actualParaQuien = prev.paraQuien.length > 0 ? prev.paraQuien : grupoSeleccionado.split_participantes.map(p => p.id)
+      
+      return {
+        ...prev,
+        paraQuien: existe 
+          ? actualParaQuien.filter(pId => pId !== id)
+          : [...actualParaQuien, id]
+      }
+    })
   }
 
   const handleCompartir = async () => {
@@ -421,9 +454,43 @@ export default function CompartirGastos() {
                           </div>
                        </div>
                        
+                       {/* Selección de para quién es el gasto (Estilo Tricount) */}
+                       <div className="space-y-4">
+                          <div className="flex justify-between items-center">
+                            <label className="text-[11px] font-black uppercase text-text-muted tracking-[0.3em]">¿Para quién es el gasto?</label>
+                            <button 
+                              type="button"
+                              onClick={() => setFormGasto(prev => ({ ...prev, paraQuien: grupoSeleccionado.split_participantes.map(p => p.id) }))}
+                              className="text-[10px] font-bold text-brand-emerald uppercase hover:underline"
+                            >
+                              Todos
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                             {grupoSeleccionado.split_participantes?.map((p) => {
+                               const isSelected = formGasto.paraQuien.length > 0 
+                                 ? formGasto.paraQuien.includes(p.id)
+                                 : true
+                               return (
+                                 <button
+                                   key={p.id}
+                                   type="button"
+                                   onClick={() => toggleParticipanteGasto(p.id)}
+                                   className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${isSelected ? 'bg-brand-emerald/10 border-brand-emerald text-brand-emerald' : 'bg-white/5 border-border-subtle text-text-muted hover:border-white/20'}`}
+                                 >
+                                   <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${isSelected ? 'bg-brand-emerald border-brand-emerald text-white' : 'border-border-subtle bg-white/5'}`}>
+                                      {isSelected && <Check size={14} strokeWidth={4} />}
+                                   </div>
+                                   <span className="text-[13px] font-bold truncate">{p.nombre}</span>
+                                 </button>
+                               )
+                             })}
+                          </div>
+                       </div>
+
                        <div className="p-4 bg-brand-emerald/5 border border-brand-emerald/10 rounded-xl flex items-center gap-3">
                           <Info size={18} className="text-brand-emerald shrink-0" />
-                          <p className="text-[11px] font-medium text-brand-emerald/80 leading-snug">El gasto se dividirá a partes iguales entre todos los participantes del grupo.</p>
+                          <p className="text-[11px] font-medium text-brand-emerald/80 leading-snug">El gasto se dividirá equitativamente solo entre las personas seleccionadas.</p>
                        </div>
 
                        <button 

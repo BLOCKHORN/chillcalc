@@ -14,25 +14,36 @@ const calcularBalances = (grupo) => {
   const balances = {}
   integrantes.forEach(p => balances[p.id] = 0)
   
-  const totalGastado = gastos.reduce((acc, g) => acc + Number(g.monto || 0), 0)
-  const cuotaPorPersona = totalGastado / integrantes.length
-  
   gastos.forEach(g => {
+    const monto = Number(g.monto || 0)
+    const participantesIds = g.participantes_ids && g.participantes_ids.length > 0 
+      ? g.participantes_ids 
+      : integrantes.map(p => p.id)
+    
+    const cuotaPersona = monto / participantesIds.length
+    
+    // El que pagó recupera el total
     if (balances[g.pagado_por_id] !== undefined) {
-      balances[g.pagado_por_id] += Number(g.monto || 0)
+      balances[g.pagado_por_id] += monto
     }
+    
+    // A cada participante se le resta su cuota
+    participantesIds.forEach(pId => {
+      if (balances[pId] !== undefined) {
+        balances[pId] -= cuotaPersona
+      }
+    })
   })
 
   return integrantes.map(p => {
-    let balanceBase = (balances[p.id] || 0) - cuotaPorPersona
     const pagosHechos = liquidaciones.filter(l => l.deudor_id === p.id).reduce((acc, l) => acc + Number(l.monto || 0), 0)
     const pagosRecibidos = liquidaciones.filter(l => l.acreedor_id === p.id).reduce((acc, l) => acc + Number(l.monto || 0), 0)
-    const balanceFinal = balanceBase + pagosHechos - pagosRecibidos
+    const balanceFinal = (balances[p.id] || 0) + pagosHechos - pagosRecibidos
 
     return { 
       ...p, 
       balance: isNaN(balanceFinal) ? 0 : balanceFinal, 
-      pagadoTotal: balances[p.id] || 0 
+      pagadoTotal: gastos.filter(g => g.pagado_por_id === p.id).reduce((acc, g) => acc + Number(g.monto || 0), 0)
     }
   })
 }
@@ -44,12 +55,18 @@ export default function VistaPublicaSplit({ token }) {
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState(false)
   
-  const [formGasto, setFormGasto] = useState({ desc: '', monto: '', pagadoPor: '' })
+  const [formGasto, setFormGasto] = useState({ desc: '', monto: '', pagadoPor: '', paraQuien: [] })
   const [enviando, setEnviando] = useState(false)
 
   const cargarDatos = async () => {
     const data = await cargarGrupoPublico(token)
-    if (data) setGrupo(data)
+    if (data) {
+      setGrupo(data)
+      // Inicializar paraQuien con todos si está vacío
+      if (formGasto.paraQuien.length === 0) {
+        setFormGasto(prev => ({ ...prev, paraQuien: data.split_participantes.map(p => p.id) }))
+      }
+    }
     else setError(true)
     setCargando(false)
   }
@@ -57,7 +74,7 @@ export default function VistaPublicaSplit({ token }) {
   useEffect(() => {
     document.documentElement.classList.remove('light-mode') 
     cargarDatos()
-  }, [token, cargarGrupoPublico])
+  }, [token])
 
   const balances = useMemo(() => grupo ? calcularBalances(grupo) : [], [grupo])
   const totalGrupo = useMemo(() => grupo?.split_gastos?.reduce((acc, g) => acc + Number(g.monto), 0) || 0, [grupo])
@@ -68,6 +85,10 @@ export default function VistaPublicaSplit({ token }) {
       mostrarToast('Faltan campos obligatorios', 'error')
       return
     }
+
+    const participantesIds = formGasto.paraQuien.length > 0 
+      ? formGasto.paraQuien 
+      : grupo.split_participantes.map(p => p.id)
     
     setEnviando(true)
     const hoy = new Date()
@@ -78,14 +99,29 @@ export default function VistaPublicaSplit({ token }) {
       descripcion: formGasto.desc,
       monto: parseFloat(formGasto.monto),
       pagado_por_id: formGasto.pagadoPor,
+      participantes_ids: participantesIds,
       fecha
     })
     
     if (exito) {
-      setFormGasto({ desc: '', monto: '', pagadoPor: '' })
-      await cargarDatos() // Recargamos para ver el nuevo gasto
+      setFormGasto({ desc: '', monto: '', pagadoPor: '', paraQuien: grupo.split_participantes.map(p => p.id) })
+      await cargarDatos() 
     }
     setEnviando(false)
+  }
+
+  const toggleParticipanteGasto = (id) => {
+    setFormGasto(prev => {
+      const existe = prev.paraQuien.length > 0 ? prev.paraQuien.includes(id) : true
+      const actualParaQuien = prev.paraQuien.length > 0 ? prev.paraQuien : grupo.split_participantes.map(p => p.id)
+      
+      return {
+        ...prev,
+        paraQuien: existe 
+          ? actualParaQuien.filter(pId => pId !== id)
+          : [...actualParaQuien, id]
+      }
+    })
   }
 
   if (cargando) {
@@ -206,6 +242,33 @@ export default function VistaPublicaSplit({ token }) {
                         ))}
                       </select>
                     </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <label className="text-[9px] font-black uppercase text-text-muted tracking-widest ml-1">¿Para quién es el gasto?</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {grupo.split_participantes.map(p => {
+                        const isSelected = formGasto.paraQuien.length > 0 ? formGasto.paraQuien.includes(p.id) : true
+                        return (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => toggleParticipanteGasto(p.id)}
+                            className={`flex items-center gap-2 p-3 rounded-lg border transition-all ${isSelected ? 'bg-brand-emerald/10 border-brand-emerald text-brand-emerald' : 'bg-white/5 border-border-subtle text-text-muted'}`}
+                          >
+                            <div className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? 'bg-brand-emerald border-brand-emerald text-white' : 'border-border-subtle bg-white/5'}`}>
+                              {isSelected && <CheckCircle2 size={12} strokeWidth={4} />}
+                            </div>
+                            <span className="text-[12px] font-bold truncate">{p.nombre}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-brand-emerald/5 border border-brand-emerald/10 rounded-lg flex items-center gap-3">
+                    <Info size={14} className="text-brand-emerald shrink-0" />
+                    <p className="text-[10px] font-medium text-brand-emerald/80 leading-tight">El gasto se dividirá equitativamente solo entre las personas seleccionadas.</p>
                   </div>
                   <button 
                     disabled={enviando}

@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS split_gastos (
     descripcion TEXT NOT NULL,
     monto DECIMAL(12,2) NOT NULL,
     pagado_por_id UUID REFERENCES split_participantes(id) ON DELETE CASCADE,
+    participantes_ids JSONB DEFAULT NULL, -- IDs de los participantes a los que aplica este gasto. Si es null, aplica a todos.
     fecha TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
