@@ -67,14 +67,14 @@ export default function Objetivos() {
     <>
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-24 px-1 relative w-full">
         
-        <div className="absolute top-10 right-20 w-72 h-72 bg-brand-500/5 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute top-40 left-10 w-64 h-64 bg-emerald-500/5 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute top-10 right-20 w-72 h-72 bg-brand-emerald/5 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-40 left-10 w-64 h-64 bg-brand-emerald/5 rounded-full blur-[100px] pointer-events-none" />
 
         <header className="mb-10 pt-2 relative z-10">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="w-full text-center md:text-left">
               <p className="text-[10px] md:text-xs font-black text-text-muted uppercase tracking-widest mb-2 flex items-center justify-center md:justify-start gap-2">
-                <Target size={14} className="text-brand-400" />
+                <Target size={14} className="text-brand-emerald" />
                 Metas y Proyección
               </p>
               <h1 className="text-5xl md:text-6xl font-black text-text-main mb-1 tracking-tighter leading-none">
@@ -85,7 +85,7 @@ export default function Objetivos() {
             <div className="flex w-full md:w-auto md:mr-14">
               <button 
                 onClick={handleNuevo} 
-                className="flex-1 md:flex-none flex items-center justify-center gap-2.5 px-6 py-3.5 md:py-3 rounded-xl font-bold bg-brand-500/10 text-brand-400 hover:bg-brand-500/20 active:scale-95 transition-all text-sm w-full md:w-auto border border-brand-500/20 shadow-lg shadow-brand-500/5 group uppercase tracking-widest"
+                className="flex-1 md:flex-none flex items-center justify-center gap-2.5 px-6 py-3.5 md:py-3 rounded-xl font-bold bg-brand-emerald/10 text-brand-emerald hover:bg-brand-emerald/20 active:scale-95 transition-all text-sm w-full md:w-auto border border-brand-emerald/20 shadow-lg shadow-brand-emerald/5 group uppercase tracking-widest"
               >
                 <Plus size={18} className="group-hover:rotate-90 transition-transform"/> 
                 <span>Nuevo Objetivo</span>
@@ -106,11 +106,11 @@ export default function Objetivos() {
             }
 
             return (
-              <div key={obj.id} className={`bg-surface-solid/40 backdrop-blur-xl border border-border-subtle/50 rounded-3xl p-6 flex flex-col shadow-xl shadow-black/5 group transition-all duration-300 hover:-translate-y-1 hover:border-border-subtle/80 ${proyeccion.alcanzado ? 'border-brand-500/30 bg-brand-500/5' : ''}`}>
+              <div key={obj.id} className={`bg-surface-solid/40 backdrop-blur-xl border border-border-subtle/50 rounded-3xl p-6 flex flex-col shadow-xl shadow-black/5 group transition-all duration-300 hover:-translate-y-1 hover:border-border-subtle/80 ${proyeccion.alcanzado ? 'border-brand-emerald/30 bg-brand-emerald/5' : ''}`}>
                 
                 <div className="flex items-start justify-between mb-6">
                   <div className="flex items-center gap-4">
-                    <div className={`p-3 rounded-2xl border shrink-0 transition-colors ${proyeccion.alcanzado ? 'bg-brand-500/20 text-brand-400 border-brand-500/30 shadow-[0_0_15px_rgba(var(--brand-500),0.1)]' : 'bg-surface-solid/60 text-text-muted border-border-subtle/50 group-hover:bg-surface group-hover:text-brand-400'}`}>
+                    <div className={`p-3 rounded-2xl border shrink-0 transition-colors ${proyeccion.alcanzado ? 'bg-brand-emerald/20 text-brand-emerald border-brand-emerald/30 shadow-[0_0_15px_rgba(0,143,88,0.1)]' : 'bg-surface-solid/60 text-text-muted border-border-subtle/50 group-hover:bg-surface group-hover:text-brand-emerald'}`}>
                       <Target size={24} strokeWidth={2.5} />
                     </div>
                     <div className="overflow-hidden">
@@ -124,7 +124,7 @@ export default function Objetivos() {
                   </div>
                   
                   <div className="flex items-center gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => handleEditar(obj.id)} className="p-2 text-text-muted hover:text-brand-400 bg-surface-solid md:bg-surface-solid/50 rounded-xl border border-border-subtle/50 hover:border-brand-500/30 transition-all active:scale-90">
+                    <button onClick={() => handleEditar(obj.id)} className="p-2 text-text-muted hover:text-brand-emerald bg-surface-solid md:bg-surface-solid/50 rounded-xl border border-border-subtle/50 hover:border-brand-emerald/30 transition-all active:scale-90">
                       <Edit2 size={16} strokeWidth={2.5} />
                     </button>
                     <button onClick={() => eliminarObjetivo(obj.id)} className="p-2 text-text-muted hover:text-danger bg-surface-solid md:bg-surface-solid/50 rounded-xl border border-border-subtle/50 hover:border-danger/30 transition-all active:scale-90">
@@ -136,15 +136,15 @@ export default function Objetivos() {
                 <div className="mb-6 bg-surface-solid/50 p-4 rounded-2xl border border-border-subtle/30">
                   <div className="mb-2.5 flex justify-between items-end">
                     <span className="text-[10px] font-black uppercase tracking-widest text-text-muted">Progreso Actual</span>
-                    <span className={`text-2xl font-black leading-none tracking-tighter ${proyeccion.alcanzado ? 'text-brand-400' : 'text-text-main'}`}>
+                    <span className={`text-2xl font-black leading-none tracking-tighter ${proyeccion.alcanzado ? 'text-brand-emerald' : 'text-text-main'}`}>
                       {proyeccion.progreso.toFixed(1)}%
                     </span>
                   </div>
                   
                   <div className="w-full bg-surface-solid rounded-full h-3 overflow-hidden border border-border-subtle/50 relative shadow-inner">
-                    <div className="absolute inset-0 bg-linear-to-r from-brand-600/20 to-brand-400/20 blur-md rounded-full" style={{ width: `${proyeccion.progreso}%` }} />
+                    <div className="absolute inset-0 bg-brand-emerald/20 blur-md rounded-full" style={{ width: `${proyeccion.progreso}%` }} />
                     <div 
-                      className={`${proyeccion.alcanzado ? 'bg-brand-500' : 'bg-linear-to-r from-brand-600 to-brand-400'} h-full rounded-full transition-all duration-1000 ease-out relative z-10`} 
+                      className={`${proyeccion.alcanzado ? 'bg-brand-emerald' : 'bg-brand-emerald'} h-full rounded-full transition-all duration-1000 ease-out relative z-10`} 
                       style={{ width: `${proyeccion.progreso}%` }}
                     />
                   </div>
@@ -169,11 +169,11 @@ export default function Objetivos() {
                             {proyeccion.mesesResto > 0 && `${proyeccion.mesesResto} ${proyeccion.mesesResto === 1 ? 'Mes' : 'Meses'}`}
                             {proyeccion.anos === 0 && proyeccion.mesesResto === 0 && '¡Ya casi!'}
                           </p>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-brand-400 opacity-80">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-brand-emerald opacity-80">
                              Meta: {fechaEstimada}
                           </p>
                         </div>
-                        <div className="p-4 bg-brand-500/10 rounded-2xl text-brand-400 border border-brand-500/20 shadow-[0_0_15px_rgba(var(--brand-500),0.05)]">
+                        <div className="p-4 bg-brand-emerald/10 rounded-2xl text-brand-emerald border border-brand-emerald/20 shadow-[0_0_15px_rgba(0,143,88,0.05)]">
                           <CalendarClock size={28} strokeWidth={2} />
                         </div>
                       </div>
@@ -187,7 +187,7 @@ export default function Objetivos() {
                         </div>
                         <div>
                           <p className="text-lg md:text-xl font-black text-text-main truncate leading-none mb-1">{formatoEuros(proyeccion.totalAportado)}</p>
-                          <p className="text-[9px] font-black uppercase tracking-widest text-brand-400">+{formatoEuros(obj.aportacionExtra)}/mes</p>
+                          <p className="text-[9px] font-black uppercase tracking-widest text-brand-emerald">+{formatoEuros(obj.aportacionExtra)}/mes</p>
                         </div>
                       </div>
 
@@ -197,7 +197,7 @@ export default function Objetivos() {
                           <span className="text-[9px] uppercase font-black tracking-widest">Interés</span>
                         </div>
                         <div>
-                          <p className={`text-lg md:text-xl font-black truncate leading-none mb-1 ${proyeccion.totalIntereses > 0 ? 'text-brand-400' : 'text-text-main'}`}>
+                          <p className={`text-lg md:text-xl font-black truncate leading-none mb-1 ${proyeccion.totalIntereses > 0 ? 'text-brand-emerald' : 'text-text-main'}`}>
                             {formatoEuros(proyeccion.totalIntereses)}
                           </p>
                           <p className="text-[9px] font-black uppercase tracking-widest text-text-muted">{obj.tasa}% anual</p>
